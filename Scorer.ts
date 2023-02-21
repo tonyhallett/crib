@@ -1,53 +1,135 @@
-enum Suit {Hearts , Clubs , Diamonds, Spades}
-enum Pips { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
-interface Card {
+export enum Suit {Hearts , Clubs , Diamonds, Spades}
+export enum Pips { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
+export interface Card {
   suit : Suit,
   pips : Pips 
 }
 
-enum ScoreType { Pair, Three,Four, Flush, Run }
-interface Score{
-    type : ScoreType
-   cards  : Card []
-}
+type Pair = [Card, Card];
 type FiveCards = [Card, Card, Card, Card, Card ]
-type FourCards = [Card, Card, Card, Card ]
+type FourCards = readonly [Card, Card, Card, Card ]
 type ThreeCards = [Card, Card, Card ]
 type Cards = Card[]
 type Flush = FourCards | FiveCards 
 //type Runs = FiveCards | FourCards | [FourCards, FourCards ] 
 interface Scores {
-    pairs : [Card, Card ][],
+    pairs : Pair[] | undefined,
     threes : ThreeCards | undefined, 
     fours : FourCards | undefined ,
-    // nob 
+    oneForHisKnob : Card | undefined,
     runs : Cards [],
-    flush : Flush | undefined 
+    flush : Flush | undefined,
+    fifteenTwos:Cards[] | undefined;
 }
-type ScoreCards  = [Card, Card,Card, Card,Card]
-export function getScores(Cards:ScoreCards,topCard:Card,isBox : boolean ) : Scores {
+type ScoreCards  = FourCards;
+
+class OrderedGroupedCards{
+  private map  = new Map<Pips,Card[]>();
+  constructor(cards:Card[]){
+    const sortedCards = sortCards(cards);
+    sortedCards.forEach(card => {
+      let ofAKind = this.map.get(card.pips);
+      if(ofAKind === undefined){
+        ofAKind = [];
+        this.map.set(card.pips,ofAKind);
+      };
+      ofAKind.push(card);
+    })
+  }
+
+  forEach(callback:(cards:Card[]) => void){
+    this.map.forEach((ofAKind) => {
+      callback(ofAKind);
+    })
+  }
+
+}
+
+export function getScores(cards:ScoreCards,topCard:Card,isBox : boolean ) : Scores {
  const scores:Scores = {
-  pairs:[],
+  pairs:undefined,
   flush:undefined,
   fours:undefined,
   threes:undefined,
+  oneForHisKnob:undefined,
+  fifteenTwos:undefined,
   runs:[]
  };
- const [flushCards,isFullFlush] = getFlush(scoreCards,topCard,isBox);
+ let checkOfAKind = true;
+ const [flushCards,isFullFlush] = getFlush(cards,topCard,isBox);
  if(flushCards){
   scores.flush = flushCards;
-  if(isFullFlush){
-    // no need to check of kind
-  }
+  checkOfAKind = !isFullFlush;
  }
+ const orderedGroupedCards = new OrderedGroupedCards([...cards, topCard]);
+ if(checkOfAKind){
+  ofAKind(orderedGroupedCards, scores);
+ }
+ oneForHisKnob(cards, topCard,scores);
+ fifteenTwos(orderedGroupedCards, scores);
+ runs(orderedGroupedCards, scores);
  return scores;
 }
 
-function sortCards(cards:Card[]){
-  
+function oneForHisKnob(cards:ScoreCards,topCard:Card, scores:Pick<Scores,"oneForHisKnob">){
+  for(const card of cards){
+    if(card.pips === Pips.Jack && card.suit === topCard.suit){
+      scores.oneForHisKnob = card;
+      return;
+    }
+  }
 }
 
-function getFlush(scoreCards:ScoreCards,topCard:Card,isBox:boolean):[Flush|undefined, isFullFlush ]{
+function fifteenTwos(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"fifteenTwos">){
+  const fifteenTwos:Cards[] = [];
+}
+
+function runs(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"runs">){
+
+}
+
+export function getPipsValue(pips:Pips){
+  switch(pips){
+    case Pips.Ten:
+    case Pips.Jack:
+    case Pips.Queen:
+    case Pips.King:
+      return 10;
+    default:
+      return pips + 1;
+  }
+}
+
+function ofAKind(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"pairs" |"threes"| "fours">){
+  const pairs:Pair[] = [];
+  // can you break ?
+  orderedGroupedCards.forEach(cards => {
+    switch(cards.length){
+      case 4:
+        scores.fours = cards as unknown as FourCards;
+        break;
+      case 3:
+        scores.threes = cards as unknown as ThreeCards;
+        break;
+      case 2:
+        pairs.push(cards as unknown as Pair)
+        break;
+    }
+  });
+  if(pairs.length > 0){
+    scores.pairs = pairs;
+  }
+}
+
+export function sortCards(cards:Card[]){
+  return cards.sort((a,b) => {
+    return a.pips - b.pips;
+  })
+}
+
+
+
+function getFlush(scoreCards:ScoreCards,topCard:Card,isBox:boolean):[Flush|undefined, boolean ]{
   let suit:Suit | undefined;
   let scoreCardsFlush = true;
   for(const scoreCard of scoreCards){
