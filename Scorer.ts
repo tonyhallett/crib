@@ -37,7 +37,7 @@ class OrderedGroupedCards{
     })
   }
 
-  forEach(callback:(cards:Card[]) => void){
+  forEach(callback:(cards:Cards) => void){
     this.map.forEach((ofAKind) => {
       callback(ofAKind);
     })
@@ -85,7 +85,40 @@ function fifteenTwos(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,
 }
 
 function runs(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"runs">){
+  let done = false;
+  let pippedCards:Cards[] = [];
+  let lastPips:Pips | undefined;
+  orderedGroupedCards.forEach(cards => {
+    if(!done){
+      const pips = cards[0].pips;
+      if(lastPips === undefined){
+        lastPips = pips;
+        pippedCards.push(cards);
+      }else{
+        const nextInRun = pips - lastPips === 1;
+        
+        if(!nextInRun){
+          pippedCards = [];
+          if(pippedCards.length > 2) {
+            done = true;
+          }
+        }
+        if(!done){
+          pippedCards.push(cards);
+        }
+      }
+      lastPips = pips;
+    }
+  });
+  if(pippedCards.length > 2){
+    const runCards:Cards[] = [];
+    pippedCards.forEach((cards,index) => {
+      cards.forEach(card => {
 
+      })
+    });
+    scores.runs = runCards;
+  }
 }
 
 export function getPipsValue(pips:Pips){
