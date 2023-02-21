@@ -25,9 +25,13 @@ interface Scores {
     flush : Flush | undefined 
 }
 type ScoreCards  = [Card, Card,Card, Card,Card]
-function getScores(Cards:ScoreCards,topCard:Card,isBox : boolean ) : Score[] {
+export function getScores(Cards:ScoreCards,topCard:Card,isBox : boolean ) : Scores {
  const scores:Scores = {
-
+  pairs:[],
+  flush:undefined,
+  fours:undefined,
+  threes:undefined,
+  runs:[]
  };
  const [flushCards,isFullFlush] = getFlush(scoreCards,topCard,isBox);
  if(flushCards){
@@ -36,6 +40,7 @@ function getScores(Cards:ScoreCards,topCard:Card,isBox : boolean ) : Score[] {
     // no need to check of kind
   }
  }
+ return scores;
 }
 
 function sortCards(cards:Card[]){
