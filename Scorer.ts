@@ -2,8 +2,56 @@ export enum Suit {Hearts , Clubs , Diamonds, Spades}
 export enum Pips { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
 export interface Card {
   suit : Suit,
-  pips : Pips 
+  pips : Pips,
+  value : number 
 }
+
+export function cardFromJson(cardJson:string):Card{
+  // expecting AH etc
+  const pipsChar = cardJson.charAt(0);
+  const pips = getPips(pipsChar);
+  const suitChar = cardJson.charAt(1);
+  const suit = getSuit(suitChar);
+
+  return {
+    pips,
+    suit,
+    value:getPipsValue(pips)
+  }
+}
+
+function getPips(pipsChar:string):Pips{
+  switch(pipsChar){
+    case "A":
+      return Pips.Ace;
+    case "K":
+      return Pips.King;
+    case "Q":
+      return Pips.Queen;
+    case "J":
+      return Pips.Jack;
+    case "T":
+      return Pips.Ten
+    default:
+      return Number.parseInt(pipsChar) - 1
+  }
+}
+
+function getSuit(suitChar:string){
+  switch(suitChar){
+    case "H":
+      return Suit.Hearts;
+    case "C":
+      return Suit.Clubs;
+    case "D":
+      return Suit.Diamonds;
+    case "S":
+      return Suit.Spades;
+    default:
+      throw new Error(`${suitChar} is not a suit.  Should be H, C, D or S.`);
+  }
+}
+
 
 type Pair = [Card, Card];
 type FiveCards = [Card, Card, Card, Card, Card ]
@@ -22,7 +70,11 @@ interface Scores {
     fifteenTwos:Cards[] | undefined;
 }
 type ScoreCards  = FourCards;
-
+export function sortCards(cards:Card[]){
+  return cards.sort((a,b) => {
+    return a.pips - b.pips;
+  })
+}
 class OrderedGroupedCards{
   private map  = new Map<Pips,Card[]>();
   constructor(cards:Card[]){
@@ -121,7 +173,7 @@ function runs(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"runs">
   }
 }
 
-export function getPipsValue(pips:Pips){
+function getPipsValue(pips:Pips){
   switch(pips){
     case Pips.Ten:
     case Pips.Jack:
@@ -154,11 +206,7 @@ function ofAKind(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"pai
   }
 }
 
-export function sortCards(cards:Card[]){
-  return cards.sort((a,b) => {
-    return a.pips - b.pips;
-  })
-}
+
 
 
 

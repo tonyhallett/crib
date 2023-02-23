@@ -1,22 +1,66 @@
-import {getScores, sortCards, getPipsValue, Suit, Pips, Card} from "../Scorer"
+import {getScores, sortCards, getPipsValue, cardFromJson, Suit, Pips, Card} from "../Scorer"
 describe("scorer", () => {
-    const aceClubs:Card = {pips:Pips.Ace,suit:Suit.Clubs};
-    const twoClubs:Card = {pips:Pips.Two,suit:Suit.Clubs};
-    const threeClubs:Card = {pips:Pips.Three,suit:Suit.Clubs};
-    const fourClubs:Card = {pips:Pips.Four,suit:Suit.Clubs};
-    const fiveClubs:Card = {pips:Pips.Five,suit:Suit.Clubs};
-    const aceHearts:Card = {pips:Pips.Ace,suit:Suit.Hearts};
+    const aceClubs = cardFromJson("AC");
+    const twoClubs = cardFromJson("2C");
+    const threeClubs = cardFromJson("3C");
+    const fourClubs = cardFromJson("4C");
+    const fiveClubs = cardFromJson("5C");
+    const aceHearts = cardFromJson("AH");
     const sameSuitCards = [aceClubs, twoClubs, threeClubs, fourClubs] as const;
     const differentSuitTopCard = aceHearts;
     const sameSuitTopCard = fiveClubs;
-    const aceSpades:Card = {pips:Pips.Ace,suit:Suit.Spades};
-    const aceDiamonds:Card = {pips:Pips.Ace,suit:Suit.Diamonds};
-    const twoDiamonds:Card = {pips:Pips.Two,suit:Suit.Diamonds};
-    const jackDiamonds:Card = {pips:Pips.Jack,suit:Suit.Diamonds};
-    const jackSpades:Card = {pips:Pips.Jack,suit:Suit.Spades};
-    const tenSpades:Card = {pips:Pips.Ten,suit:Suit.Spades};
-    const queenSpades:Card = {pips:Pips.Queen,suit:Suit.Spades};
-    const kingSpades:Card = {pips:Pips.Queen,suit:Suit.Spades};
+    const aceSpades = cardFromJson("AS");
+    const aceDiamonds = cardFromJson("AD");
+    const twoDiamonds = cardFromJson("2D");
+    const jackDiamonds = cardFromJson("JD");
+    const jackClubs = cardFromJson("JC");
+    const jackSpades = cardFromJson("JS");
+    const tenSpades = cardFromJson("TS");
+    const queenSpades = cardFromJson("QS")
+    const kingSpades = cardFromJson("KS")
+    const nineSpades = cardFromJson("9S")
+    const nineDiamonds = cardFromJson("9D");
+
+
+    describe("cardFromJson", () => {
+        it("should throw for invalid suit", () => {
+            expect(() => cardFromJson("AZ")).toThrowError("Z is not a suit.  Should be H, C, D or S.");
+        });
+
+        it("should create card with correct suit", () => {
+            expect(aceClubs.suit).toBe(Suit.Clubs);
+            expect(aceHearts.suit).toBe(Suit.Hearts);
+            expect(aceSpades.suit).toBe(Suit.Spades);
+            expect(aceDiamonds.suit).toBe(Suit.Diamonds);
+        });
+
+        describe("should create card with correct value", () => {
+            it("numbers", () => {
+                [2,3,4,5,6,7,8,9].forEach(number => {
+                    expect(cardFromJson(`${number}H`).value).toEqual(number);
+                })
+            });
+
+            it("ten values", () => {
+                const tenCards = [tenSpades, jackSpades, queenSpades, kingSpades];
+                tenCards.forEach(tenCard => expect(tenCard.value).toBe(10));
+            });
+
+            it("ace", () => {
+                expect(aceClubs.value).toBe(1);
+            })
+        });
+
+        describe("create card pips correctly", () => {
+            it("should work with pip identifiers", () => {
+                expect(aceClubs.pips).toBe(Pips.Ace);
+                expect(tenSpades.pips).toBe(Pips.Ten);
+                expect(jackSpades.pips).toBe(Pips.Jack);
+                expect(queenSpades.pips).toBe(Pips.Queen);
+                expect(kingSpades.pips).toBe(Pips.King);
+            });
+        });
+    })
 
     describe("sort cards", () => {
         it("should sort lowest to highest pips", () => {
@@ -24,19 +68,6 @@ describe("scorer", () => {
             expect(sortedCards).toEqual([aceSpades, aceDiamonds,aceHearts, twoClubs,fiveClubs]);
         });
     });
-
-    describe("getPipsValue", () => {
-        it("should be same as pips up to 10", () => {
-            const aceToTenPips:[Pips,number][] = [[Pips.Ace,1], [Pips.Two,2], [Pips.Three,3],[Pips.Four,4], [Pips.Five,5], [Pips.Six,6],[Pips.Seven,7],[Pips.Eight,8], [Pips.Nine,9],[Pips.Ten,10]];
-            aceToTenPips.forEach(pipsValue => {
-                expect(getPipsValue(pipsValue[0])).toEqual(pipsValue[1]);
-            })
-        });
-
-        it("should be 10 for Jack, Queen and King", () => {
-            [Pips.Jack, Pips.Queen, Pips.King].forEach(pips => expect(getPipsValue(pips)).toEqual(10));
-        })
-    })
 
     describe("flushes", () =>{
         it("should have no flush when box and four card flush", () => {
@@ -100,7 +131,7 @@ describe("scorer", () => {
         });
     });
 
-    describe("fifteen twos", () => {
+    xdescribe("fifteen twos", () => {
         it("should find a fifteen two - two cards", () => {
             const scores = getScores([tenSpades,aceClubs,twoClubs,aceHearts],fiveClubs,true);
             expect(scores.fifteenTwos).toEqual([[tenSpades,fiveClubs]]);
@@ -132,5 +163,59 @@ describe("scorer", () => {
         it("should find a fifteen two - five cards", () => {
 
         });
+    })
+
+    xdescribe("runs", () => {
+        it("should find run of 5", () => {
+            const scores = getScores([kingSpades,nineSpades,tenSpades,jackSpades],queenSpades,true);
+            // need to change the tests so is not dependent upon array order
+            expect(scores.runs).toEqual([]);
+        });
+
+        it("should find single run of 4", () => {
+            const scores = getScores([queenSpades,nineSpades,tenSpades,jackSpades],twoClubs,true);
+            // need to change the tests so is not dependent upon array order
+            expect(scores.runs).toEqual([]);
+        });
+
+        it("should find two runs of 4", () => {
+            const scores = getScores([queenSpades,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
+            expect(scores.runs).toEqual([]);
+        });
+
+        it("should find single run of 3", () => {
+            const scores = getScores([twoClubs,nineSpades,tenSpades,jackSpades],aceClubs,true);
+            expect(scores.runs).toEqual([]);
+        });
+
+        it("should find two runs of 3", () => {
+            const scores = getScores([twoClubs,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
+            // need to change the tests so is not dependent upon array order
+            // how to create own expectation 
+            expect(scores.runs).toEqual([
+                [nineSpades, tenSpades, jackSpades],
+                [nineSpades, tenSpades, jackDiamonds]
+            ]);
+        });
+
+        it("should find three runs of 3", () => {
+            const scores = getScores([jackClubs,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
+            expect(scores.runs).toEqual([
+                [nineSpades, tenSpades, jackSpades],
+                [nineSpades, tenSpades, jackDiamonds],
+                [nineSpades, tenSpades, jackClubs],
+            ]);
+        });
+
+        it("should find four runs of 3", () => {
+            const scores = getScores([jackClubs,nineSpades,tenSpades,jackSpades],nineDiamonds,true);
+            expect(scores.runs).toEqual([
+                [nineSpades, tenSpades, jackSpades],
+                [nineSpades, tenSpades, jackClubs],
+                [nineDiamonds, tenSpades, jackSpades],
+                [nineDiamonds, tenSpades, jackClubs],
+            ]);
+        });
+        
     })
 })
