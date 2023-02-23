@@ -1,10 +1,11 @@
-import {getScores, sortCards, getPipsValue, cardFromJson, Suit, Pips, Card} from "../Scorer"
+import {getScores, sortCards, cardFromJson, Suit, Pips, Card, Cards} from "../Scorer"
 describe("scorer", () => {
     const aceClubs = cardFromJson("AC");
     const twoClubs = cardFromJson("2C");
     const threeClubs = cardFromJson("3C");
     const fourClubs = cardFromJson("4C");
     const fiveClubs = cardFromJson("5C");
+    const sevenClubs = cardFromJson("7C");
     const aceHearts = cardFromJson("AH");
     const sameSuitCards = [aceClubs, twoClubs, threeClubs, fourClubs] as const;
     const differentSuitTopCard = aceHearts;
@@ -61,14 +62,7 @@ describe("scorer", () => {
             });
         });
     })
-
-    describe("sort cards", () => {
-        it("should sort lowest to highest pips", () => {
-            const sortedCards = sortCards([aceSpades,aceDiamonds, fiveClubs,twoClubs,aceHearts]);
-            expect(sortedCards).toEqual([aceSpades, aceDiamonds,aceHearts, twoClubs,fiveClubs]);
-        });
-    });
-
+    
     describe("flushes", () =>{
         it("should have no flush when box and four card flush", () => {
             const scores = getScores(sameSuitCards,differentSuitTopCard,true);
@@ -131,68 +125,111 @@ describe("scorer", () => {
         });
     });
 
-    xdescribe("fifteen twos", () => {
+    describe("fifteen twos", () => {
         it("should find a fifteen two - two cards", () => {
             const scores = getScores([tenSpades,aceClubs,twoClubs,aceHearts],fiveClubs,true);
-            expect(scores.fifteenTwos).toEqual([[tenSpades,fiveClubs]]);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[tenSpades,fiveClubs]]);
         });
 
         it("should find a fifteen two - Jack is ten", () => {
             const scores = getScores([jackSpades,aceClubs,twoClubs,aceHearts],fiveClubs,true);
-            expect(scores.fifteenTwos).toEqual([[jackSpades,fiveClubs]]);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[jackSpades,fiveClubs]]);
         });
 
         it("should find a fifteen two - Queen is ten", () => {
             const scores = getScores([queenSpades,aceClubs,twoClubs,aceHearts],fiveClubs,true);
-            expect(scores.fifteenTwos).toEqual([[queenSpades,fiveClubs]]);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[queenSpades,fiveClubs]]);
         });
 
         it("should find a fifteen two - King is ten", () => {
             const scores = getScores([kingSpades,aceClubs,twoClubs,aceHearts],fiveClubs,true);
-            expect(scores.fifteenTwos).toEqual([[kingSpades,fiveClubs]]);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[kingSpades,fiveClubs]]);
         });
 
         it("should find a fifteen two - three cards", () => {
-
+            const scores = getScores([kingSpades,aceClubs,twoClubs,fourClubs],sevenClubs,true);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[kingSpades,aceClubs, fourClubs]]);
         });
 
         it("should find a fifteen two - four cards", () => {
-
+            const scores = getScores([kingSpades,twoClubs,twoDiamonds,aceDiamonds],sevenClubs,true);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[kingSpades,twoClubs,twoDiamonds, aceDiamonds]]);
         });
 
         it("should find a fifteen two - five cards", () => {
-
+            const scores = getScores([kingSpades,aceClubs,twoClubs,aceDiamonds],aceSpades ,true);
+            expectScoresAnyOrder(scores.fifteenTwos!,[[kingSpades,aceClubs, twoClubs,aceSpades, aceDiamonds]]);
         });
+
+        it("should handle combos", () =>{
+            const scores = getScores([kingSpades,fiveClubs,queenSpades,aceClubs],nineDiamonds ,true);
+            expectScoresAnyOrder(scores.fifteenTwos!,[
+                [kingSpades,fiveClubs],
+                [queenSpades, fiveClubs],
+                [nineDiamonds, aceClubs,fiveClubs]
+            ]);
+        })
     })
 
-    xdescribe("runs", () => {
+    function sortCards(cards:Card[]){
+        return cards.sort((a,b) => {
+          const diff = a.pips - b.pips;
+          if(diff !== 0){
+            return diff;
+          }
+          return a.suit - b.suit;
+        })
+      }
+    function sortedCardsSame(sortedCards1:Cards, sortedCards2:Cards){
+        let same = sortedCards1.length === sortedCards2.length;
+        if(same){
+            for(var i=0;i<sortedCards1.length;i++){
+                same = Object.is(sortedCards1[i], sortedCards2[i]);
+                if(!same){
+                    break;
+                }
+            }
+        }
+        return same;
+    }
+    function expectScoresAnyOrder(actual:Cards[], expected:Cards[]){
+        expect(actual.length).toEqual(expected.length);
+        for(const actualScore of actual){
+            const sortedActualScore = sortCards(actualScore);
+            for(const expectedScore of expected){
+                const sortedExpectedScore = sortCards(expectedScore);
+                if(sortedCardsSame(sortedActualScore, sortedExpectedScore)){
+                    expected.splice(expected.indexOf(expectedScore), 1);
+                    break;
+                }
+            }
+        }
+        expect(expected.length).toBe(0);
+    }
+    describe("runs", () => {
         it("should find run of 5", () => {
             const scores = getScores([kingSpades,nineSpades,tenSpades,jackSpades],queenSpades,true);
-            // need to change the tests so is not dependent upon array order
-            expect(scores.runs).toEqual([]);
+            expectScoresAnyOrder(scores.runs,[[kingSpades,nineSpades,tenSpades,jackSpades,queenSpades]])
         });
 
         it("should find single run of 4", () => {
             const scores = getScores([queenSpades,nineSpades,tenSpades,jackSpades],twoClubs,true);
-            // need to change the tests so is not dependent upon array order
-            expect(scores.runs).toEqual([]);
+            expectScoresAnyOrder(scores.runs,[[queenSpades,nineSpades,tenSpades,jackSpades]])
         });
 
         it("should find two runs of 4", () => {
             const scores = getScores([queenSpades,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
-            expect(scores.runs).toEqual([]);
+            expectScoresAnyOrder(scores.runs, [[queenSpades,nineSpades,tenSpades,jackSpades],[queenSpades,nineSpades,tenSpades,jackDiamonds]])
         });
 
         it("should find single run of 3", () => {
             const scores = getScores([twoClubs,nineSpades,tenSpades,jackSpades],aceClubs,true);
-            expect(scores.runs).toEqual([]);
+            expectScoresAnyOrder(scores.runs, [[nineSpades,tenSpades,jackSpades]])
         });
 
         it("should find two runs of 3", () => {
             const scores = getScores([twoClubs,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
-            // need to change the tests so is not dependent upon array order
-            // how to create own expectation 
-            expect(scores.runs).toEqual([
+            expectScoresAnyOrder(scores.runs,[
                 [nineSpades, tenSpades, jackSpades],
                 [nineSpades, tenSpades, jackDiamonds]
             ]);
@@ -200,7 +237,7 @@ describe("scorer", () => {
 
         it("should find three runs of 3", () => {
             const scores = getScores([jackClubs,nineSpades,tenSpades,jackSpades],jackDiamonds,true);
-            expect(scores.runs).toEqual([
+            expectScoresAnyOrder(scores.runs,[
                 [nineSpades, tenSpades, jackSpades],
                 [nineSpades, tenSpades, jackDiamonds],
                 [nineSpades, tenSpades, jackClubs],
@@ -209,7 +246,7 @@ describe("scorer", () => {
 
         it("should find four runs of 3", () => {
             const scores = getScores([jackClubs,nineSpades,tenSpades,jackSpades],nineDiamonds,true);
-            expect(scores.runs).toEqual([
+            expectScoresAnyOrder(scores.runs,[
                 [nineSpades, tenSpades, jackSpades],
                 [nineSpades, tenSpades, jackClubs],
                 [nineDiamonds, tenSpades, jackSpades],

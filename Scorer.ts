@@ -1,3 +1,5 @@
+import { permute } from "./permute";
+
 export enum Suit {Hearts , Clubs , Diamonds, Spades}
 export enum Pips { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
 export interface Card {
@@ -57,7 +59,7 @@ type Pair = [Card, Card];
 type FiveCards = [Card, Card, Card, Card, Card ]
 type FourCards = readonly [Card, Card, Card, Card ]
 type ThreeCards = [Card, Card, Card ]
-type Cards = Card[]
+export type Cards = Card[]
 type Flush = FourCards | FiveCards 
 //type Runs = FiveCards | FourCards | [FourCards, FourCards ] 
 interface Scores {
@@ -117,9 +119,9 @@ export function getScores(cards:ScoreCards,topCard:Card,isBox : boolean ) : Scor
  if(checkOfAKind){
   ofAKind(orderedGroupedCards, scores);
  }
- oneForHisKnob(cards, topCard,scores);
- fifteenTwos(orderedGroupedCards, scores);
- runs(orderedGroupedCards, scores);
+ oneForHisKnob(cards, topCard, scores);
+ fifteenTwos([...cards, topCard], scores);
+ runs([...cards, topCard], scores);
  return scores;
 }
 
@@ -132,45 +134,78 @@ function oneForHisKnob(cards:ScoreCards,topCard:Card, scores:Pick<Scores,"oneFor
   }
 }
 
-function fifteenTwos(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"fifteenTwos">){
+function fifteenTwos(cards:FiveCards,scores:Pick<Scores,"fifteenTwos">){
   const fifteenTwos:Cards[] = [];
-}
-
-function runs(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"runs">){
-  let done = false;
-  let pippedCards:Cards[] = [];
-  let lastPips:Pips | undefined;
-  orderedGroupedCards.forEach(cards => {
-    if(!done){
-      const pips = cards[0].pips;
-      if(lastPips === undefined){
-        lastPips = pips;
-        pippedCards.push(cards);
-      }else{
-        const nextInRun = pips - lastPips === 1;
-        
-        if(!nextInRun){
-          pippedCards = [];
-          if(pippedCards.length > 2) {
-            done = true;
-          }
-        }
-        if(!done){
-          pippedCards.push(cards);
-        }
-      }
-      lastPips = pips;
+  if(sumsToFifteen(cards)){
+    scores.fifteenTwos = [cards];
+    return;
+  }
+  const permutations = [...permute(cards,4),...permute(cards,3),...permute(cards,2)];
+  permutations.forEach(testCards => {
+    if(sumsToFifteen(testCards)){
+      fifteenTwos.push(testCards);
     }
   });
-  if(pippedCards.length > 2){
-    const runCards:Cards[] = [];
-    pippedCards.forEach((cards,index) => {
-      cards.forEach(card => {
-
-      })
-    });
-    scores.runs = runCards;
+  if(fifteenTwos.length>0){
+    scores.fifteenTwos = fifteenTwos;
   }
+}
+
+function sumsToFifteen(cards:Cards){
+  let sum = 0;
+  for(const card of cards){
+    sum += card.value;
+  }
+  return sum === 15;
+}
+
+function runs(cards:FiveCards,scores:Pick<Scores,"runs">){
+  const runs:Cards[] = [];
+  if(isRun(cards)){
+    runs.push(cards);
+    scores.runs = runs;
+    return;
+  }
+
+  const fourCardPermutations = permute(cards, 4);
+  fourCardPermutations.forEach(fourCards => {
+    if(isRun(fourCards)){
+      runs.push(fourCards);
+    }
+  });
+
+  if(runs.length > 0){
+    scores.runs = runs;
+    return;
+  }
+  
+  const threeCardPermutations = permute(cards,3);
+  threeCardPermutations.forEach(threeCards =>{
+    if(isRun(threeCards)){
+      runs.push(threeCards);
+    }
+  });
+
+  if(runs.length > 0){
+    scores.runs = runs;
+  }
+  // assumption is that permute and cards will not be ordered
+  // perhaps there is an algorithm for that!
+}
+
+function isRun(cards:Cards){
+  let cardsAreRun = true;
+  const sortedCards = sortCards(cards);
+  let lastCardPips = cards[0].pips;
+  for(let i=1;i<sortedCards.length;i++){
+    const nextCardPips = sortedCards[i].pips;
+    if(nextCardPips - lastCardPips !== 1){
+      cardsAreRun = false;
+      break;
+    }
+    lastCardPips = nextCardPips;
+  }
+  return cardsAreRun;
 }
 
 function getPipsValue(pips:Pips){
