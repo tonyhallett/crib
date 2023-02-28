@@ -5,8 +5,11 @@ using Microsoft.Azure.SignalR.Management;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using TypedSignalR.Client;
 
 namespace AzureFunctionApp
 {
@@ -38,31 +41,90 @@ namespace AzureFunctionApp
             throw new System.NotImplementedException();
         }
     }
+
+    [Receiver]
     public interface ICribClient
     {
-        // method need to be Tasks / void
-    }
-    //InvocationContext has ConnectId and UserId
-    public class CribHub2 : ServerlessHub<ICribClient>
-    {
-        public CribHub2() { }
-
-        // testing - ServiceHubContext<T> is abstract
-        public CribHub2(ServiceHubContext<ICribClient> context) : base(context)
+        // method need to be Task / void ?
+        Task CalledFromServer(string strArg,int intArg)
         {
-            
+            throw new NotImplementedException();
         }
     }
 
-    public static class CribHub
+    [Hub]
+    interface ICribHub
     {
-        [FunctionName("negotiate")]
-        public static SignalRConnectionInfo Negotiate(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
-            [SignalRConnectionInfo(HubName = "HubValue")] SignalRConnectionInfo connectionInfo)
+        Task CalledFromClient(int intArg, string stringArg);
+        
+    }
+
+    //InvocationContext has ConnectId and UserId
+
+    public class CribHub : ServerlessHub<ICribClient>, ICribHub
+    {
+        public CribHub() { }
+
+        // testing - ServiceHubContext<T> is abstract
+        public CribHub(ServiceHubContext<ICribClient> context) : base(context)
         {
-            var x = new ServerlessHub<IHubClient>()
-            return connectionInfo;
+        }
+
+        [FunctionName("negotiate")]
+        public Task<SignalRConnectionInfo> Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req)
+        {
+            return base.NegotiateAsync(
+                new NegotiationOptions { 
+                    HttpContext = req.HttpContext,
+                }
+            );
+
+        }
+
+        // here have an issue with the typescript generation
+        // any bindings will be determined to be a parameter provided by the client
+        [FunctionName(nameof(Broadcast))]
+        /*
+            All the hub methods must have an argument of InvocationContext decorated by [SignalRTrigger] attribute
+            Parameter binding experience 
+
+            In class based model, [SignalRParameter] is unnecessary because all the arguments are marked as [SignalRParameter] 
+            by default except in one of the following situations: 
+
+            The argument is decorated by a binding attribute 
+
+            The argument's type is ILogger or CancellationToken 
+
+            The argument is decorated by attribute [SignalRIgnore] 
+
+            ---
+            [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter)]
+            [Binding] // Place this on an attribute to note that it's a binding attribute.
+            public class SignalRTriggerAttribute : Attribute
+
+            This details how bindings work
+            // https://github.com/Azure/azure-webjobs-sdk/wiki/Creating-custom-input-and-output-bindings
+
+            https://krvarma.medium.com/custom-extension-for-azure-functions-part-1-triggers-e88e4bc94669
+        */
+
+
+        public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, string message, ILogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        // add if required
+        /*[FunctionName(nameof(OnConnected))]
+
+        public Task OnConnected([SignalRTrigger] InvocationContext invocationContext, ILogger logger)
+        {
+            return Task.CompletedTask;
+        }*/
+
+        public Task CalledFromClient(int intArg,string stringArg)
+        {
+            throw new NotImplementedException();
         }
     }
 }

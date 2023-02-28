@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx jest --collectCoverage"
+    "test": "npx jest --collectCoverage",
+    "generate-typescript" : "dotnet tsrts --project ./AzureFunctionApp/AzureFunctionApp/AzureFunctionApp.csproj --output generated"
   },
   "repository": {
     "type": "git",
