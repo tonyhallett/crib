@@ -1,3 +1,4 @@
+import { permute } from "../permute";
 import {getScores, sortCards, cardFromJson, Suit, Pips, Card, Cards} from "../Scorer"
 describe("scorer", () => {
     const aceClubs = cardFromJson("AC");
@@ -254,5 +255,27 @@ describe("scorer", () => {
             ]);
         });
         
+    });
+
+    describe("permutations", () => {
+        it("should remain sorted", () => {
+            const cards:Cards = [queenSpades, aceClubs, fiveClubs,fourClubs, twoClubs];
+            const sortedCards = sortCards(cards);
+            const fourPermutations = permute(sortedCards,4);
+            const threePermutations = permute(sortedCards,3);
+            const testPermutations = [fourPermutations, threePermutations];
+            testPermutations.forEach(permutations => {
+                permutations.forEach(cards => {
+                    let lastPips:Pips|undefined;
+                    for(let i=0;i<cards.length;i++){
+                        const card = cards[i];
+                        if(i!==0){
+                            expect(card.pips - lastPips!).toBeGreaterThan(0);
+                        }
+                        lastPips = card.pips
+                    }
+                })
+            })
+        })
     })
 })

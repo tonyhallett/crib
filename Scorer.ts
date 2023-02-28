@@ -79,9 +79,10 @@ export function sortCards(cards:Card[]){
 }
 class OrderedGroupedCards{
   private map  = new Map<Pips,Card[]>();
+  sortedCards:Cards
   constructor(cards:Card[]){
-    const sortedCards = sortCards(cards);
-    sortedCards.forEach(card => {
+    this.sortedCards = sortCards(cards);
+    this.sortedCards.forEach(card => {
       let ofAKind = this.map.get(card.pips);
       if(ofAKind === undefined){
         ofAKind = [];
@@ -116,12 +117,13 @@ export function getScores(cards:ScoreCards,topCard:Card,isBox : boolean ) : Scor
   checkOfAKind = !isFullFlush;
  }
  const orderedGroupedCards = new OrderedGroupedCards([...cards, topCard]);
+ const orderedCards:FiveCards = orderedGroupedCards.sortedCards as FiveCards;
  if(checkOfAKind){
   ofAKind(orderedGroupedCards, scores);
  }
  oneForHisKnob(cards, topCard, scores);
- fifteenTwos([...cards, topCard], scores);
- runs([...cards, topCard], scores);
+ fifteenTwos(orderedCards, scores);
+ runs(orderedCards, scores);
  return scores;
 }
 
@@ -189,14 +191,11 @@ function runs(cards:FiveCards,scores:Pick<Scores,"runs">){
   if(runs.length > 0){
     scores.runs = runs;
   }
-  // assumption is that permute and cards will not be ordered
-  // perhaps there is an algorithm for that!
 }
 
-function isRun(cards:Cards){
+function isRun(sortedCards:Cards){
   let cardsAreRun = true;
-  const sortedCards = sortCards(cards);
-  let lastCardPips = cards[0].pips;
+  let lastCardPips = sortedCards[0].pips;
   for(let i=1;i<sortedCards.length;i++){
     const nextCardPips = sortedCards[i].pips;
     if(nextCardPips - lastCardPips !== 1){
