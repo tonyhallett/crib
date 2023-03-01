@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TypedSignalR.Client;
 
 namespace AzureFunctionApp
 {
@@ -42,26 +41,22 @@ namespace AzureFunctionApp
         }
     }
 
-    [Receiver]
+
+    public class ClientReceiverAttribute : Attribute{}
+
+    [ClientReceiver]
     public interface ICribClient
     {
         // method need to be Task / void ?
-        Task CalledFromServer(string strArg,int intArg)
-        {
-            throw new NotImplementedException();
-        }
+        Task CalledFromServer(string strArg, int intArg);
+        void Other();
     }
 
-    [Hub]
-    interface ICribHub
-    {
-        Task CalledFromClient(int intArg, string stringArg);
-        
-    }
+    
 
     //InvocationContext has ConnectId and UserId
 
-    public class CribHub : ServerlessHub<ICribClient>, ICribHub
+    public class CribHub : ServerlessHub<ICribClient>
     {
         public CribHub() { }
 
