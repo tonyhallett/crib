@@ -42,9 +42,6 @@ namespace AzureFunctionApp
     }
 
 
-    public class ClientReceiverAttribute : Attribute{}
-
-    [ClientReceiver]
     public interface ICribClient
     {
         // method need to be Task / void ?
