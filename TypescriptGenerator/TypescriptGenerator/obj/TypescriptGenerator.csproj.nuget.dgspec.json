@@ -45,6 +45,14 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "dependencies": {
+            "Microsoft.Azure.WebJobs": {
+              "target": "Package",
+              "version": "[3.0.36, )"
+            },
+            "Microsoft.Azure.WebJobs.Extensions.Http": {
+              "target": "Package",
+              "version": "[3.2.0, )"
+            },
             "Microsoft.Azure.WebJobs.Extensions.SignalRService": {
               "target": "Package",
               "version": "[1.9.0, )"

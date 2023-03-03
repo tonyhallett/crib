@@ -45,7 +45,7 @@ namespace TypescriptGenerator
         public string Name => hubType.Name;
         
         private IEnumerable<MethodInfo> GetFunctionMethods() {
-            return hubType.GetMethods().Where(method =>
+            return hubType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(method =>
             {
                 var customAttributeData = method.GetCustomAttributesData();
                 if (customAttributeData == null)
@@ -57,7 +57,7 @@ namespace TypescriptGenerator
                     return customAttributeData.Any(customAttributeData =>
                     {
                         var attributeName = customAttributeData.AttributeType.Name;
-                        return attributeName == "FunctionAttribute";
+                        return attributeName == "FunctionNameAttribute";
                     });
                 };
             });
@@ -66,32 +66,38 @@ namespace TypescriptGenerator
         {
             return GetFunctionMethods().Where(methodInfo =>
             {
-                return methodInfo.GetParameters().Any(p =>
+                var hasSignalRTriggerParameter =  methodInfo.GetParameters().Any(p =>
                 {
                     return p.CustomAttributes.Any(customAttributeData => customAttributeData.AttributeType.Name == "SignalRTriggerAttribute");
                 });
+                return hasSignalRTriggerParameter;
             });
         }
+        private List<ServerlessHubMethod>? hubMethods;
         public List<ServerlessHubMethod> GetMethods()
         {
-            var ignoredTypes = new List<string> { "InvocationContext", "ILogger", "CancellationToken" };
-            return GetSignalRMethods().Select(signalRMethod =>
+            if(hubMethods == null)
             {
-                return new ServerlessHubMethod(
-                    signalRMethod.Name,
-                    signalRMethod.GetParameters().Where(parameterInfo =>
-                    {
-                        if (ignoredTypes.Contains(parameterInfo.ParameterType.Name))
+                var ignoredTypes = new List<string> { "InvocationContext", "ILogger", "CancellationToken" };
+                hubMethods =  GetSignalRMethods().Select(signalRMethod =>
+                {
+                    return new ServerlessHubMethod(
+                        signalRMethod.Name,
+                        signalRMethod.GetParameters().Where(parameterInfo =>
                         {
-                            return false;
-                        }
-                        return !parameterInfo.CustomAttributes.Any(customAttributeData =>
-                        {
-                            return customAttributeData.AttributeType.Name != "SignalRTriggerAttribute";
-                        });
-                    }).Select(parameterInfo => new ServerlessHubParameterInfo(parameterInfo.Name!, parameterInfo.ParameterType)).ToList()
-                );
-            }).ToList();
+                            if (ignoredTypes.Contains(parameterInfo.ParameterType.Name))
+                            {
+                                return false;
+                            }
+                            return !parameterInfo.CustomAttributes.Any(customAttributeData =>
+                            {
+                                return customAttributeData.AttributeType.Name != "SignalRTriggerAttribute";
+                            });
+                        }).Select(parameterInfo => new ServerlessHubParameterInfo(parameterInfo.Name!, parameterInfo.ParameterType)).ToList()
+                    );
+                }).ToList();
+            }
+            return hubMethods!;
         }
     }
     

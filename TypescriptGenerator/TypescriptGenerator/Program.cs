@@ -6,6 +6,7 @@ using SkbKontur.TypeScript.ContractGenerator;
 using SkbKontur.TypeScript.ContractGenerator.Abstractions;
 using SkbKontur.TypeScript.ContractGenerator.CodeDom;
 using SkbKontur.TypeScript.ContractGenerator.Internals;
+using System.Reflection;
 
 namespace TypescriptGenerator
 {
@@ -31,20 +32,13 @@ namespace TypescriptGenerator
                 rootTypesProvider
             );
             var unit = typeGenerator.Generate()[0];
-            // hacky
-            var imports = unit.Imports as Dictionary<ITypeInfo, TypeScriptImportStatement>;
-            imports!.Add(TypeInfo.From(typeof(Program)), new ImportSignalRStatement());
+            var importsField = unit.GetType().GetField("imports", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance);
+            var imports = importsField!.GetValue(unit) as Dictionary<ITypeInfo, TypeScriptImportStatement>;
+            imports!.Add(SkbKontur.TypeScript.ContractGenerator.Internals.TypeInfo.From(typeof(Program)), new ImportSignalRStatement());
 
             unit.Body.Add(new ConnectionCode(hubTypesProvider.ServerlessHubs));
             
             typeGenerator.GenerateFiles("C:\\Users\\tonyadmin\\Documents\\TempGeneratedFiles");
-        }
-    }
-    public class ImportSignalRStatement : TypeScriptImportStatement
-    {
-        public override string GenerateCode(ICodeGenerationContext context)
-        {
-            return "import * as signalR from @microsoft/signalr;";
         }
     }
 }

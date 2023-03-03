@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace AzureFunctionApp
 {
-    public class TestServiceHubContext : ServiceHubContext<ICribClient>
+    public class TestServiceHubContext : ServiceHubContext<CribClient>
     {
-        public override IHubClients<ICribClient> Clients => throw new System.NotImplementedException();
+        public override IHubClients<CribClient> Clients => throw new System.NotImplementedException();
 
         // abstract class
         public override GroupManager Groups => throw new System.NotImplementedException();
@@ -41,24 +41,36 @@ namespace AzureFunctionApp
         }
     }
 
-
-    public interface ICribClient
+    public class ServerCallingClient
     {
-        // method need to be Task / void ?
-        Task CalledFromServer(string strArg, int intArg);
-        void Other();
+        public string Property { get; set; }
+    }
+    public class ClientCallingServer
+    {
+        public string Property { get; set; }
+    }
+
+    public class HelperType
+    {
+        public string Property { get; set; }
+    }
+
+    public interface CribClient
+    {
+        Task CalledFromServer(ServerCallingClient serverCallingClient, int intArg);
+        //Task CalledFromServer2(ServerCallingClient serverCallingClient, int intArg);
     }
 
     
 
     //InvocationContext has ConnectId and UserId
 
-    public class CribHub : ServerlessHub<ICribClient>
+    public class CribHub : ServerlessHub<CribClient>
     {
         public CribHub() { }
 
         // testing - ServiceHubContext<T> is abstract
-        public CribHub(ServiceHubContext<ICribClient> context) : base(context)
+        public CribHub(ServiceHubContext<CribClient> context) : base(context)
         {
         }
 
@@ -101,10 +113,17 @@ namespace AzureFunctionApp
         */
 
 
-        public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, string message, ILogger logger)
+        public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, ClientCallingServer clientCallingServer, ILogger logger)
         {
             return Task.CompletedTask;
         }
+        
+        //[FunctionName(nameof(Other))]
+        public Task Other([SignalRTrigger] InvocationContext invocationContext, ClientCallingServer clientCallingServer, ILogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
 
         // add if required
         /*[FunctionName(nameof(OnConnected))]
@@ -114,7 +133,7 @@ namespace AzureFunctionApp
             return Task.CompletedTask;
         }*/
 
-        public Task CalledFromClient(int intArg,string stringArg)
+        public string HelperMethod(HelperType helperType)
         {
             throw new NotImplementedException();
         }

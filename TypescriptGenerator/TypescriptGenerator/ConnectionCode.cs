@@ -1,4 +1,6 @@
-﻿using SkbKontur.TypeScript.ContractGenerator.CodeDom;
+﻿using SkbKontur.TypeScript.ContractGenerator.Abstractions;
+using SkbKontur.TypeScript.ContractGenerator.CodeDom;
+using System.Reflection;
 
 namespace TypescriptGenerator
 {
@@ -10,14 +12,210 @@ namespace TypescriptGenerator
             this.serverlessHubs = serverlessHubs;
         }
 
+        private string GetHubMethod(ServerlessHubMethod serverlessHubMethod)
+        {
+            var tsMethodName = LowercaseFirstLetter(serverlessHubMethod.MethodName);
+            var typedMethod = "(";
+            var argNames = "";
+            for(var i = 0; i < serverlessHubMethod.Parameters.Count; i++)
+            {
+                var parameter = serverlessHubMethod.Parameters[i];
+                if(i != 0)
+                {
+                    typedMethod+=", ";
+                    argNames += ", ";
+                }
+                typedMethod += $"{parameter.Name}:{GetTypeName(parameter.Type)}";
+                argNames+= parameter.Name;
+            }
+            typedMethod += ")";
+            var sendComma = argNames.Length == 0 ? "" : ", ";
+
+            // does the connection.send method name need to be the same case as cs
+            return $"           {tsMethodName}:{typedMethod} => connection.send('{serverlessHubMethod.MethodName}'{sendComma}{argNames}),";
+        }
+        
+        private string LowercaseFirstLetter(string word)
+        {
+            return $"{word.Substring(0, 1).ToLower()}{word.Substring(1)}";
+        }
+
+        private string CreateHubFactory()
+        {
+            var allHubMethods = serverlessHubs.Select(serverlessHub =>
+            {
+                var hub = serverlessHub.HubInfo;
+                var hubMethods = hub.GetMethods().Select(hubMethod => GetHubMethod(hubMethod));
+                var tsHubMethods = string.Join(Environment.NewLine, hubMethods);
+                var hubName = LowercaseFirstLetter(hub.Name);
+                if (hubName.EndsWith("Hub"))
+                {
+                    hubName = hubName.Substring(0, hubName.Length - 3);
+                }
+                return $@"
+    {hubName}(connection:signalR.HubConnection){{
+        return {{
+{tsHubMethods}
+        }}
+    }},{Environment.NewLine}
+";
+            });
+            return $@"
+export const hubFactory = {{
+{string.Join(",", allHubMethods)}
+}}
+";
+        }
+
+        private const string typedConnection = @"
+interface ITypedConnection<T> {
+    toggleAll(on:boolean):void
+    off(toOff:keyof T):void
+    on(toOn:keyof T):void
+}
+
+type UntypedHandler = Parameters<signalR.HubConnection[""on""]>[1];
+type UntypedClient<T> = {
+    [Property in keyof T]:UntypedHandler
+}
+
+class TypedConnection<T> implements ITypedConnection<T>{
+    constructor(
+        private untypedClient:UntypedClient<T>, 
+        private connection:signalR.HubConnection,
+        addHandlers:boolean = true
+    ){
+        if(addHandlers){
+            this.addHandlers();
+        }
+    }  
+    
+    addHandlers(){
+        for(const method in this.untypedClient){
+            this.connection.on(method,this.untypedClient[method as keyof UntypedClient<T>]);
+        }
+    }
+    removeHandlers(){
+        for(const method in this.untypedClient){
+            this.connection.off(method,this.untypedClient[method as keyof UntypedClient<T>]);
+        }
+    } 
+    toggleAll(on:boolean){
+        if(on){
+            this.addHandlers();
+        }else{
+            this.removeHandlers();
+        }
+    }
+
+    off(toOff:Extract<keyof T, string>){
+        this.connection.off(toOff,this.untypedClient[toOff]);
+    }
+
+    on(toOn:Extract<keyof T, string>){
+        this.connection.on(toOn,this.untypedClient[toOn]);
+    }
+}
+
+";
+
+        private string GetTypeName(Type type)
+        {
+            if(builtinTypes.TryGetValue(type, out var typeName))
+            {
+                return typeName;
+            }
+            return type.Name;
+        }
+
+        private static readonly Dictionary<Type, string> builtinTypes = new Dictionary<Type, string>
+            {
+                {typeof(bool), "boolean"},
+                {typeof(int), "number"},
+                {typeof(uint), "number"},
+                {typeof(short), "number"},
+                {typeof(ushort), "number"},
+                {typeof(byte), "number"},
+                {typeof(sbyte), "number"},
+                {typeof(float), "number"},
+                {typeof(double), "number"},
+                {typeof(decimal), "number"},
+                //{typeof(DateTime), "(Date | string)"},
+                //{typeof(DateTimeOffset), "(Date | string)"},
+                //{typeof(TimeSpan), "(number | string)"},
+                {typeof(string), "string"},
+                {typeof(long), "number"},
+                {typeof(ulong), "number"},
+                //{typeof(byte[]), "string"},
+                //{typeof(Guid>(), "string"},
+                {typeof(char), "string"},
+                {typeof(object), "object"},
+                {typeof(void), "void"} 
+            };
+
+        private string CreateClientFactory()
+        {
+            var factoryMethods = serverlessHubs.Select(serverlessHub =>
+            {
+                var clientCalledFromServer = serverlessHub.ClientReceiverType;
+                var factoryMethodName = LowercaseFirstLetter(clientCalledFromServer.Name);
+                if (factoryMethodName.EndsWith("Client"))
+                {
+                    factoryMethodName = factoryMethodName.Substring(0,factoryMethodName.Length - 6);
+                }
+                var receiverType = $"{clientCalledFromServer.Name}";
+
+                var untypedClientMethods = clientCalledFromServer.GetMethods().Select(method =>
+                {
+                    var methodName = LowercaseFirstLetter(method.Name);
+                    
+                    var typedMethod = "(";
+                    var argNames = "";
+                    var methodParameters = method.GetParameters();
+                    for (var i = 0; i < methodParameters.Length; i++)
+                    {
+                        var parameter = methodParameters[i];
+                        if (i != 0)
+                        {
+                            typedMethod += ", ";
+                            argNames += ", ";
+                        }
+                        typedMethod += $"{parameter.Name}:{GetTypeName(parameter.ParameterType)}";
+                        argNames += parameter.Name;
+                    }
+                    typedMethod += ")";
+
+                    return @$"
+            {methodName}{typedMethod}{{
+                return client.{methodName}({argNames});
+            }},";
+                });
+
+                return @$"
+    {factoryMethodName}(connection:signalR.HubConnection, client: {receiverType}): ITypedConnection<{receiverType}>{{
+        const untypedClient:UntypedClient<{receiverType}> = {{
+{string.Join(Environment.NewLine, untypedClientMethods)}
+        }}
+
+        return new TypedConnection(untypedClient, connection);
+    }},
+";
+            });
+            return
+@$"export const clientFactory = {{
+{string.Join(Environment.NewLine, factoryMethods)}
+}}";
+        }
+        
         public override string GenerateCode(ICodeGenerationContext context)
         {
             /*
                 I will need to considerMessage Pack format
             */
-  
             return @$"  
-                //todo {serverlessHubs[0].HubInfo.Name}
+{CreateHubFactory()}
+{typedConnection}
+{CreateClientFactory()}
             ";
         }
     }
