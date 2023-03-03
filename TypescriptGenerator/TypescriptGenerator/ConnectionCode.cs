@@ -4,11 +4,10 @@ namespace TypescriptGenerator
 {
     public class ConnectionCode : TypeScriptStatement
     {
-        private readonly string hubClientTypeName;
+        private readonly List<ServerlessHubType> serverlessHubs;
 
-        // could also provide the unit so can add the import
-        public ConnectionCode(string hubClientTypeName) {
-            this.hubClientTypeName = hubClientTypeName;
+        public ConnectionCode(List<ServerlessHubType> serverlessHubs) {
+            this.serverlessHubs = serverlessHubs;
         }
 
         public override string GenerateCode(ICodeGenerationContext context)
@@ -18,7 +17,7 @@ namespace TypescriptGenerator
             */
   
             return @$"  
-
+                //todo {serverlessHubs[0].HubInfo.Name}
             ";
         }
     }

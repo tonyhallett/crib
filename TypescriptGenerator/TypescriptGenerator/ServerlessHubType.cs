@@ -3,11 +3,7 @@
 namespace TypescriptGenerator
 {
     /*
-    interface ICribHub
-    {
-        Task CalledFromClient(int intArg, string stringArg);
-        
-    }
+    
 
     public class CribHub : ServerlessHub<ICribClient>, ICribHub
     
@@ -17,6 +13,11 @@ namespace TypescriptGenerator
  [FunctionName(nameof(Broadcast))]
         /*
             All the hub methods must have an argument of InvocationContext decorated by [SignalRTrigger] attribute
+            --
+            Yet elsewhere
+            The trigger input type is declared as either InvocationContext or a custom type. 
+            If you choose InvocationContext you get full access to the request content. For a custom type, the runtime tries to parse the JSON request body to set the object propertie
+            --
             Parameter binding experience 
 
             In class based model, [SignalRParameter] is unnecessary because all the arguments are marked as [SignalRParameter] 
@@ -34,15 +35,63 @@ namespace TypescriptGenerator
         */
     public class ServerlessHubInfo
     {
+        private readonly Type hubType;
+
         public ServerlessHubInfo(Type hubType)
         {
-
+            this.hubType = hubType;
         }
 
+        public string Name => hubType.Name;
+        
+        private IEnumerable<MethodInfo> GetFunctionMethods() {
+            return hubType.GetMethods().Where(method =>
+            {
+                var customAttributeData = method.GetCustomAttributesData();
+                if (customAttributeData == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return customAttributeData.Any(customAttributeData =>
+                    {
+                        var attributeName = customAttributeData.AttributeType.Name;
+                        return attributeName == "FunctionAttribute";
+                    });
+                };
+            });
+        }
+        private IEnumerable<MethodInfo> GetSignalRMethods()
+        {
+            return GetFunctionMethods().Where(methodInfo =>
+            {
+                return methodInfo.GetParameters().Any(p =>
+                {
+                    return p.CustomAttributes.Any(customAttributeData => customAttributeData.AttributeType.Name == "SignalRTriggerAttribute");
+                });
+            });
+        }
         public List<ServerlessHubMethod> GetMethods()
         {
-            // have some existing code for this - will want to drive from outside
-            throw new NotImplementedException();
+            var ignoredTypes = new List<string> { "InvocationContext", "ILogger", "CancellationToken" };
+            return GetSignalRMethods().Select(signalRMethod =>
+            {
+                return new ServerlessHubMethod(
+                    signalRMethod.Name,
+                    signalRMethod.GetParameters().Where(parameterInfo =>
+                    {
+                        if (ignoredTypes.Contains(parameterInfo.ParameterType.Name))
+                        {
+                            return false;
+                        }
+                        return !parameterInfo.CustomAttributes.Any(customAttributeData =>
+                        {
+                            return customAttributeData.AttributeType.Name != "SignalRTriggerAttribute";
+                        });
+                    }).Select(parameterInfo => new ServerlessHubParameterInfo(parameterInfo.Name!, parameterInfo.ParameterType)).ToList()
+                );
+            }).ToList();
         }
     }
     

@@ -1,5 +1,6 @@
 ﻿using SkbKontur.TypeScript.ContractGenerator;
 using SkbKontur.TypeScript.ContractGenerator.Abstractions;
+using TypeInfoFactory = SkbKontur.TypeScript.ContractGenerator.Internals.TypeInfo;
 using System.Reflection;
 
 namespace TypescriptGenerator
@@ -21,9 +22,14 @@ namespace TypescriptGenerator
             return serverlessHubs.SelectMany(serverlessHub =>
             {
                 var hubInfo = serverlessHub.HubInfo;
-                var allParameterTypes = hubInfo.GetMethods().SelectMany(hubMethod => hubMethod.Parameters.Select(p => p.Type));
-                    //.Select(t => TypeInfo.From(t);
-                return new ITypeInfo[] { CreateHubClientType(serverlessHub.ClientReceiverType) };
+                
+                // do not need the hub in the typescript
+                var hubParameterTypes = hubInfo.GetMethods().SelectMany(hubMethod => hubMethod.Parameters.Select(p => p.Type))
+                    .Select(t => TypeInfoFactory.From(t));
+                var types = new List<ITypeInfo>(hubParameterTypes);
+                // do need the hub client in the typescript
+                types.Add(CreateHubClientType(serverlessHub.ClientReceiverType));
+                return types;
             }).ToArray();
         }
 
