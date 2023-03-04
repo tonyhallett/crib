@@ -1,5 +1,5 @@
-import { permute } from "../permute";
-import {getScores, sortCards, cardFromJson, Suit, Pips, Card, Cards} from "../Scorer"
+import { permute } from "../src/permute";
+import {getScores, sortCards, cardFromJson, Suit, Pips, Card, Cards} from "../src/Scorer"
 describe("scorer", () => {
     const aceClubs = cardFromJson("AC");
     const twoClubs = cardFromJson("2C");

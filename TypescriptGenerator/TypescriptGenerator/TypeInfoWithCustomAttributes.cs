@@ -1,7 +1,6 @@
 ﻿using SkbKontur.TypeScript.ContractGenerator;
 using SkbKontur.TypeScript.ContractGenerator.Abstractions;
 using TheirIAttributeInfo = SkbKontur.TypeScript.ContractGenerator.Abstractions.IAttributeInfo;
-using TheirTypeInfo = SkbKontur.TypeScript.ContractGenerator.Internals.TypeInfo;
 using System.Reflection;
 
 namespace TypescriptGenerator
@@ -11,9 +10,9 @@ namespace TypescriptGenerator
         private ITypeInfo wrappedTypeInfo;
         private readonly TheirIAttributeInfo[] attributes;
 
-        public TypeInfoWithCustomAttributes(Type type, TheirIAttributeInfo[] attributes)
+        public TypeInfoWithCustomAttributes(ITypeInfo wrappedTypeInfo, TheirIAttributeInfo[] attributes)
         {
-            wrappedTypeInfo = TheirTypeInfo.From(type);
+            this.wrappedTypeInfo = wrappedTypeInfo;
             this.attributes = attributes;
         }
 
