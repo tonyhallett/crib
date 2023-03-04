@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx jest --collectCoverage"
+    "test": "npx jest --collectCoverage",
+    "generate-types":"node C:\\Users\\tonyadmin\\Documents\\crib\\scripts\\generate-types.js"
   },
   "repository": {
     "type": "git",
