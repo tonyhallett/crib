@@ -10,6 +10,7 @@ export type ServerCallingClient = {
 };
 export interface CribClient {
     calledFromServer(serverCallingClient: ServerCallingClient, intArg: number): void;
+    calledFromServer2(serverCallingClient: ServerCallingClient, intArg: number): void;
 }
   
 
@@ -18,11 +19,13 @@ export const hubFactory = {
     crib(connection:signalR.HubConnection){
         return {
            broadcast:(clientCallingServer:ClientCallingServer) => connection.send('Broadcast', clientCallingServer),
+           other:(clientCallingServer:ClientCallingServer) => connection.send('Other', clientCallingServer),
         }
     },
 
 
 }
+export type CribHub = ReturnType<(typeof hubFactory)['crib']>
 
 
 interface ITypedConnection<T> {
@@ -82,6 +85,10 @@ export const clientFactory = {
 
             calledFromServer(serverCallingClient:ServerCallingClient, intArg:number){
                 return client.calledFromServer(serverCallingClient, intArg);
+            },
+
+            calledFromServer2(serverCallingClient:ServerCallingClient, intArg:number){
+                return client.calledFromServer2(serverCallingClient, intArg);
             },
         }
 

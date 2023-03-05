@@ -1,9 +1,9 @@
 import * as signalR from '@microsoft/signalr';
 import { useEffect, useRef } from 'react';
-import { clientFactory, hubFactory} from './generatedTypes'
+import { clientFactory, CribHub, hubFactory} from './generatedTypes'
 
 export default function App(){
-    const ref = useRef<ReturnType<(typeof hubFactory)["crib"]>|undefined>(undefined)
+    const ref = useRef<CribHub|undefined>(undefined)
     // automatic reconnect ?
     // logging
 
@@ -15,6 +15,9 @@ export default function App(){
             clientFactory.crib(connection, {
                 calledFromServer(serverCallingClient, intArg) {
 
+                },
+                calledFromServer2(serverCallingClient, intArg) {
+                    
                 },
             });
             const serverProxy = hubFactory.crib(connection);

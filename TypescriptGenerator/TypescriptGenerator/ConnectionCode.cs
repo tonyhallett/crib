@@ -1,4 +1,5 @@
-﻿using SkbKontur.TypeScript.ContractGenerator.Abstractions;
+﻿using SkbKontur.TypeScript.ContractGenerator;
+using TheirTypeInfo = SkbKontur.TypeScript.ContractGenerator.Internals.TypeInfo;
 using SkbKontur.TypeScript.ContractGenerator.CodeDom;
 using System.Reflection;
 
@@ -6,9 +7,13 @@ namespace TypescriptGenerator
 {
     public class ConnectionCode : TypeScriptStatement
     {
+        private readonly TypeScriptGenerator typeScriptGenerator;
+        private readonly TypeScriptUnit unit;
         private readonly List<ServerlessHubType> serverlessHubs;
 
-        public ConnectionCode(List<ServerlessHubType> serverlessHubs) {
+        public ConnectionCode(TypeScriptGenerator typeScriptGenerator, TypeScriptUnit unit, List<ServerlessHubType> serverlessHubs) {
+            this.typeScriptGenerator = typeScriptGenerator;
+            this.unit = unit;
             this.serverlessHubs = serverlessHubs;
         }
 
@@ -42,28 +47,43 @@ namespace TypescriptGenerator
 
         private string CreateHubFactory()
         {
-            var allHubMethods = serverlessHubs.Select(serverlessHub =>
+            var hubsAndFactoryMethods = serverlessHubs.Select(serverlessHub =>
             {
                 var hub = serverlessHub.HubInfo;
                 var hubMethods = hub.GetMethods().Select(hubMethod => GetHubMethod(hubMethod));
                 var tsHubMethods = string.Join(Environment.NewLine, hubMethods);
-                var hubName = LowercaseFirstLetter(hub.Name);
-                if (hubName.EndsWith("Hub"))
+                var hubFactoryMethodName = LowercaseFirstLetter(hub.Name);
+                if (hubFactoryMethodName.EndsWith("Hub"))
                 {
-                    hubName = hubName.Substring(0, hubName.Length - 3);
+                    hubFactoryMethodName = hubFactoryMethodName.Substring(0, hubFactoryMethodName.Length - 3);
                 }
-                return $@"
-    {hubName}(connection:signalR.HubConnection){{
+                /*
+const ref = useRef<ReturnType<(typeof hubFactory)["crib"]>|undefined>(undefined) 
+export const hubFactory = { 
+    crib(connection:signalR.HubConnection){ 
+
+        return { 
+           broadcast:(clientCallingServer:ClientCallingServer) => connection.send('Broadcast', clientCallingServer), 
+        } 
+    }, 
+} 
+Do need to create ICribHub – use the same method 
+                */
+                var hubFactoryMethod = $@"
+    {hubFactoryMethodName}(connection:signalR.HubConnection){{
         return {{
 {tsHubMethods}
         }}
     }},{Environment.NewLine}
 ";
+                var hubType = $"export type {hub.Name} = ReturnType<(typeof hubFactory)['{hubFactoryMethodName}']>";
+                return (hubFactoryMethod, hubType);
             });
             return $@"
 export const hubFactory = {{
-{string.Join(",", allHubMethods)}
+{string.Join(",", hubsAndFactoryMethods.Select(hubAndFactoryMethod => hubAndFactoryMethod.hubFactoryMethod))}
 }}
+{string.Join(Environment.NewLine, hubsAndFactoryMethods.Select(hubAndFactoryMethod => hubAndFactoryMethod.hubType))}
 ";
         }
 
@@ -121,11 +141,12 @@ class TypedConnection<T> implements ITypedConnection<T>{
 
         private string GetTypeName(Type type)
         {
-            if(builtinTypes.TryGetValue(type, out var typeName))
-            {
-                return typeName;
-            }
-            return type.Name;
+            return typeScriptGenerator.BuildAndImportType(unit, TheirTypeInfo.From(type)).GenerateCode(context!);
+            //if(builtinTypes.TryGetValue(type, out var typeName))
+            //{
+            //    return typeName;
+            //}
+            //return type.Name;
         }
 
         private static readonly Dictionary<Type, string> builtinTypes = new Dictionary<Type, string>
@@ -152,6 +173,7 @@ class TypedConnection<T> implements ITypedConnection<T>{
                 {typeof(object), "object"},
                 {typeof(void), "void"} 
             };
+        private ICodeGenerationContext? context;
 
         private string CreateClientFactory()
         {
@@ -209,6 +231,7 @@ class TypedConnection<T> implements ITypedConnection<T>{
         
         public override string GenerateCode(ICodeGenerationContext context)
         {
+            this.context = context;
             /*
                 I will need to considerMessage Pack format
             */

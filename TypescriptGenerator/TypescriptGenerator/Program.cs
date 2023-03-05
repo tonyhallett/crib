@@ -20,7 +20,7 @@ namespace TypescriptGenerator
             var (typeScriptGenerator, unit, serverlessHubTypes) = 
                 GenerateUnit(args[0] /* assembly path */, generatedFileName);
 
-            AddConnectionCode(unit, serverlessHubTypes);
+            AddConnectionCode(typeScriptGenerator, unit, serverlessHubTypes);
 
             GenerateFiles(typeScriptGenerator, generatedTypescriptFilePath);
         }
@@ -58,11 +58,11 @@ namespace TypescriptGenerator
             return (typeGenerator, unit, hubTypesProvider.ServerlessHubs);
         }
     
-        private static void AddConnectionCode(TypeScriptUnit unit,List<ServerlessHubType> serverlessHubTypes)
+        private static void AddConnectionCode(TypeScriptGenerator typeScriptGenerator,TypeScriptUnit unit,List<ServerlessHubType> serverlessHubTypes)
         {
             TypescriptUnitImports.Add(unit, SkbKontur.TypeScript.ContractGenerator.Internals.TypeInfo.From(typeof(Program)), new ImportSignalRStatement());
 
-            unit.Body.Add(new ConnectionCode(serverlessHubTypes));
+            unit.Body.Add(new ConnectionCode(typeScriptGenerator,unit, serverlessHubTypes));
 
         }
     }

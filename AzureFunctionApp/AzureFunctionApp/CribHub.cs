@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Azure.WebJobs;
@@ -7,6 +8,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,7 +62,7 @@ namespace AzureFunctionApp
     public interface CribClient
     {
         Task CalledFromServer(ServerCallingClient serverCallingClient, int intArg);
-        //Task CalledFromServer2(ServerCallingClient serverCallingClient, int intArg);
+        Task CalledFromServer2(ServerCallingClient serverCallingClient, int intArg);
     }
 
     
@@ -74,15 +78,27 @@ namespace AzureFunctionApp
         {
         }
 
-        [FunctionName("negotiate")]
-        public Task<SignalRConnectionInfo> Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req)
+        [FunctionName("index")]
+        public static IActionResult GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, Microsoft.Azure.WebJobs.ExecutionContext context)
         {
-            return base.NegotiateAsync(
-                new NegotiationOptions { 
-                    HttpContext = req.HttpContext,
-                }
-            );
+            var path = Path.Combine(context.FunctionAppDirectory, "content", "index.html");
+            return new ContentResult
+            {
+                Content = File.ReadAllText(path),
+                ContentType = "text/html",
+            };
+        }
 
+        // https://github.com/Y-Sindo/azure-sdk-for-net/blob/e22903c98635a305d9c658c79d5f6f675725deab/sdk/signalr/Microsoft.Azure.WebJobs.Extensions.SignalRService/sample/Function.cs
+        [FunctionName("negotiate")]
+        public Task<SignalRConnectionInfo> NegotiateAsync([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req)
+        {
+            var claims = GetClaims(req.Headers["Authorization"]);
+            return NegotiateAsync(new NegotiationOptions
+            {
+                UserId = claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
+                Claims = claims
+            });
         }
 
         // here have an issue with the typescript generation
@@ -118,7 +134,7 @@ namespace AzureFunctionApp
             return Task.CompletedTask;
         }
         
-        //[FunctionName(nameof(Other))]
+        [FunctionName(nameof(Other))]
         public Task Other([SignalRTrigger] InvocationContext invocationContext, ClientCallingServer clientCallingServer, ILogger logger)
         {
             return Task.CompletedTask;
