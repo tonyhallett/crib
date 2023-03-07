@@ -45,24 +45,10 @@ namespace AzureFunctionApp
         }
     }
 
-    public class ServerCallingClient
-    {
-        public string Property { get; set; }
-    }
-    public class ClientCallingServer
-    {
-        public string Property { get; set; }
-    }
-
-    public class HelperType
-    {
-        public string Property { get; set; }
-    }
-
+    
     public interface CribClient
     {
-        Task CalledFromServer(ServerCallingClient serverCallingClient, int intArg);
-        Task CalledFromServer2(ServerCallingClient serverCallingClient, int intArg);
+        Task ReceivedBroadcast(string message,string clientid, string claims);
     }
 
     
@@ -93,16 +79,24 @@ namespace AzureFunctionApp
         [FunctionName("negotiate")]
         public Task<SignalRConnectionInfo> NegotiateAsync([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req)
         {
+            // nothing preventing a username field (and password )
+            // could even hard code claims
+
+            // is this any different to below ( taken from ServerlessHub<T> example ) ? If not then better ?
+            var claimsPrincipal = req.HttpContext.User;
+            // claimsPrincipal.Identity?.Name
+            //claimsPrincipal.Claims
+
             var claims = GetClaims(req.Headers["Authorization"]);
             return NegotiateAsync(new NegotiationOptions
             {
+                // Gets or sets the user ID. If null, the identity name in <see cref="HttpContext.User" /> will be used.
                 UserId = claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
+                // Gets or sets the claim list to be put into access token. If null, the claims in <see cref="HttpContext.User"/> will be used.
                 Claims = claims
             });
         }
 
-        // here have an issue with the typescript generation
-        // any bindings will be determined to be a parameter provided by the client
         [FunctionName(nameof(Broadcast))]
         /*
             All the hub methods must have an argument of InvocationContext decorated by [SignalRTrigger] attribute
@@ -129,18 +123,20 @@ namespace AzureFunctionApp
         */
 
 
-        public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, ClientCallingServer clientCallingServer, ILogger logger)
+        public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, string message, ILogger logger)
         {
-            return Task.CompletedTask;
+            var userId = invocationContext.UserId;
+            var claims = invocationContext.Claims;
+            var claimsMsg = "";
+            foreach (var kv in claims)
+            {
+                claimsMsg += $"{kv.Key} - {kv.Value}";
+             
+            }
+            // try/catch
+            return Clients.All.ReceivedBroadcast(message, userId, claimsMsg);
         }
         
-        [FunctionName(nameof(Other))]
-        public Task Other([SignalRTrigger] InvocationContext invocationContext, ClientCallingServer clientCallingServer, ILogger logger)
-        {
-            return Task.CompletedTask;
-        }
-
-
         // add if required
         /*[FunctionName(nameof(OnConnected))]
 
@@ -148,10 +144,5 @@ namespace AzureFunctionApp
         {
             return Task.CompletedTask;
         }*/
-
-        public string HelperMethod(HelperType helperType)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

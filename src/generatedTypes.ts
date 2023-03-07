@@ -2,15 +2,8 @@
 // Generated from ServerlessHub<T>
 import * as signalR from '@microsoft/signalr';
 
-export type ClientCallingServer = {
-    property: string;
-};
-export type ServerCallingClient = {
-    property: string;
-};
 export interface CribClient {
-    calledFromServer(serverCallingClient: ServerCallingClient, intArg: number): void;
-    calledFromServer2(serverCallingClient: ServerCallingClient, intArg: number): void;
+    receivedBroadcast(message: string, clientid: string, claims: string): void;
 }
   
 
@@ -18,8 +11,7 @@ export const hubFactory = {
 
     crib(connection:signalR.HubConnection){
         return {
-           broadcast:(clientCallingServer:ClientCallingServer) => connection.send('Broadcast', clientCallingServer),
-           other:(clientCallingServer:ClientCallingServer) => connection.send('Other', clientCallingServer),
+           broadcast:(message:string) => connection.send('Broadcast', message),
         }
     },
 
@@ -83,12 +75,8 @@ export const clientFactory = {
     crib(connection:signalR.HubConnection, client: CribClient): ITypedConnection<CribClient>{
         const untypedClient:UntypedClient<CribClient> = {
 
-            calledFromServer(serverCallingClient:ServerCallingClient, intArg:number){
-                return client.calledFromServer(serverCallingClient, intArg);
-            },
-
-            calledFromServer2(serverCallingClient:ServerCallingClient, intArg:number){
-                return client.calledFromServer2(serverCallingClient, intArg);
+            receivedBroadcast(message:string, clientid:string, claims:string){
+                return client.receivedBroadcast(message, clientid, claims);
             },
         }
 
