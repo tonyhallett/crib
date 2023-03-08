@@ -83,18 +83,23 @@ namespace AzureFunctionApp
             // could even hard code claims
 
             // is this any different to below ( taken from ServerlessHub<T> example ) ? If not then better ?
-            var claimsPrincipal = req.HttpContext.User;
+            //var claimsPrincipal = req.HttpContext.User;
             // claimsPrincipal.Identity?.Name
             //claimsPrincipal.Claims
 
-            var claims = GetClaims(req.Headers["Authorization"]);
-            return NegotiateAsync(new NegotiationOptions
-            {
-                // Gets or sets the user ID. If null, the identity name in <see cref="HttpContext.User" /> will be used.
-                UserId = claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
-                // Gets or sets the claim list to be put into access token. If null, the claims in <see cref="HttpContext.User"/> will be used.
-                Claims = claims
-            });
+            return NegotiateAsync(new NegotiationOptions { HttpContext = req.HttpContext });
+
+            //var claims = GetClaims(req.Headers["Authorization"]);
+            //return NegotiateAsync(new NegotiationOptions
+            //{
+            //    //public TimeSpan TokenLifetime { get; set; } = TimeSpan.FromHours(1);
+
+            //    // Assumption is that if do not provide below then should provide the HttpContext
+            //    // Gets or sets the user ID. If null, the identity name in <see cref="HttpContext.User" /> will be used.
+            //    UserId = claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
+            //    // Gets or sets the claim list to be put into access token. If null, the claims in <see cref="HttpContext.User"/> will be used.
+            //    Claims = claims
+            //});
         }
 
         [FunctionName(nameof(Broadcast))]
@@ -125,13 +130,19 @@ namespace AzureFunctionApp
 
         public Task Broadcast([SignalRTrigger] InvocationContext invocationContext, string message, ILogger logger)
         {
-            var userId = invocationContext.UserId;
-            var claims = invocationContext.Claims;
-            var claimsMsg = "";
-            foreach (var kv in claims)
+            string userId = "";
+            string claimsMsg = "";
+            try
             {
-                claimsMsg += $"{kv.Key} - {kv.Value}";
-             
+                userId = invocationContext.UserId;
+                var claims = invocationContext.Claims;
+                foreach (var kv in claims)
+                {
+                    claimsMsg += $"{kv.Key} - {kv.Value}";
+                }
+            }catch(Exception e)
+            {
+                message = e.Message;
             }
             // try/catch
             return Clients.All.ReceivedBroadcast(message, userId, claimsMsg);

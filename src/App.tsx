@@ -1,5 +1,6 @@
 import * as signalR from '@microsoft/signalr';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import functionAppPath from './functionAppPath';
 import { clientFactory, CribHub, hubFactory} from './generatedTypes'
 // https://learn.microsoft.com/en-us/javascript/api/@microsoft/signalr/hubconnection?view=signalr-js-latest
 
@@ -47,11 +48,16 @@ const NavBar = (props:{user:ClientPrincipal}) => {
 } 
 
 
-
+/*
+    if it is not possible to use Easy Auth with a static website then will use
+    https://auth0.com/pricing
+*/
 export default function App(){
     const ref = useRef<CribHub|undefined>(undefined);
-    const [isAuthenticated, setIsAuthenticated] = useState(false); 
-    const [user, setUser] = useState<ClientPrincipal|undefined>(); 
+    
+    //const [isAuthenticated, setIsAuthenticated] = useState(false); 
+    //const [user, setUser] = useState<ClientPrincipal|undefined>(); 
+    
     const [connected, setConnected] = useState(false);
     const [receivedBroadcast, setReceivedBroadcast] = useState("");
     const sendMessageClickHandler = useCallback(async () =>{
@@ -61,30 +67,27 @@ export default function App(){
             console.log("Error broadcasting")
         }
     },[]);
-    const signalRConnectClickHandler = useCallback(async () =>{
-        //todo store the connection
-        const connection = new signalR.HubConnectionBuilder().withUrl("todo").build();
-        const cribConnection = clientFactory.crib(connection, {
-            receivedBroadcast(message, clientid, claims) {
-                setReceivedBroadcast(`${message} - ${clientid} - ${claims}`);
-            },
-        });
-        
-        const serverProxy = hubFactory.crib(connection);
-        ref.current = serverProxy;
-        try{
-            await connection.start();
-            setConnected(true);
-        }catch(e){
-            // retry logic 
-        }
-    },[])
-    // automatic reconnect ?
-    // logging
-
+    
     // will probably use redux
     useEffect(() => {
-        
+        async function signalRConnect(){
+            //todo store the connection and more configuration
+            const connection = new signalR.HubConnectionBuilder().withUrl(`functionAppPath/api`).build();
+            const cribConnection = clientFactory.crib(connection, {
+                receivedBroadcast(message, clientid, claims) {
+                    setReceivedBroadcast(`${message} - ${clientid} - ${claims}`);
+                },
+            });
+            
+            const serverProxy = hubFactory.crib(connection);
+            ref.current = serverProxy;
+            try{
+                await connection.start();
+                setConnected(true);
+            }catch(e){
+                // retry logic 
+            }
+        }   
         async function getUserInfo() { 
             try { 
                 // need the full path - should import config from another ts file that do not upload to 
@@ -93,8 +96,8 @@ export default function App(){
                 const payload = await response.json(); 
                 const { clientPrincipal } = payload; 
                 if(clientPrincipal){ 
-                  setUser(clientPrincipal); 
-                  setIsAuthenticated(true); 
+                  //setUser(clientPrincipal); 
+                  //setIsAuthenticated(true); 
                   console.log(`clientPrincipal = ${JSON.stringify(clientPrincipal)}`); 
                 }  
             } catch (error:any) { 
@@ -102,15 +105,15 @@ export default function App(){
             } 
         
         };
-
-        getUserInfo();
+        signalRConnect();
+        //getUserInfo();
     });
 
-    const canSignalRConnect = isAuthenticated && !connected;
+    //const canSignalRConnect = isAuthenticated && !connected;
 
     return <div>
 
-        <button disabled={!canSignalRConnect} onClick={signalRConnectClickHandler}>SignalR connect</button>
+        {/* <button disabled={!canSignalRConnect} onClick={signalRConnectClickHandler}>SignalR connect</button> */}
         <button onClick={sendMessageClickHandler} disabled={!connected}>Send hello to SignalR service</button>
         <div>{receivedBroadcast}</div>
     </div>;
