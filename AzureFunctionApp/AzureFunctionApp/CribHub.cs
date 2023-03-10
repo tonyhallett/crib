@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -11,47 +9,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AzureFunctionApp
 {
-    public class TestServiceHubContext : ServiceHubContext<CribClient>
-    {
-        public override IHubClients<CribClient> Clients => throw new System.NotImplementedException();
-
-        // abstract class
-        public override GroupManager Groups => throw new System.NotImplementedException();
-
-        // abstract class
-        public override UserGroupManager UserGroups => throw new System.NotImplementedException();
-
-        // abstract class
-        public override ClientManager ClientManager => throw new System.NotImplementedException();
-
-        public override void Dispose()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override ValueTask DisposeAsync()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override ValueTask<NegotiationResponse> NegotiateAsync(NegotiationOptions negotiationOptions = null, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-
-    
-    public interface CribClient
-    {
-        Task ReceivedBroadcast(string message,string clientid, string claims);
-    }
-
-    
 
     //InvocationContext has ConnectId and UserId
 
@@ -64,16 +25,16 @@ namespace AzureFunctionApp
         {
         }
 
-        [FunctionName("index")]
-        public static IActionResult GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, Microsoft.Azure.WebJobs.ExecutionContext context)
-        {
-            var path = Path.Combine(context.FunctionAppDirectory, "content", "index.html");
-            return new ContentResult
-            {
-                Content = File.ReadAllText(path),
-                ContentType = "text/html",
-            };
-        }
+        //[FunctionName("index")]
+        //public static IActionResult GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, Microsoft.Azure.WebJobs.ExecutionContext context)
+        //{
+        //    var path = Path.Combine(context.FunctionAppDirectory, "content", "index.html");
+        //    return new ContentResult
+        //    {
+        //        Content = File.ReadAllText(path),
+        //        ContentType = "text/html",
+        //    };
+        //}
 
         // https://github.com/Y-Sindo/azure-sdk-for-net/blob/e22903c98635a305d9c658c79d5f6f675725deab/sdk/signalr/Microsoft.Azure.WebJobs.Extensions.SignalRService/sample/Function.cs
         [FunctionName("negotiate")]

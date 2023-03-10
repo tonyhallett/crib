@@ -1,14 +1,33 @@
 import { permute } from "./permute";
 
-export enum Suit {Hearts , Clubs , Diamonds, Spades}
-export enum Pips { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
+export enum Suit {
+  Hearts,
+  Clubs,
+  Diamonds,
+  Spades,
+}
+export enum Pips {
+  Ace,
+  Two,
+  Three,
+  Four,
+  Five,
+  Six,
+  Seven,
+  Eight,
+  Nine,
+  Ten,
+  Jack,
+  Queen,
+  King,
+}
 export interface Card {
-  suit : Suit,
-  pips : Pips,
-  value : number 
+  suit: Suit;
+  pips: Pips;
+  value: number;
 }
 
-export function cardFromJson(cardJson:string):Card{
+export function cardFromJson(cardJson: string): Card {
   // expecting AH etc
   const pipsChar = cardJson.charAt(0);
   const pips = getPips(pipsChar);
@@ -18,12 +37,12 @@ export function cardFromJson(cardJson:string):Card{
   return {
     pips,
     suit,
-    value:getPipsValue(pips)
-  }
+    value: getPipsValue(pips),
+  };
 }
 
-function getPips(pipsChar:string):Pips{
-  switch(pipsChar){
+function getPips(pipsChar: string): Pips {
+  switch (pipsChar) {
     case "A":
       return Pips.Ace;
     case "K":
@@ -33,14 +52,14 @@ function getPips(pipsChar:string):Pips{
     case "J":
       return Pips.Jack;
     case "T":
-      return Pips.Ten
+      return Pips.Ten;
     default:
-      return Number.parseInt(pipsChar) - 1
+      return Number.parseInt(pipsChar) - 1;
   }
 }
 
-function getSuit(suitChar:string){
-  switch(suitChar){
+function getSuit(suitChar: string) {
+  switch (suitChar) {
     case "H":
       return Suit.Hearts;
     case "C":
@@ -54,151 +73,161 @@ function getSuit(suitChar:string){
   }
 }
 
-
 type Pair = [Card, Card];
-type FiveCards = [Card, Card, Card, Card, Card ]
-type FourCards = readonly [Card, Card, Card, Card ]
-type ThreeCards = [Card, Card, Card ]
-export type Cards = Card[]
-type Flush = FourCards | FiveCards 
-//type Runs = FiveCards | FourCards | [FourCards, FourCards ] 
+type FiveCards = [Card, Card, Card, Card, Card];
+type FourCards = readonly [Card, Card, Card, Card];
+type ThreeCards = [Card, Card, Card];
+export type Cards = Card[];
+type Flush = FourCards | FiveCards;
+//type Runs = FiveCards | FourCards | [FourCards, FourCards ]
 interface Scores {
-    pairs : Pair[] | undefined,
-    threes : ThreeCards | undefined, 
-    fours : FourCards | undefined ,
-    oneForHisKnob : Card | undefined,
-    runs : Cards [],
-    flush : Flush | undefined,
-    fifteenTwos:Cards[] | undefined;
+  pairs: Pair[] | undefined;
+  threes: ThreeCards | undefined;
+  fours: FourCards | undefined;
+  oneForHisKnob: Card | undefined;
+  runs: Cards[];
+  flush: Flush | undefined;
+  fifteenTwos: Cards[] | undefined;
 }
-type ScoreCards  = FourCards;
-export function sortCards(cards:Card[]){
-  return cards.sort((a,b) => {
+type ScoreCards = FourCards;
+export function sortCards(cards: Card[]) {
+  return cards.sort((a, b) => {
     return a.pips - b.pips;
-  })
+  });
 }
-class OrderedGroupedCards{
-  private map  = new Map<Pips,Card[]>();
-  sortedCards:Cards
-  constructor(cards:Card[]){
+class OrderedGroupedCards {
+  private map = new Map<Pips, Card[]>();
+  sortedCards: Cards;
+  constructor(cards: Card[]) {
     this.sortedCards = sortCards(cards);
-    this.sortedCards.forEach(card => {
+    this.sortedCards.forEach((card) => {
       let ofAKind = this.map.get(card.pips);
-      if(ofAKind === undefined){
+      if (ofAKind === undefined) {
         ofAKind = [];
-        this.map.set(card.pips,ofAKind);
-      };
+        this.map.set(card.pips, ofAKind);
+      }
       ofAKind.push(card);
-    })
+    });
   }
 
-  forEach(callback:(cards:Cards) => void){
+  forEach(callback: (cards: Cards) => void) {
     this.map.forEach((ofAKind) => {
       callback(ofAKind);
-    })
+    });
   }
-
 }
 
-export function getScores(cards:ScoreCards,topCard:Card,isBox : boolean ) : Scores {
- const scores:Scores = {
-  pairs:undefined,
-  flush:undefined,
-  fours:undefined,
-  threes:undefined,
-  oneForHisKnob:undefined,
-  fifteenTwos:undefined,
-  runs:[]
- };
- let checkOfAKind = true;
- const [flushCards,isFullFlush] = getFlush(cards,topCard,isBox);
- if(flushCards){
-  scores.flush = flushCards;
-  checkOfAKind = !isFullFlush;
- }
- const orderedGroupedCards = new OrderedGroupedCards([...cards, topCard]);
- const orderedCards:FiveCards = orderedGroupedCards.sortedCards as FiveCards;
- if(checkOfAKind){
-  ofAKind(orderedGroupedCards, scores);
- }
- oneForHisKnob(cards, topCard, scores);
- fifteenTwos(orderedCards, scores);
- runs(orderedCards, scores);
- return scores;
+export function getScores(
+  cards: ScoreCards,
+  topCard: Card,
+  isBox: boolean
+): Scores {
+  const scores: Scores = {
+    pairs: undefined,
+    flush: undefined,
+    fours: undefined,
+    threes: undefined,
+    oneForHisKnob: undefined,
+    fifteenTwos: undefined,
+    runs: [],
+  };
+  let checkOfAKind = true;
+  const [flushCards, isFullFlush] = getFlush(cards, topCard, isBox);
+  if (flushCards) {
+    scores.flush = flushCards;
+    checkOfAKind = !isFullFlush;
+  }
+  const orderedGroupedCards = new OrderedGroupedCards([...cards, topCard]);
+  const orderedCards: FiveCards = orderedGroupedCards.sortedCards as FiveCards;
+  if (checkOfAKind) {
+    ofAKind(orderedGroupedCards, scores);
+  }
+  oneForHisKnob(cards, topCard, scores);
+  fifteenTwos(orderedCards, scores);
+  runs(orderedCards, scores);
+  return scores;
 }
 
-function oneForHisKnob(cards:ScoreCards,topCard:Card, scores:Pick<Scores,"oneForHisKnob">){
-  for(const card of cards){
-    if(card.pips === Pips.Jack && card.suit === topCard.suit){
+function oneForHisKnob(
+  cards: ScoreCards,
+  topCard: Card,
+  scores: Pick<Scores, "oneForHisKnob">
+) {
+  for (const card of cards) {
+    if (card.pips === Pips.Jack && card.suit === topCard.suit) {
       scores.oneForHisKnob = card;
       return;
     }
   }
 }
 
-function fifteenTwos(cards:FiveCards,scores:Pick<Scores,"fifteenTwos">){
-  const fifteenTwos:Cards[] = [];
-  if(sumsToFifteen(cards)){
+function fifteenTwos(cards: FiveCards, scores: Pick<Scores, "fifteenTwos">) {
+  const fifteenTwos: Cards[] = [];
+  if (sumsToFifteen(cards)) {
     scores.fifteenTwos = [cards];
     return;
   }
-  const permutations = [...permute(cards,4),...permute(cards,3),...permute(cards,2)];
-  permutations.forEach(testCards => {
-    if(sumsToFifteen(testCards)){
+  const permutations = [
+    ...permute(cards, 4),
+    ...permute(cards, 3),
+    ...permute(cards, 2),
+  ];
+  permutations.forEach((testCards) => {
+    if (sumsToFifteen(testCards)) {
       fifteenTwos.push(testCards);
     }
   });
-  if(fifteenTwos.length>0){
+  if (fifteenTwos.length > 0) {
     scores.fifteenTwos = fifteenTwos;
   }
 }
 
-function sumsToFifteen(cards:Cards){
+function sumsToFifteen(cards: Cards) {
   let sum = 0;
-  for(const card of cards){
+  for (const card of cards) {
     sum += card.value;
   }
   return sum === 15;
 }
 
-function runs(cards:FiveCards,scores:Pick<Scores,"runs">){
-  const runs:Cards[] = [];
-  if(isRun(cards)){
+function runs(cards: FiveCards, scores: Pick<Scores, "runs">) {
+  const runs: Cards[] = [];
+  if (isRun(cards)) {
     runs.push(cards);
     scores.runs = runs;
     return;
   }
 
   const fourCardPermutations = permute(cards, 4);
-  fourCardPermutations.forEach(fourCards => {
-    if(isRun(fourCards)){
+  fourCardPermutations.forEach((fourCards) => {
+    if (isRun(fourCards)) {
       runs.push(fourCards);
     }
   });
 
-  if(runs.length > 0){
+  if (runs.length > 0) {
     scores.runs = runs;
     return;
   }
-  
-  const threeCardPermutations = permute(cards,3);
-  threeCardPermutations.forEach(threeCards =>{
-    if(isRun(threeCards)){
+
+  const threeCardPermutations = permute(cards, 3);
+  threeCardPermutations.forEach((threeCards) => {
+    if (isRun(threeCards)) {
       runs.push(threeCards);
     }
   });
 
-  if(runs.length > 0){
+  if (runs.length > 0) {
     scores.runs = runs;
   }
 }
 
-function isRun(sortedCards:Cards){
+function isRun(sortedCards: Cards) {
   let cardsAreRun = true;
   let lastCardPips = sortedCards[0].pips;
-  for(let i=1;i<sortedCards.length;i++){
+  for (let i = 1; i < sortedCards.length; i++) {
     const nextCardPips = sortedCards[i].pips;
-    if(nextCardPips - lastCardPips !== 1){
+    if (nextCardPips - lastCardPips !== 1) {
       cardsAreRun = false;
       break;
     }
@@ -207,8 +236,8 @@ function isRun(sortedCards:Cards){
   return cardsAreRun;
 }
 
-function getPipsValue(pips:Pips){
-  switch(pips){
+function getPipsValue(pips: Pips) {
+  switch (pips) {
     case Pips.Ten:
     case Pips.Jack:
     case Pips.Queen:
@@ -219,11 +248,14 @@ function getPipsValue(pips:Pips){
   }
 }
 
-function ofAKind(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"pairs" |"threes"| "fours">){
-  const pairs:Pair[] = [];
+function ofAKind(
+  orderedGroupedCards: OrderedGroupedCards,
+  scores: Pick<Scores, "pairs" | "threes" | "fours">
+) {
+  const pairs: Pair[] = [];
   // can you break ?
-  orderedGroupedCards.forEach(cards => {
-    switch(cards.length){
+  orderedGroupedCards.forEach((cards) => {
+    switch (cards.length) {
       case 4:
         scores.fours = cards as unknown as FourCards;
         break;
@@ -231,44 +263,42 @@ function ofAKind(orderedGroupedCards:OrderedGroupedCards,scores:Pick<Scores,"pai
         scores.threes = cards as unknown as ThreeCards;
         break;
       case 2:
-        pairs.push(cards as unknown as Pair)
+        pairs.push(cards as unknown as Pair);
         break;
     }
   });
-  if(pairs.length > 0){
+  if (pairs.length > 0) {
     scores.pairs = pairs;
   }
 }
 
-
-
-
-
-function getFlush(scoreCards:ScoreCards,topCard:Card,isBox:boolean):[Flush|undefined, boolean ]{
-  let suit:Suit | undefined;
+function getFlush(
+  scoreCards: ScoreCards,
+  topCard: Card,
+  isBox: boolean
+): [Flush | undefined, boolean] {
+  let suit: Suit | undefined;
   let scoreCardsFlush = true;
-  for(const scoreCard of scoreCards){
-    if(suit === undefined){
-      suit = scoreCard.suit
-    }else if(suit !== scoreCard.suit){
+  for (const scoreCard of scoreCards) {
+    if (suit === undefined) {
+      suit = scoreCard.suit;
+    } else if (suit !== scoreCard.suit) {
       scoreCardsFlush = false;
       break;
     }
   }
-  if(!scoreCardsFlush){
-    return [undefined,false];
+  if (!scoreCardsFlush) {
+    return [undefined, false];
   }
-  if(isBox){
-    if(topCard.suit === suit){
-      return [[...scoreCards,topCard],true]
+  if (isBox) {
+    if (topCard.suit === suit) {
+      return [[...scoreCards, topCard], true];
     }
-    return [undefined,false];
+    return [undefined, false];
   }
 
-  if(topCard.suit === suit){
-    return [[...scoreCards,topCard], true]
+  if (topCard.suit === suit) {
+    return [[...scoreCards, topCard], true];
   }
-  return [scoreCards,false];
-
-
+  return [scoreCards, false];
 }
