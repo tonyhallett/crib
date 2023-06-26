@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TypescriptGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\tonyh\\source\\repos\\crib\\AzureFunctionApp\\CribAzureFunctionApp\\bin\\Release\\net6.0\\CribAzureFunctionApp.dll C:\\Users\\tonyh\\source\\repos\\crib\\src\\generatedTypes.ts"
+    }
+  }
+}
