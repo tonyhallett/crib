@@ -1,7 +1,6 @@
 import {
   ElementOrSelector,
   DOMKeyframesDefinition,
-  useAnimate,
   motion,
 } from "framer-motion";
 import { CSSProperties, useRef, useEffect } from "react";
@@ -12,11 +11,12 @@ import {
   SequenceLabelWithTime,
   DOMSegment,
   DOMSegmentWithTransition,
-  SequenceOptions,
 } from "./motion-types";
 import { getSVG } from "./getSVG";
 import { Point, Size } from "../PlayMatch/matchLayoutManager";
 import { PlayingCard } from "../generatedTypes";
+import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
+import { SegmentAnimationOptionsWithTransitionEnd } from "../fixAnimationSequence/createAnimationsFromSegments";
 
 export enum CardFlip {
   BelowCard,
@@ -52,19 +52,18 @@ export type DomSegmentOptionalElementOrSelector = [
 export type DomSegmentOptionalElementOrSelectorWithOptions = [
   ElementOrSelector | undefined,
   DOMKeyframesDefinition,
-  DOMSegmentWithTransitionOptions
+  SegmentAnimationOptionsWithTransitionEnd & At
 ];
 export type OptionalDomSegment = | DomSegmentOptionalElementOrSelector
 | DomSegmentOptionalElementOrSelectorWithOptions;
+
 export type CardSegment =
   | OptionalDomSegment
   | SequenceLabel
   | SequenceLabelWithTime;
 
-export type AnimationCompleteCallback = (count: number) => void;
 export interface CardProps {
   segments: CardSegment[] | undefined;
-  onComplete?: AnimationCompleteCallback;
   cardFlip: CardFlip;
   faceDown: boolean;
   size: Size;
@@ -95,23 +94,12 @@ function addScopeIfNoSelector(scope: unknown, segments: CardSegment[]) {
 export function Card(props: CardProps) {
   const animationCounter = useRef(0);
   const lastProps = useRef<CardProps | undefined>(undefined);
-  const [scope, animate] = useAnimate();
+  const [scope, animate] = useAnimateSegments();
   useEffect(() => {
     if (lastProps.current !== props && props.segments) {
       const segments = addScopeIfNoSelector(scope.current, props.segments);
       animationCounter.current = 0;
-      animate(segments, {
-        /*
-          onComplete not a property of sequence options
-          This is very hacky
-          onComplete is used for every motion value, for every element specified in the sequence
-          and segments can share a motion value if they animate the same property
-        */
-        onComplete: () => {
-          animationCounter.current++;
-          props.onComplete?.(animationCounter.current);
-        },
-      } as unknown as SequenceOptions); 
+      animate(segments); 
     }
     lastProps.current = props;
   }, [animate, props, scope]);
