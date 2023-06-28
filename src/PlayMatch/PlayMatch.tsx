@@ -12,6 +12,7 @@ import {
   AnimationManager,
   FlipCardDatasWithCompletionRegistration,
 } from "./AnimationManager";
+import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -116,6 +117,9 @@ function PlayMatchInner({
           cardFlipDuration:number
         ): FlipCardDatasWithCompletionRegistration {
           let animationCompleteCallback: () => void | undefined;
+          const complete = () => {
+            animationCompleteCallback && animationCompleteCallback();
+          }
           const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
 
           const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
@@ -129,14 +133,17 @@ function PlayMatchInner({
 
           const getDiscardToBoxCardData = (
             boxPosition: Box,
-            prevCardData: FlipCardData
+            prevCardData: FlipCardData,
+            onComplete?:OnComplete | undefined
           ) => {
             const newCardData = { ...prevCardData };
             newCardData.animationSequence = [
               getDiscardToBoxSegment(
                 boxPosition,
                 discardDuration,
-                count * secondDiscardDelay
+                count * secondDiscardDelay,
+                undefined,
+                onComplete
               ),
             ];
             return newCardData;
@@ -149,12 +156,9 @@ function PlayMatchInner({
               flip: true,
               duration: cardFlipDuration,
               at: cardFlipDelay,
+              onComplete:complete
             };
             newCardData.animationSequence = [flipAnimation];
-            // do not need to look at index as single segment animating single property - rotateY
-            newCardData.animationCompleteCallback = () => {
-              animationCompleteCallback && animationCompleteCallback();
-            };
             return newCardData;
           };
 
@@ -165,18 +169,12 @@ function PlayMatchInner({
           const newDiscarderCardDatas = prevOtherPlayerCardDatas.map(
             (prevCardData) => {
               if (count < numDiscards) {
+                count++;
                 const newData = getDiscardToBoxCardData(
                   boxPosition,
-                  prevCardData
+                  prevCardData,
+                  count === numDiscards && !cutCard ? complete : undefined
                 );
-                count++;
-                if (count === numDiscards && !cutCard) {
-                  newData.animationCompleteCallback = (count) => {
-                    if(count === 3){ // x,y,z animations
-                      animationCompleteCallback && animationCompleteCallback();
-                    }
-                  };
-                }
                 return newData;
               }
               return prevCardData;

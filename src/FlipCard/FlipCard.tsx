@@ -6,17 +6,19 @@ import { ElementOrSelector } from "framer-motion";
 import {
   CardFlip,
   CardSegment,
-  DOMSegmentWithTransitionOptions,
   Card,
   CardProps,
-  AnimationCompleteCallback,
   OptionalDomSegment,
 } from "./Card";
+import { SegmentAnimationOptionsWithTransitionEnd } from "../fixAnimationSequence/createAnimationsFromSegments";
+import { At } from "../fixAnimationSequence/motion-types";
+import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 
 export interface FlipAnimation {
   flip: boolean; // true is flip false is flip back
   duration: number;
   at?: number;
+  onComplete?: OnComplete;
 }
 
 export type FlipCardAnimationSequence = (CardSegment | FlipAnimation)[];
@@ -29,18 +31,18 @@ export interface FlipCardProps {
   animationSequence?: FlipCardAnimationSequence;
   isHorizontal: boolean;
   zIndex?: number;
-  animationCompleteCallback?: AnimationCompleteCallback;
 }
 
 function getFlipCardSegment(
   flip: boolean,
   cardFlip: CardFlip,
   duration: number,
-  at?: SequenceTime
+  at?: SequenceTime,
+  onComplete?: OnComplete
 ): [
   ElementOrSelector | undefined,
   StyleKeyframesDefinition,
-  DOMSegmentWithTransitionOptions
+  SegmentAnimationOptionsWithTransitionEnd & At
 ] {
   const belowCardRotateY = flip ? 0 : 180;
   const aboveCardRotateY = flip ? 180 : 0;
@@ -48,9 +50,11 @@ function getFlipCardSegment(
     rotateY:
       cardFlip === CardFlip.BelowCard ? belowCardRotateY : aboveCardRotateY,
   };
-  const options: DOMSegmentWithTransitionOptions = {
+  const options: SegmentAnimationOptionsWithTransitionEnd & At = {
     rotateY: { duration },
-    at: at,
+    at,
+    onComplete
+
   };
   return [undefined, defn, options];
 }
@@ -63,7 +67,7 @@ function adjustSegmentZIndex(zIndex:number, segment:OptionalDomSegment,isAboveCa
   const cardSegment = [...segment] as OptionalDomSegment;
   const adjusted = {
     ...cardSegment[1],
-    "z-index":zIndex
+    "zIndex":zIndex
   };
   cardSegment[1] = adjusted;
   return cardSegment;
@@ -78,7 +82,8 @@ function addFlipSegments(
     flipAnimation.flip,
     CardFlip.BelowCard,
     flipAnimation.duration,
-    flipAnimation.at
+    flipAnimation.at,
+    flipAnimation.onComplete
   );
   belowCardSegments.push(belowCardFlipSegment);
   const aboveCardFlipSegment = getFlipCardSegment(
@@ -94,18 +99,40 @@ function isFlipAnimation(segment: CardSegment | FlipAnimation): segment is FlipA
   return typeof segment !== "string" && "flip" in segment;
 }
 
-/* 
-  Animation sequence fails when want a zIndex animation.  It becomes an immediate animation.
-  There is no transitionEnd available. https://github.com/framer/motion/issues/260
-  The typescript does not permit onUpdate either.
-  Solution from https://github.com/framer/motion/issues/1254 which is still an issue
-*/
-type WorkaroundDomKeyFramesDefinition = DOMKeyframesDefinition & {
-  "z-index": number | undefined;
+
+function getZIndex(segment:OptionalDomSegment){
+  const domKeyFramesDefinition = segment[1];
+  return domKeyFramesDefinition["zIndex"] as number | undefined;
 }
-function getWorkaroundZIndex(segment:OptionalDomSegment){
-  const domKeyFramesDefinition = segment[1] as WorkaroundDomKeyFramesDefinition;
-  return domKeyFramesDefinition["z-index"] as number | undefined;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function removeOnComplete(valueTransition:any){
+  if(typeof valueTransition === "object"){
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const {onComplete, ...rest} = valueTransition;
+    return rest;
+  }
+  
+  return valueTransition;
+}
+
+
+function segmentRemoveOnComplete(segment:OptionalDomSegment):OptionalDomSegment{
+  if(segment.length === 2){
+    return segment;
+  }
+  const options = segment[2];
+  const remainder = removeOnComplete(options);
+  Object.keys(remainder).forEach(key => {
+    if(remainder[key] !== undefined){
+      remainder[key] = removeOnComplete(remainder[key]);
+    }
+  });
+  
+  return [
+    segment[0],
+    segment[1],
+    remainder
+  ]
 }
 
 function doGetFlipCardSegments( animationSequence: FlipCardAnimationSequence){
@@ -117,16 +144,20 @@ function doGetFlipCardSegments( animationSequence: FlipCardAnimationSequence){
         addFlipSegments(belowCardSegments,aboveCardSegments,segment);
       } else {
         if(Array.isArray(segment)){
-          const zIndex = getWorkaroundZIndex(segment);
+          const zIndex = getZIndex(segment);
+          let aboveCardSegment = segmentRemoveOnComplete(segment);
+          let belowCardSegment = segment;
           if(zIndex !== undefined){
-            belowCardSegments.push(adjustSegmentZIndex(zIndex,segment,false));
-            aboveCardSegments.push(adjustSegmentZIndex(zIndex,segment,true));
-            continue;
+            belowCardSegment = adjustSegmentZIndex(zIndex,segment,false);
+            aboveCardSegment = adjustSegmentZIndex(zIndex,aboveCardSegment,true);
           }
-        }
+          belowCardSegments.push(belowCardSegment);
+          aboveCardSegments.push(aboveCardSegment);
+        }else{
 
-        belowCardSegments.push(segment);
-        aboveCardSegments.push(segment);
+          belowCardSegments.push(segment);
+          aboveCardSegments.push(segment);
+        }
         
       }
     }
@@ -166,7 +197,6 @@ export function FlipCard(props: FlipCardProps) {
         playingCard={props.startFaceUp ? undefined : props.playingCard}
         size={props.size}
         segments={belowCardSegments}
-        onComplete={props.animationCompleteCallback}
       />
       <Card
         {...common}

@@ -1,18 +1,21 @@
 import { Box, Point } from "./matchLayoutManager";
 import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/Card";
+import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 
 export function getDiscardToBoxSegment(
   boxPosition: Box,
   duration: number,
   delay?: number,
-  at?: number
+  at?: number,
+  onComplete?:OnComplete | undefined
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   return getMoveRotateSegment(
     boxPosition.isHorizontal,
     boxPosition.position,
     duration,
     delay,
-    at
+    at,
+    onComplete
   );
 }
 
@@ -21,7 +24,8 @@ export function getMoveRotateSegment(
   position: Point,
   duration: number,
   delay?: number,
-  at?: number
+  at?: number,
+  onComplete?:OnComplete | undefined
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   const rotation = isHorizontal ? 90 : 0;
   return [
@@ -35,6 +39,7 @@ export function getMoveRotateSegment(
       duration: duration,
       delay,
       at,
+      x:{onComplete} // so only get the one notification
     },
   ];
 }
