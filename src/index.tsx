@@ -9,7 +9,9 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import { CribBoard, CribBoardExample, ViewExample } from "./CribBoard";
+import { AnimatedCribBoardExample, CribBoardExample } from "./CribBoardExample";
+import { SvgAnimation } from "./SvgAnimation";
+import { UseRefDemo } from "./CribBoard";
 
 const rootNode = document.getElementById("app");
 
@@ -46,6 +48,6 @@ const root = createRoot(rootNode!);
   </ThemeProvider>
 ); */
 root.render(
-  <CribBoardExample/> 
+  <AnimatedCribBoardExample/> 
     
 )

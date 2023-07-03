@@ -1,8 +1,11 @@
 import { CSSProperties } from "@mui/material/styles/createMixins";
-import { Fragment, SVGProps, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { SVGHorizontalLine } from "./SVGHorizontalLine";
+import { SVGVerticalLine } from "./SVGVerticalLine";
+import { SVGSemiCirclePath } from "./SVGSemiCirclePath";
+import { fill } from "./utilities/arrayHelpers";
 
-
-function getPegBox(from:number):{peg:number,box:number}{
+export function getPegBox(from:number):{peg:number,box:number}{
     let box = Math.floor(from / 5) + 1;
     let peg = (from % 5);
     if(peg === 0){
@@ -16,20 +19,43 @@ function getPegBox(from:number):{peg:number,box:number}{
 }
 
 
-interface ColouredScore{
+export function getBottomEllipseAngles(first:number){
+    return [first, first + (90 - first)/2,90, 180 - ((90 - first)/2) - first, 180 - first]
+}
+
+export function getPlayerTrackPositionIndex(trackNumber:number, playerNumber:number){
+    return getReversedPlayerTrackPosition(trackNumber === 3, playerNumber) - 1;
+}
+
+function getReversedPlayerTrackPosition(reversed:boolean, playerNumber:number){
+    if(reversed){
+        switch(playerNumber){
+            case 2:
+                return 2;
+            case 1:
+                return 3;
+            case 3:
+                return 1;
+        }    
+    }
+    return playerNumber;
+}
+
+export function getReversedPlayerTrackPositionIndex(playerNumber:number){
+    return getReversedPlayerTrackPosition(true, playerNumber) - 1;
+}
+
+export interface ColouredScore{
     frontPeg:number,
     backPeg:number
+    gameScore:number,
     colour:CSSProperties["color"]
 }
 
-interface Scores{
+export interface ColouredScores{
     player1:ColouredScore,
     player2:ColouredScore,
-    player3:ColouredScore
-}
-
-function getBottomEllipseAngles(first:number){
-    return [first, first + (90 - first)/2,90, 180 - ((90 - first)/2) - first, 180 - first]
+    player3?:ColouredScore
 }
 
 export function CribBoard({
@@ -39,7 +65,7 @@ export function CribBoard({
     pegHorizontalSpacing,
     pegTrackBoxPaddingPercentage,
     strokeWidth,
-    scores,
+    colouredScores,
     pegRadius
 }:{
     pegHoleRadius:number,
@@ -48,7 +74,7 @@ export function CribBoard({
     pegHorizontalSpacing:number,
     pegTrackBoxPaddingPercentage:number,
     strokeWidth:number,
-    scores:Scores,
+    colouredScores:ColouredScores,
     pegRadius:number
 }){
     const pegHoleDiameter = 2 * pegHoleRadius;
@@ -68,91 +94,171 @@ export function CribBoard({
     const smallEllipseInnerRadius = pegTrackPadding / 2;
     const smallEllipseY = largeEllipseHeight + 7 * pegBoxHeight;
 
-    const calculatedHeight = largeEllipseHeight + smallEllipseHeight + 7 * pegBoxHeight;
+    const gamePeggingHeight = largeEllipseHeight + smallEllipseHeight + 7 * pegBoxHeight;
 
-    function getPlayerTrackPosition(trackNumber:number, playerNumber:number){
-        if(trackNumber === 3){
-            switch(playerNumber){
-                case 2:
-                    return 2;
-                case 1:
-                    return 3;
-                case 3:
-                    return 1;
-            }    
-        }
-        return playerNumber;
+    const getPegHoleX = (i:number) => pegPadding + i * (pegHorizontalSpacing + pegHoleDiameter)
+
+    const getPegHoleY = (i:number) => pegPadding + i * (pegPadding + pegHoleDiameter)
+
+    const getPegBoxY = (i:number) => largeEllipseHeight + i * (pegBoxHeight)
+    
+    const center = 1.5 * pegBoxWidth + pegTrackPadding ;
+    const winningPegPosition = {x:center - pegHoleRadius, y:finalPegY};
+
+    const startPegFrontY = largeEllipseHeight + 7 * pegBoxHeight + getPegHoleY(0);
+    const startPegBackY = largeEllipseHeight + 7 * pegBoxHeight + getPegHoleY(1);
+
+    const gameScorePadding = pegPadding;
+    const numGamesToScore = 10;
+    const startGameScoreY = gamePeggingHeight + gameScorePadding;
+
+    const angles = getBottomEllipseAngles(10);
+    const bottomEllipsePegPositions = fill(3,(i) => {
+        const radii = smallEllipseInnerRadius + getPegHoleX(i) + pegHoleRadius;
+        return angles.map((angle) => {
+            let x = radii * Math.cos(angle * Math.PI / 180);
+            x+= smallEllipseInnerXStart + pegTrackPadding/2 - pegHoleRadius;
+            const y = radii * Math.sin(angle * Math.PI / 180) + smallEllipseY;
+            return {x,y};
+        })
+    });
+    const rightQuadrantAngles = fill(5,(i) => (i + 1) * (70 / 5));
+    const leftQuadrantAngles = rightQuadrantAngles.map((angle) => Math.abs(180 - angle));
+    
+    const getTopEllipsePegPositions = (angles:number[]) => {
+        return fill(3,(i) => {
+            const radii = largeEllipseHeight/2 + getPegHoleX(i);
+            return angles.map((angle) => {
+                let x = radii * Math.cos(angle * Math.PI / 180);
+                x+= center- pegHoleRadius;
+                const y = -(radii * Math.sin(angle * Math.PI / 180)) + largeEllipseHeight;
+                return {x,y};
+            })
+        });
+    }
+    const leftQuadrantPegPositions = getTopEllipsePegPositions(leftQuadrantAngles);
+    const rightQuadrantPegPositions = getTopEllipsePegPositions(rightQuadrantAngles);
+
+
+    const topEllipsePegHoles = leftQuadrantPegPositions.flat().concat(rightQuadrantPegPositions.flat()).map(({x,y},i) => {
+        return <use key={i} href="#pegHole" x={x} y={y}/>
+    }); 
+    const bottomEllipsePegHoles = bottomEllipsePegPositions.flat().map(({x,y},i) => {
+        return <use key={i} href="#pegHole" x={x} y={y}/>
+    }); 
+
+    const getTrackAndFrom = (score:number) => {
+        const ranges:[number,number][] = [[0,36],[85,121],[45,81]];
+        const trackRange = ranges.find(([from,to]) => {
+            return score > from && score < to;
+        });
+        return trackRange ? {track:ranges.indexOf(trackRange) + 1,from:score - trackRange[0]} : {track:0,from:0};
     }
 
-    const getPegHoleX = (i:number) => {
-        return pegPadding + i * (pegHorizontalSpacing + pegHoleDiameter);
+    const getTrackPegX = (track:number,player:number) => {
+        const playerTrackPositionIndex = getPlayerTrackPositionIndex(track,player);
+        return (track - 1 ) * (pegBoxWidth + pegTrackPadding) + getPegHoleX(playerTrackPositionIndex);
+    }
+    const getNonEllipsePegPosition = (score:number,player:number):({x:number,y:number}|undefined) => {
+        const {track,from} = getTrackAndFrom(score);
+        if(track !== 0){
+            const playerTrackPositionIndex = getPlayerTrackPositionIndex(track,player);
+            const x = (track - 1 )* (pegBoxWidth + pegTrackPadding) + getPegHoleX(playerTrackPositionIndex);
+
+            const pegBox = getPegBox(from);
+            const box = track === 3 ? pegBox.box - 1 : 7 - pegBox.box;
+            const peg = track === 3 ? pegBox.peg - 1 : Math.abs(5 - pegBox.peg);
+            const y = getPegHoleY(peg) + getPegBoxY(box);
+            return {
+                x,
+                y
+            }
+        }
+    };
+    
+    const getEllipsePegPosition = (score:number,player:number) => {
+        if(score >80 && score < 86){
+            return getBottomEllipsePosition(score,player);
+        }else{
+            return getTopEllipsePosition(score,player);
+        }
+
     }
 
-    const getPegHoleY = (i:number) => {
-        return pegPadding + i * (pegPadding + pegHoleDiameter);
+    const getTopEllipsePosition = (score:number,player:number) => {
+        const playerTrackPositionIndex = getReversedPlayerTrackPositionIndex(player);
+        let pegPosition = score % 5;
+        if(pegPosition === 0){
+            pegPosition = 5;
+        }
+        let pegIndex = pegPosition - 1;
+        let quadrantPositions = leftQuadrantPegPositions;
+            
+        if(score >= 41){
+            quadrantPositions = rightQuadrantPegPositions;
+            pegIndex = Math.abs(5 - pegPosition);
+        }
+        
+        return quadrantPositions[playerTrackPositionIndex][pegIndex];
     }
 
-    const getPegBoxY = (i:number) => {
-        return largeEllipseHeight + i * (pegBoxHeight);
+    const getBottomEllipsePosition = (score:number,player:number) => {
+        const playerTrackPositionIndex = getReversedPlayerTrackPositionIndex(player);
+        let pegPosition = score % 5;
+        if(pegPosition === 0){
+            pegPosition = 5;
+        }
+        return bottomEllipsePegPositions[playerTrackPositionIndex][pegPosition-1];
     }
-
-    const winningPegPosition = {x:1.5 * pegBoxWidth + pegTrackPadding, y:finalPegY};
-
-    // eslint-disable-next-line complexity
-    const getPegXY = (score:number,player:number):{x:number,y:number} => {
-        let track = 0;
-        let from = 0;
-        if(score === 121){
-            return winningPegPosition;
-        }
-        if(score> 0 && score < 36){
-            from = score;
-            track = 1;
-        }else if(score > 45 && score < 81){
-            from = score - 45;
-            track = 3;
-        }else if(score > 85 && score < 121){
-            from = score - 85;
-            track = 2;
-        }
-        if(track === 0){
-            console.log(score);
-            throw new Error("Not implemented");
-        }
-        const playerTrackPosition = getPlayerTrackPosition(track,player);
-        const pegX = (track -1 )* (pegBoxWidth + pegTrackPadding) + getPegHoleX(playerTrackPosition - 1);
-
-        const pegBox = getPegBox(from);
-        const box = track === 3 ? pegBox.box - 1 : 7 - pegBox.box;
-        const peg = track === 3 ? pegBox.peg - 1 : Math.abs(5 - pegBox.peg);
-        const pegY = getPegHoleY(peg) + getPegBoxY(box);
+    
+    const getNonWinningPegPosition = (score:number,player:number):{x:number,y:number} => {
+        return getNonEllipsePegPosition(score,player) || getEllipsePegPosition(score,player);
+    }
+    const getStartPegPosition = (player:number,isFrontPeg:boolean):{x:number,y:number} => {
         return {
-            x:pegX,
-            y:pegY
+            x:getTrackPegX(1,player),
+            y:isFrontPeg ? startPegFrontY : startPegBackY
         }
     }
-
-    const mappedPegs = [scores.player1,scores.player2,scores.player3].map((playerScore,player) => {
+    const getPegPosition = (score:number,player:number,isFrontPeg:boolean):{x:number,y:number} => {
+        return score === 121 ? winningPegPosition :
+            score === 0 ? getStartPegPosition(player,isFrontPeg) : getNonWinningPegPosition(score,player);
+    }
+    const scores = [colouredScores.player1,colouredScores.player2];
+    if(colouredScores.player3){
+        scores.push(colouredScores.player3);
+    }
+    const pegs = scores.map((playerScore,player) => {
         const pegs = [playerScore.frontPeg,playerScore.backPeg].map((score,i) => {
-            const {x,y} = getPegXY(score,player+1);
-            return <circle  key={player*4 + i} transform={`translate(${x},${y})`} stroke="none" r={pegRadius} cx={pegHoleRadius} cy={pegHoleRadius} fill={playerScore.colour}/>
+            const {x,y} = getPegPosition(score,player+1,i===0);
+            return <circle  key={`${player}_{i}`} transform={`translate(${x},${y})`} stroke="none" r={pegRadius} cx={pegHoleRadius} cy={pegHoleRadius} fill={playerScore.colour}/>
         });
         return pegs;
     }).flat();
 
-    const angles = getBottomEllipseAngles(10);
-    const bottomEllipsePegs = new Array(3).fill(0).map((_,i) => {
-        const radii = smallEllipseInnerRadius + getPegHoleX(i) + pegHoleRadius;
-        return angles.map((angle,j) => {
-            let x = radii * Math.cos(angle * Math.PI / 180);
-            x+= smallEllipseInnerXStart + pegTrackPadding/2 - pegHoleRadius;
-            const y = radii * Math.sin(angle * Math.PI / 180) + smallEllipseY;
-            return <use key={`${i}_${j}`} href="#pegHole" x={x} y={y}/>
-        })
-    }).flat();
+    const getPegRow = (numPegs:number) => {
+        return fill(numPegs,(i) => <use key={i} href="#pegHole" x={getPegHoleX(i)}/>)
+    }
+    
+    const gameScorePegs = scores.map((playerScore) => {
+        return {
+            score:playerScore.gameScore,
+            colour:playerScore.colour
+        }
+    }).map(({score,colour},player) => {
+        const x = getPegHoleX(score);
+        return <circle 
+            key={player} 
+            transform={`translate(${x},${startGameScoreY + getPegHoleY(player)})`} 
+            stroke="none" 
+            r={pegRadius} 
+            cx={pegHoleRadius} 
+            cy={pegHoleRadius} 
+            fill={colour}/>
+    });
     
 
-    const viewBox = `-1 ${-strokeWidth} ${largeEllipseWidth + strokeWidth + 1} ${calculatedHeight + strokeWidth*3}`// tbd
+    const viewBox = `-1 ${-strokeWidth} ${largeEllipseWidth + strokeWidth + 1} ${gamePeggingHeight + strokeWidth*3 + 2}`// tbd
     return <svg stroke="black" strokeWidth={strokeWidth} height={height} viewBox={viewBox}>
         <defs>
             <symbol id="pegCircle">
@@ -162,7 +268,8 @@ export function CribBoard({
                 <use href="#pegCircle" fill="black"/>
             </symbol>
             <symbol id="pegHoleRow">
-                {new Array(3).fill(0).map((_,i) => <use key={i} href="#pegHole" x={getPegHoleX(i)}/>)}
+                {/*fill(3,(i) => <use key={i} href="#pegHole" x={getPegHoleX(i)}/>)*/}
+                {getPegRow(3)}
             </symbol>
             <symbol id="pegBox" width={pegBoxWidth} height={pegBoxHeight} > {/* purposely clipping outer stroke*/}
                 {/* left / right */}
@@ -171,16 +278,16 @@ export function CribBoard({
                 
                 {/* bottom */}
                 <SVGHorizontalLine length={pegBoxWidth} y={pegBoxHeight}/>
-                {new Array(5).fill(0).map((_,i) => <use key={i} href="#pegHoleRow" y={getPegHoleY(i)}/>)}
+                {fill(5,(i) => <use key={i} href="#pegHoleRow" y={getPegHoleY(i)}/>)}
             </symbol>
             <symbol id="verticalPegboxes">
-                {new Array(7).fill(0).map((_,i) => <use key={i} href="#pegBox" y={getPegBoxY(i)}/>)}
+                {fill(7,(i) => <use key={i} href="#pegBox" y={getPegBoxY(i)}/>)}
             </symbol>
         </defs>
         
         
 
-        {new Array(3).fill(0).map((_,i) => <Fragment key={i}>
+        {fill(3,(i) => <Fragment key={i}>
             <use href="#verticalPegboxes" x={i* (pegBoxWidth + pegTrackPadding)}/>
             <SVGHorizontalLine strokeWidth={strokeWidth/2} y={largeEllipseHeight + strokeWidth/4} x={i* (pegBoxWidth + pegTrackPadding)} length={pegBoxWidth}/>
         </Fragment>)}
@@ -193,161 +300,49 @@ export function CribBoard({
             <SVGSemiCirclePath x={smallEllipseInnerXStart - strokeWidth/4} y={smallEllipseY} radius={smallEllipseInnerRadius + strokeWidth/4} top={false}/>
         </g>
 
-        {bottomEllipsePegs}
+        {bottomEllipsePegHoles}
+        {topEllipsePegHoles}
+        <SVGVerticalLine x={center} y={0} length={largeEllipseHeight - largeEllipseInnerRadius}/>
         
         {/* final peg hole*/}
         <use href="#pegHole" {...winningPegPosition}/>
+        
+        
+
+        {/* start peg holes */}
+        <use href="#pegHoleRow" y={startPegFrontY}/>
+        <use href="#pegHoleRow" y={startPegBackY}/>
         {
-            mappedPegs
+            pegs
         }
+
+        {/* game score holes */}
+        {fill(3,i => {
+            return <g key={i} transform={`translate(0,${startGameScoreY + getPegHoleY(i)})`}>
+                {getPegRow(numGamesToScore)}
+            </g>
+        })}
+        {
+            gameScorePegs
+        }
+
         
     </svg>
 }
 
 
 
-
-type SVGHorizontalVerticalLineProps = Omit<SVGProps<SVGLineElement>,"x1"|"x2"|"y1"|"y2"> & {y?:number,x?:number,length:number}
-
-type SVGSemiCircleProps = Omit<SVGProps<SVGPathElement>,"d"> & {x:number,y:number,radius:number,top:boolean}
-function SVGSemiCirclePath(props:SVGSemiCircleProps){
-    const {x,y,radius,top,...remainder} = props;
-    const d = `M${x},${y} A${radius},${radius} 0 0,${(top?1:0)} ${x + 2 *radius},${y}`;
-    return <path d={d} {...remainder}/>
+export function UseRefDemo(){
+    const [refValue,setRefValue] = useState(0);
+    return <><button onClick={() => {
+        setRefValue(refValue + 1);
+    }}>Change</button>
+    <NewPropsEffectRef forRef={refValue}/>
+    </>
 }
 
-function SVGHorizontalLine(props:SVGHorizontalVerticalLineProps){
-    // eslint-disable-next-line prefer-const
-    let {y,x,length,...remainder} = props;
-    x = x ?? 0;
-    return <line x1={x} x2={x + length} y1={y} y2={y} {...remainder}/>
-}
-
-function SVGVerticalLine(props:SVGHorizontalVerticalLineProps){
-    // eslint-disable-next-line prefer-const
-    let {y,x,length,...remainder} = props;
-    y = y ?? 0;
-    return <line x1={x} x2={x} y1={y} y2={y + length} {...remainder}/>
-}
-
-const scoresDemo:Scores[] = [
-    {
-        player1:{
-          frontPeg:20,
-          backPeg:1,
-          colour:"red"
-        },
-        player2:{
-          frontPeg:50,
-          backPeg:46,
-          colour:"blue"
-        },
-        player3:{
-          frontPeg:110,
-          backPeg:86,
-          colour:"green"
-        }
-      },
-      {
-        player2:{
-          frontPeg:20,
-          backPeg:1,
-          colour:"red"
-        },
-        player3:{
-          frontPeg:50,
-          backPeg:46,
-          colour:"blue"
-        },
-        player1:{
-          frontPeg:110,
-          backPeg:86,
-          colour:"green"
-        }
-      },
-      {
-        player3:{
-          frontPeg:20,
-          backPeg:1,
-          colour:"red"
-        },
-        player1:{
-          frontPeg:50,
-          backPeg:46,
-          colour:"blue"
-        },
-        player2:{
-          frontPeg:110,
-          backPeg:86,
-          colour:"green"
-        }
-      }
-]
-
-export function CribBoardExample(){
-    const [scores, setScores] = useState<Scores>(
-        {
-            player1:{
-              frontPeg:2,
-              backPeg:1,
-              colour:"red"
-            },
-            player2:{
-              frontPeg:2,
-              backPeg:1,
-              colour:"blue"
-            },
-            player3:{
-              frontPeg:2,
-              backPeg:1,
-              colour:"green"
-            }
-          },
-    );
-
-
-    return <>
-        <button onClick={() => {
-            setScores(scores => {
-                let frontPeg = scores.player1.frontPeg;
-                switch(frontPeg){
-                    case 35:
-                        frontPeg = 46;
-                        break;
-                    case 80:
-                        frontPeg = 86;
-                        break;
-                }
-                frontPeg++;
-                const backPeg = frontPeg - 1;
-                return {
-                    player1:{
-                        frontPeg,
-                        backPeg,
-                        colour:"red"
-                      },
-                      player2:{
-                        frontPeg,
-                        backPeg,
-                        colour:"blue"
-                      },
-                      player3:{
-                        frontPeg,
-                        backPeg,
-                        colour:"green"
-                      }
-                }
-            })
-        }}>Next</button>
-        <CribBoard 
-        pegHoleRadius={0.05} 
-        pegRadius={0.09}
-        pegTrackBoxPaddingPercentage={0.3} 
-        height={800} // 963
-        pegHorizontalSpacing={0.3} 
-        pegPadding={0.1}
-        strokeWidth={0.01}
-        scores= {scores}
-        />
-  </>
+function NewPropsEffectRef(props:{forRef:number}){
+    const reffed = useRef(props.forRef);
+    console.log(`${reffed.current} - ${props.forRef}` );
+    return <div>{reffed.current}</div>
 }
