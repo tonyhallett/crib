@@ -20,7 +20,7 @@ export interface PegInfo{
     gameScore:number
 }
 
-function getInitialPegInfo(colouredScore:ColouredScore) : PegInfo{
+function getPegInfo(colouredScore:ColouredScore) : PegInfo{
     return {
         initial:{
             frontPeg:colouredScore.frontPeg,
@@ -36,11 +36,11 @@ function getInitialPegInfo(colouredScore:ColouredScore) : PegInfo{
 
 export function getPegInfos(colouredScores:ColouredScores){
     const pegInfos = [
-        getInitialPegInfo(colouredScores.player1),
-        getInitialPegInfo(colouredScores.player2),
+        getPegInfo(colouredScores.player1),
+        getPegInfo(colouredScores.player2),
     ];
     if(colouredScores.player3){
-        pegInfos.push(getInitialPegInfo(colouredScores.player3));
+        pegInfos.push(getPegInfo(colouredScores.player3));
     }
     return pegInfos;
 }
@@ -56,7 +56,7 @@ const getGamePegId = (player:number) => `gamePeg${player}`;
 export function AnimatedCribBoard({
     pegHoleRadius, height, pegPadding, pegHorizontalSpacing, pegTrackBoxPaddingPercentage, strokeWidth, colouredScores, pegRadius, at = 0,
     // could even determine distance and keep constant
-    moveDuration = 10, raiseDuration = 1
+    moveDuration = 2, raiseDuration = 1
 }: {
     pegHoleRadius: number;
     height: number;
@@ -375,6 +375,7 @@ export function AnimatedCribBoard({
             // eslint-disable-next-line complexity
             const animations = lastPegInfos.reduce<SmartSegment[]>((segments, lastPegInfo, player) => {
                 const newPegInfo = newPegInfos[player];
+                newPegInfo.peg1Advanced = lastPegInfo.peg1Advanced;
                 if(isNewGame){
                     const { x, y } = memoed.getPegPosition(0, player + 1, true);
                     segments.push([`#${getPegIdentifier(player, true)}`, { x, y }, { duration: moveDuration, at:0 }]);
@@ -383,9 +384,9 @@ export function AnimatedCribBoard({
                     segments.push([`#${getPegIdentifier(player, false)}`, { x:x2, y:y2 }, { duration: moveDuration, at:0 }]);
 
                     if(newPegInfo.gameScore !== lastPegInfo.gameScore){
-
                         segments.push([`#${getGamePegId(player)}`, memoed.getGamePegPosition(player,newPegInfo.gameScore), { duration: moveDuration, at:0 }]);
                     }
+                    newPegInfo.peg1Advanced = true;
                 }
                 else if (newPegInfo.frontPeg !== lastPegInfo.frontPeg) {
                     newPegInfo.peg1Advanced = !lastPegInfo.peg1Advanced;
