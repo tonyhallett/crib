@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1123233&q=F11&can=2
 function getIsFullScreenWithHeightTolerance(tolerance:number){
   return () => {
+    console.log(`window.innerHeight: ${window.innerHeight}, screen.height: ${screen.height}, window.innerWidth: ${window.innerWidth}, screen.width: ${screen.width}`);
     return window.innerWidth === screen.width && (screen.height - window.innerHeight <= tolerance);
   }
   
@@ -35,7 +36,7 @@ function getIsFullScreenWithHeightTolerance(tolerance:number){
 
 const getIsFullScreen = getIsFullScreenWithHeightTolerance(1);
 
-export function useFullscreen(){
+export function useFullscreenHack(){
   const [fullscreen, setFullscreen] = useState(
     getIsFullScreen()
   );
@@ -58,9 +59,9 @@ export function useFullscreen(){
   return fullscreen;
 }
 
-// this works aside from when press escape - which the browser suggests 
+// this works on windows ( android calculations are odd ) aside from when press escape - which the browser suggests 
 // will no longer be in full screen mode in terms of events but will look like it is
-/* export function useFullscreen(){
+export function useFullscreenFullscreenElement(){
   const [fullscreen, setFullscreen] = useState(
     document.fullscreenElement !== null
   );
@@ -84,4 +85,9 @@ export function useFullscreen(){
     }
   });
   return fullscreen;
-} */
+}
+
+export function useFullscreen(){
+  const actual = navigator.userAgent.includes("Android") ? useFullscreenFullscreenElement : useFullscreenHack;
+  return actual();  
+}
