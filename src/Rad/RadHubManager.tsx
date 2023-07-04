@@ -549,7 +549,7 @@ export function RadHubManager() {
     <motion.div
       drag
       initial={{
-        y: 700,
+        y: 100,
       }}
       style={{
         padding: 50,
