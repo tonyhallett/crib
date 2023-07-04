@@ -1,4 +1,4 @@
-import { CSSProperties, Fragment, useEffect, useMemo, useRef } from "react";
+import { CSSProperties, Fragment, useCallback, useEffect, useMemo, useRef } from "react";
 import { SVGHorizontalLine } from "./SVGHorizontalLine";
 import { SVGVerticalLine } from "./SVGVerticalLine";
 import { SVGSemiCirclePath } from "./SVGSemiCirclePath";
@@ -45,6 +45,14 @@ export function getPegInfos(colouredScores:ColouredScores){
     return pegInfos;
 }
 
+export function getNewPegInfos(colouredScores:ColouredScores,oldPegInfos:PegInfo[]) : PegInfo[]{
+    const newPegInfos = getPegInfos(colouredScores);
+    newPegInfos.forEach((newPegInfo,index) => {
+        newPegInfo.peg1Advanced = oldPegInfos[index].peg1Advanced
+    });
+    return newPegInfos;
+}
+
 export function getPegIdentifier(player:number,front:boolean){
     const frontBackIdentifier = front ? "front" : "back";
     return `player${player}_${frontBackIdentifier}_peg`;
@@ -53,10 +61,22 @@ export function getPegIdentifier(player:number,front:boolean){
 
 const getGamePegId = (player:number) => `gamePeg${player}`;
 
+const getIsNewGame = (newPegInfos:PegInfo[]) => {
+    let isNewGame = true;
+    for(let i=0;i<newPegInfos.length;i++){
+        const newPegInfo = newPegInfos[i];
+        if(newPegInfo.frontPeg + newPegInfo.backPeg !== 0){
+            isNewGame = false;
+            break;
+        }
+    }
+    return isNewGame;
+}
+
 export function AnimatedCribBoard({
     pegHoleRadius, height, pegPadding, pegHorizontalSpacing, pegTrackBoxPaddingPercentage, strokeWidth, colouredScores, pegRadius, at = 0,
     // could even determine distance and keep constant
-    moveDuration = 2, raiseDuration = 1
+    moveDuration = 2
 }: {
     pegHoleRadius: number;
     height: number;
@@ -358,40 +378,47 @@ export function AnimatedCribBoard({
 
     }, [height, pegHoleRadius, pegHorizontalSpacing, pegPadding, pegRadius, pegTrackBoxPaddingPercentage, scope, strokeWidth]);
 
-    
+    const animatePegPosition = useCallback((segments:SmartSegment[],score:number,player:number,isFrontPeg:boolean) => {
+        const { x, y } = memoed.getPegPosition(score, player + 1, isFrontPeg);
+        segments.push([`#${getPegIdentifier(player, isFrontPeg)}`, { x, y }, { duration: moveDuration, at:0 }]);
+    },[memoed, moveDuration]);
+
+    const animateGameScore = useCallback((segments:SmartSegment[],player:number,gameScore:number) => {
+        segments.push([`#${getGamePegId(player)}`, memoed.getGamePegPosition(player,gameScore), { duration: moveDuration, at:0 }]);
+    },[memoed, moveDuration])
+
+    const animatePegsToStartPositions = useCallback((segments:SmartSegment[],player:number,) => {
+        animatePegPosition(segments,0,player,true);
+        animatePegPosition(segments,0,player,false);
+    },[animatePegPosition])
+
+    const animateNewGamePegs = useCallback((segments:SmartSegment[],player:number,newPegInfo:PegInfo,lastPegInfo:PegInfo) => {
+        animatePegsToStartPositions(segments,player);
+        if(newPegInfo.gameScore !== lastPegInfo.gameScore){
+            animateGameScore(segments,player,newPegInfo.gameScore);
+        }
+        newPegInfo.peg1Advanced = true;
+    },[animateGameScore, animatePegsToStartPositions]);
+
+    const animatePeg = useCallback((segments:SmartSegment[],newPegInfo:PegInfo,lastPegInfo:PegInfo,player:number) => {
+        newPegInfo.peg1Advanced = !lastPegInfo.peg1Advanced;
+        animatePegPosition(segments,newPegInfo.frontPeg,player,newPegInfo.peg1Advanced);
+    },[animatePegPosition])
+
     useEffect(() => {
-        const newPegInfos = getPegInfos(colouredScores);
         if (rendered.current) {
             const lastPegInfos = pegInfos.current;
-
-            let isNewGame = true;
-            for(let i=0;i<newPegInfos.length;i++){
-                const newPegInfo = newPegInfos[i];
-                if(newPegInfo.frontPeg + newPegInfo.backPeg !== 0){
-                    isNewGame = false;
-                    break;
-                }
-            }
-            // eslint-disable-next-line complexity
+            const newPegInfos = getNewPegInfos(colouredScores,lastPegInfos);
+            
+            const isNewGame = getIsNewGame(newPegInfos);
+            
             const animations = lastPegInfos.reduce<SmartSegment[]>((segments, lastPegInfo, player) => {
                 const newPegInfo = newPegInfos[player];
-                newPegInfo.peg1Advanced = lastPegInfo.peg1Advanced;
                 if(isNewGame){
-                    const { x, y } = memoed.getPegPosition(0, player + 1, true);
-                    segments.push([`#${getPegIdentifier(player, true)}`, { x, y }, { duration: moveDuration, at:0 }]);
-
-                    const { x:x2, y:y2 } = memoed.getPegPosition(0, player + 1, false);
-                    segments.push([`#${getPegIdentifier(player, false)}`, { x:x2, y:y2 }, { duration: moveDuration, at:0 }]);
-
-                    if(newPegInfo.gameScore !== lastPegInfo.gameScore){
-                        segments.push([`#${getGamePegId(player)}`, memoed.getGamePegPosition(player,newPegInfo.gameScore), { duration: moveDuration, at:0 }]);
-                    }
-                    newPegInfo.peg1Advanced = true;
+                    animateNewGamePegs(segments,player,newPegInfo,lastPegInfo);
                 }
                 else if (newPegInfo.frontPeg !== lastPegInfo.frontPeg) {
-                    newPegInfo.peg1Advanced = !lastPegInfo.peg1Advanced;
-                    const { x, y } = memoed.getPegPosition(newPegInfo.frontPeg, player + 1, newPegInfo.peg1Advanced);
-                    segments.push([`#${getPegIdentifier(player, newPegInfo.peg1Advanced)}`, { x, y }, { duration: moveDuration, at:0 }]);
+                    animatePeg(segments,newPegInfo,lastPegInfo,player);
                 }
 
                 return segments;
@@ -401,7 +428,7 @@ export function AnimatedCribBoard({
         } else {
             rendered.current = true;
         }
-    }, [colouredScores, animate, moveDuration, rendered, memoed]);
+    }, [colouredScores, animate, moveDuration, rendered, memoed, animateNewGamePegs, animatePeg]);
     
     return memoed.svg;
 }
