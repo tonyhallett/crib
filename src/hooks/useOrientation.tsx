@@ -10,7 +10,6 @@ export function useOrientation() {
   useEffect(() => {
     const handler: ScreenOrientation["onchange"] = () => {
       const isLandscape = getIsLandscape();
-      console.log(`landscape changed - ${isLandscape}`);
       if (landscape !== isLandscape) {
         setLandscape(isLandscape);
       }

@@ -54,8 +54,9 @@ export type DomSegmentOptionalElementOrSelectorWithOptions = [
   DOMKeyframesDefinition,
   SegmentAnimationOptionsWithTransitionEnd & At
 ];
-export type OptionalDomSegment = | DomSegmentOptionalElementOrSelector
-| DomSegmentOptionalElementOrSelectorWithOptions;
+export type OptionalDomSegment =
+  | DomSegmentOptionalElementOrSelector
+  | DomSegmentOptionalElementOrSelectorWithOptions;
 
 export type CardSegment =
   | OptionalDomSegment
@@ -99,7 +100,7 @@ export function Card(props: CardProps) {
     if (lastProps.current !== props && props.segments) {
       const segments = addScopeIfNoSelector(scope.current, props.segments);
       animationCounter.current = 0;
-      animate(segments); 
+      animate(segments);
     }
     lastProps.current = props;
   }, [animate, props, scope]);

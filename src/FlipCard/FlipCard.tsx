@@ -1,5 +1,8 @@
 import { PlayingCard } from "../generatedTypes";
-import { DOMKeyframesDefinition, StyleKeyframesDefinition } from "framer-motion";
+import {
+  DOMKeyframesDefinition,
+  StyleKeyframesDefinition,
+} from "framer-motion";
 import { Point, Size } from "../PlayMatch/matchLayoutManager";
 import { SequenceTime } from "./motion-types";
 import { ElementOrSelector } from "framer-motion";
@@ -53,31 +56,34 @@ function getFlipCardSegment(
   const options: SegmentAnimationOptionsWithTransitionEnd & At = {
     rotateY: { duration },
     at,
-    onComplete
-
+    onComplete,
   };
   return [undefined, defn, options];
 }
 
-function adjustSegmentZIndex(zIndex:number, segment:OptionalDomSegment,isAboveCard:boolean){
-  zIndex = zIndex *2;
-  if(isAboveCard){
+function adjustSegmentZIndex(
+  zIndex: number,
+  segment: OptionalDomSegment,
+  isAboveCard: boolean
+) {
+  zIndex = zIndex * 2;
+  if (isAboveCard) {
     zIndex++;
   }
   const cardSegment = [...segment] as OptionalDomSegment;
   const adjusted = {
     ...cardSegment[1],
-    "zIndex":zIndex
+    zIndex: zIndex,
   };
   cardSegment[1] = adjusted;
   return cardSegment;
 }
 
 function addFlipSegments(
-  belowCardSegments:CardSegment[],
-  aboveCardSegments:CardSegment[],
-  flipAnimation:FlipAnimation
-){
+  belowCardSegments: CardSegment[],
+  aboveCardSegments: CardSegment[],
+  flipAnimation: FlipAnimation
+) {
   const belowCardFlipSegment = getFlipCardSegment(
     flipAnimation.flip,
     CardFlip.BelowCard,
@@ -95,73 +101,73 @@ function addFlipSegments(
   aboveCardSegments.push(aboveCardFlipSegment);
 }
 
-function isFlipAnimation(segment: CardSegment | FlipAnimation): segment is FlipAnimation {
+function isFlipAnimation(
+  segment: CardSegment | FlipAnimation
+): segment is FlipAnimation {
   return typeof segment !== "string" && "flip" in segment;
 }
 
-
-function getZIndex(segment:OptionalDomSegment){
+function getZIndex(segment: OptionalDomSegment) {
   const domKeyFramesDefinition = segment[1];
   return domKeyFramesDefinition["zIndex"] as number | undefined;
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function removeOnComplete(valueTransition:any){
-  if(typeof valueTransition === "object"){
+function removeOnComplete(valueTransition: any) {
+  if (typeof valueTransition === "object") {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {onComplete, ...rest} = valueTransition;
+    const { onComplete, ...rest } = valueTransition;
     return rest;
   }
-  
+
   return valueTransition;
 }
 
-
-function segmentRemoveOnComplete(segment:OptionalDomSegment):OptionalDomSegment{
-  if(segment.length === 2){
+function segmentRemoveOnComplete(
+  segment: OptionalDomSegment
+): OptionalDomSegment {
+  if (segment.length === 2) {
     return segment;
   }
   const options = segment[2];
   const remainder = removeOnComplete(options);
-  Object.keys(remainder).forEach(key => {
-    if(remainder[key] !== undefined){
+  Object.keys(remainder).forEach((key) => {
+    if (remainder[key] !== undefined) {
       remainder[key] = removeOnComplete(remainder[key]);
     }
   });
-  
-  return [
-    segment[0],
-    segment[1],
-    remainder
-  ]
+
+  return [segment[0], segment[1], remainder];
 }
 
-function doGetFlipCardSegments( animationSequence: FlipCardAnimationSequence){
+function doGetFlipCardSegments(animationSequence: FlipCardAnimationSequence) {
   const belowCardSegments = [];
   const aboveCardSegments = [];
-    for (let i = 0; i < animationSequence.length; i++) {
-      const segment = animationSequence[i];
-      if (isFlipAnimation(segment)) {
-        addFlipSegments(belowCardSegments,aboveCardSegments,segment);
-      } else {
-        if(Array.isArray(segment)){
-          const zIndex = getZIndex(segment);
-          let aboveCardSegment = segmentRemoveOnComplete(segment);
-          let belowCardSegment = segment;
-          if(zIndex !== undefined){
-            belowCardSegment = adjustSegmentZIndex(zIndex,segment,false);
-            aboveCardSegment = adjustSegmentZIndex(zIndex,aboveCardSegment,true);
-          }
-          belowCardSegments.push(belowCardSegment);
-          aboveCardSegments.push(aboveCardSegment);
-        }else{
-
-          belowCardSegments.push(segment);
-          aboveCardSegments.push(segment);
+  for (let i = 0; i < animationSequence.length; i++) {
+    const segment = animationSequence[i];
+    if (isFlipAnimation(segment)) {
+      addFlipSegments(belowCardSegments, aboveCardSegments, segment);
+    } else {
+      if (Array.isArray(segment)) {
+        const zIndex = getZIndex(segment);
+        let aboveCardSegment = segmentRemoveOnComplete(segment);
+        let belowCardSegment = segment;
+        if (zIndex !== undefined) {
+          belowCardSegment = adjustSegmentZIndex(zIndex, segment, false);
+          aboveCardSegment = adjustSegmentZIndex(
+            zIndex,
+            aboveCardSegment,
+            true
+          );
         }
-        
+        belowCardSegments.push(belowCardSegment);
+        aboveCardSegments.push(aboveCardSegment);
+      } else {
+        belowCardSegments.push(segment);
+        aboveCardSegments.push(segment);
       }
     }
-    return [belowCardSegments, aboveCardSegments];
+  }
+  return [belowCardSegments, aboveCardSegments];
 }
 
 function getFlipCardSegments(

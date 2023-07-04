@@ -1,5 +1,19 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CribClient, CribGameState, CribHub, MyMatch } from "../generatedTypes";
+import {
+  CSSProperties,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  CribClient,
+  CribGameState,
+  CribHub,
+  MyMatch,
+  Score,
+} from "../generatedTypes";
 import { LocalMatch } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
@@ -13,6 +27,9 @@ import {
   FlipCardDatasWithCompletionRegistration,
 } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
+import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
+import cribBoardWoodUrl from "../cribBoardWoodUrl";
+import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -54,6 +71,7 @@ export interface PlayMatchProps {
   playMatchCribHub: PlayMatchCribHub;
   signalRRegistration: (playMatchCribClient: PlayMatchCribClient) => () => void;
   updateLocalMatch: UpdateLocalMatch;
+  landscape: boolean;
 }
 
 export type FlipCardData = Omit<FlipCardProps, "size">;
@@ -68,6 +86,41 @@ export interface FlipCardDatas {
 
 const discardDuration = 0.5;
 const flipDuration = 0.5;
+const cribBoardWidthRatio = 0.35;
+function getSize(isLandscape: boolean) {
+  if (isLandscape) {
+    const cribBoardWidth =
+      document.documentElement.clientHeight * cribBoardWidthRatio;
+    return {
+      width: document.documentElement.clientWidth - cribBoardWidth,
+      height: document.documentElement.clientHeight,
+    };
+  } else {
+    const cribBoardWidth =
+      document.documentElement.clientWidth * cribBoardWidthRatio;
+    return {
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight - cribBoardWidth,
+    };
+  }
+}
+
+const colours: CSSProperties["color"][] = ["red", "blue", "green"];
+function getColouredScore(score: Score, index: number): ColouredScore {
+  return {
+    frontPeg: score.frontPeg,
+    backPeg: score.backPeg,
+    gameScore: score.games,
+    colour: colours[index],
+  };
+}
+function getColouredScores(scores: Score[]): ColouredScores {
+  return {
+    player1: getColouredScore(scores[0], 0),
+    player2: getColouredScore(scores[1], 1),
+    player3: scores.length === 3 ? getColouredScore(scores[2], 2) : undefined,
+  };
+}
 
 function PlayMatchInner({
   localMatch,
@@ -75,11 +128,10 @@ function PlayMatchInner({
   playMatchCribHub,
   signalRRegistration,
   updateLocalMatch,
+  landscape,
 }: PlayMatchProps) {
-  const size = {
-    width: document.documentElement.clientWidth,
-    height: document.documentElement.clientHeight,
-  };
+  const size = getSize(landscape);
+
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
@@ -112,14 +164,14 @@ function PlayMatchInner({
       discard(playerId, cutCard) {
         function getNew(
           prevCardDatas: FlipCardDatas,
-          discardDuration:number,
-          secondDiscardDelay:number,
-          cardFlipDuration:number
+          discardDuration: number,
+          secondDiscardDelay: number,
+          cardFlipDuration: number
         ): FlipCardDatasWithCompletionRegistration {
           let animationCompleteCallback: () => void | undefined;
           const complete = () => {
             animationCompleteCallback && animationCompleteCallback();
-          }
+          };
           const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
 
           const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
@@ -127,14 +179,14 @@ function PlayMatchInner({
             (otherPlayer) => otherPlayer.id === playerId
           );
           const boxPosition = getBoxPosition(myMatch, positions);
-          
+
           const cardFlipDelay =
             discardDuration + (numDiscards - 1) * secondDiscardDelay;
 
           const getDiscardToBoxCardData = (
             boxPosition: Box,
             prevCardData: FlipCardData,
-            onComplete?:OnComplete | undefined
+            onComplete?: OnComplete | undefined
           ) => {
             const newCardData = { ...prevCardData };
             newCardData.animationSequence = [
@@ -156,7 +208,7 @@ function PlayMatchInner({
               flip: true,
               duration: cardFlipDuration,
               at: cardFlipDelay,
-              onComplete:complete
+              onComplete: complete,
             };
             newCardData.animationSequence = [flipAnimation];
             return newCardData;
@@ -209,7 +261,12 @@ function PlayMatchInner({
           ];
         }
         animationManager.current.animate(
-          getNew(cardDatasRef.current as FlipCardDatas,discardDuration,0,flipDuration)
+          getNew(
+            cardDatasRef.current as FlipCardDatas,
+            discardDuration,
+            0,
+            flipDuration
+          )
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -251,7 +308,7 @@ function PlayMatchInner({
           default:
             throw new Error("Not implemented !");
         }
-      }else{
+      } else {
         const breakHere = true;
       }
       initiallyRendered.current = true;
@@ -279,13 +336,48 @@ function PlayMatchInner({
       ...flattenedOtherPlayerCards,
     ];
   }, [cardDatas]);
-  
+
+  const cribBoardHeight = landscape ? window.innerHeight : window.innerWidth;
+  const cribBoardWidth = cribBoardHeight * cribBoardWidthRatio;
+
+  // do not need to translateY when provide the width
+  const cribBoardPortraitStyle: CSSProperties = {
+    position: "absolute",
+    transform: `translateX(${window.innerWidth}px) rotate(90deg)`,
+    transformOrigin: "left top",
+  };
+  const cribBoardLandscapeStyle: CSSProperties = {
+    position: "absolute",
+    right: 0,
+  };
+  const cribBoardStyle = landscape
+    ? cribBoardLandscapeStyle
+    : cribBoardPortraitStyle;
+  const cardsShiftStyle = landscape
+    ? {}
+    : { transform: `translateY(${cribBoardWidth}px)` };
   return (
-    <div style={{ perspective: 5000 }}>
-      {mappedFlipCardDatas.map((cardData, i) => (
-        <FlipCard key={i} {...cardData} size={cardSize} />
-      ))}
-    </div>
+    <>
+      <div style={cribBoardStyle}>
+        <AnimatedCribBoard
+          cribBoardUrl={cribBoardWoodUrl}
+          pegHoleRadius={0.05}
+          pegRadius={0.09}
+          pegTrackBoxPaddingPercentage={0.3}
+          height={landscape ? window.innerHeight : window.innerWidth}
+          width={cribBoardWidth}
+          pegHorizontalSpacing={0.3}
+          pegPadding={0.1}
+          strokeWidth={0.1}
+          colouredScores={getColouredScores(myMatch.scores)}
+        />
+      </div>
+      <div style={{ perspective: 5000, ...cardsShiftStyle }}>
+        {mappedFlipCardDatas.map((cardData, i) => (
+          <FlipCard key={i} {...cardData} size={cardSize} />
+        ))}
+      </div>
+    </>
   );
 }
 

@@ -9,9 +9,6 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import { AnimatedCribBoardExample, CribBoardExample } from "./CribBoardExample";
-import { SvgAnimation } from "./SvgAnimation";
-import { UseRefDemo } from "./CribBoard";
 
 const rootNode = document.getElementById("app");
 
@@ -29,7 +26,7 @@ const theme = createTheme({
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(rootNode!);
-/* root.render(
+root.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
     <Auth0Provider
@@ -46,8 +43,4 @@ const root = createRoot(rootNode!);
       </SnackbarProvider>
     </Auth0Provider>
   </ThemeProvider>
-); */
-root.render(
-  <AnimatedCribBoardExample/> 
-    
-)
+);

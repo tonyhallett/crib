@@ -69,15 +69,15 @@ function getDealtPlayerCard(
   dealDuration: number,
   flipDuration: number,
   deck: Deck,
-  totalDealtCards:number,
-  onComplete:OnComplete | undefined
+  totalDealtCards: number,
+  onComplete: OnComplete | undefined
 ): AnimatedFlipCardData {
-  // earlier that dealt the higher the z-index 
+  // earlier that dealt the higher the z-index
   // and need the deck z-index to always be greater than any of the hand indices
   const deckZIndex = 100 + (totalDealtCards - dealNumber);
-  
-  const handZIndex = 4// more than the box for discards
-  
+
+  const handZIndex = 4; // more than the box for discards
+
   const animationSequence: FlipCardAnimationSequence = [
     getMoveRotateSegment(
       discardPositions.isHorizontal,
@@ -86,21 +86,23 @@ function getDealtPlayerCard(
       undefined,
       dealNumber * dealDuration
     ),
-    [undefined, 
+    [
+      undefined,
       {
-        "zIndex":handZIndex  //more than the box card
+        zIndex: handZIndex, //more than the box card
       } as DOMKeyframesDefinition,
       {
-        at:dealNumber * dealDuration + dealDuration,
-        duration:0.00001,
-        onComplete: isMyCard? undefined : onComplete
-      }]
+        at: dealNumber * dealDuration + dealDuration,
+        duration: 0.00001,
+        onComplete: isMyCard ? undefined : onComplete,
+      },
+    ],
   ];
   if (isMyCard) {
     const flipAnimation: FlipAnimation = {
       duration: flipDuration,
       flip: true,
-      onComplete:isMyCard ? onComplete : undefined
+      onComplete: isMyCard ? onComplete : undefined,
     };
     animationSequence.push(flipAnimation);
   }
@@ -166,26 +168,22 @@ const createCompletionCallbacks = (
     animationCompleteCallback = callback;
   };
 
-    const lastDealtCompleteCallback: OnComplete =
-      () => {
-        console.log("last dealt");
-          localMatch.changeHistory.numberOfActions = 0;
-          updateLocalMatch(localMatch);
+  const lastDealtCompleteCallback: OnComplete = () => {
+    console.log("last dealt");
+    localMatch.changeHistory.numberOfActions = 0;
+    updateLocalMatch(localMatch);
 
-          if (numberOfDiscards === 0) {
-            animationCompleteCallback && animationCompleteCallback();
-          }
-      };
-  
-    const lastDiscardCompleteCallback: OnComplete =
-      () => {
-        console.log("last discard")
-          localMatch.changeHistory.numberOfActions = numberOfDiscards;
-          updateLocalMatch(localMatch);
-          animationCompleteCallback && animationCompleteCallback();
-        }
-    
-    
+    if (numberOfDiscards === 0) {
+      animationCompleteCallback && animationCompleteCallback();
+    }
+  };
+
+  const lastDiscardCompleteCallback: OnComplete = () => {
+    console.log("last discard");
+    localMatch.changeHistory.numberOfActions = numberOfDiscards;
+    updateLocalMatch(localMatch);
+    animationCompleteCallback && animationCompleteCallback();
+  };
 
   return {
     registration,
@@ -203,7 +201,13 @@ function addDiscardAnimation(
   lastDiscardOnComplete: OnComplete
 ) {
   dealtCard.animationSequence.push(
-    getDiscardToBoxSegment(box, discardDuration, undefined, discardAt,lastDiscard ? lastDiscardOnComplete : undefined)
+    getDiscardToBoxSegment(
+      box,
+      discardDuration,
+      undefined,
+      discardAt,
+      lastDiscard ? lastDiscardOnComplete : undefined
+    )
   );
 }
 
@@ -252,7 +256,9 @@ function doDealPlayerCardsAndPossiblyDiscard(
     );
     for (let i = 0; i < dealDiscardNumbers.deal; i++) {
       const dealNumber = dealPositionIndex + i * numPlayers;
-      const isLastDealtCard = dealPositionIndex === dealPositions.length - 1 && i === dealDiscardNumbers.deal - 1;
+      const isLastDealtCard =
+        dealPositionIndex === dealPositions.length - 1 &&
+        i === dealDiscardNumbers.deal - 1;
       const dealtCard = getDealtPlayerCard(
         discardPositions,
         i,
@@ -262,7 +268,9 @@ function doDealPlayerCardsAndPossiblyDiscard(
         playerDealAnimationParameters.flipDuration,
         playerDealPositions.deck,
         dealDiscardNumbers.deal * numPlayers,
-        isLastDealtCard ? completionCallbacks.lastDealtCompleteCallback : undefined
+        isLastDealtCard
+          ? completionCallbacks.lastDealtCompleteCallback
+          : undefined
       );
 
       if (isMe) {

@@ -33,7 +33,7 @@ import { WoodWhenPlaying } from "./WoodWhenPlaying";
 import GamesIcon from "@mui/icons-material/Games";
 import { SnackbarAction } from "notistack";
 import { useOrientation } from "./hooks/useOrientation";
-import { useFullscreen } from "./hooks/useFullscreen";
+import { useFullscreenFullscreenElement } from "./hooks/useFullscreen";
 import { RequiresFullscreen } from "./RequiresFullscreen";
 
 type MenuItem = "Friends" | "Matches";
@@ -59,7 +59,7 @@ export default function App() {
 
   const { isLoading, error, isAuthenticated, getIdTokenClaims } = useAuth0();
   const landscape = useOrientation();
-  const fullscreen = useFullscreen();
+  const fullscreen = useFullscreenFullscreenElement();
   const [connected, setConnected] = useState(false);
   const [connectError, setConnectError] = useState("");
   const [fetchedInitialData, setFetchedInitialData] = useState(false);
@@ -92,10 +92,10 @@ export default function App() {
     setSelectedMenuItemAndRef(menuItem);
   }, []);
 
-  const setLocalMatchesAndRef = (localMatches:LocalMatch[]) => {
+  const setLocalMatchesAndRef = (localMatches: LocalMatch[]) => {
     localMatchesRef.current = localMatches;
     setLocalMatches(localMatches);
-  }
+  };
   const setMatchesAndRef = (matches: MyMatch[]) => {
     matchesRef.current = matches;
     setMatches(matches);
@@ -323,7 +323,7 @@ export default function App() {
   ) : (
     CardsIcon
   );
-  
+
   return (
     <div>
       <WoodWhenPlaying playing={!!playMatch} />
@@ -349,7 +349,7 @@ export default function App() {
       </Collapse>
       {!!playMatch && (
         <IconButton
-          style={{ position: "absolute" }}
+          style={{ position: "absolute", zIndex: 1000 }}
           size="small"
           color="primary"
           onClick={() => setPlayMatch(undefined)}
@@ -373,6 +373,7 @@ export default function App() {
       )}
       {fetchedAndAuthenticated && playMatch && (
         <PlayMatch
+          landscape={landscape}
           key={`${landscape.toString()}${playMatch.match.id}`}
           myMatch={playMatch.match}
           localMatch={playMatch.localMatch}
@@ -387,7 +388,7 @@ export default function App() {
                 }
               }
               return localMatch;
-            })
+            });
             setLocalMatchesAndRef(updatedLocalMatches);
           }}
         />

@@ -1,26 +1,23 @@
 import { animateSegments } from "./animateSegments";
-import { SegmentsAnimationOptions, SmartAnimationSequence } from "./createAnimationsFromSegments";
+import {
+  SegmentsAnimationOptions,
+  SmartAnimationSequence,
+} from "./createAnimationsFromSegments";
 import { SegmentScopeInternal } from "./useAnimateSegments";
 
-
 export function createScopedAnimateSegments(scope: SegmentScopeInternal) {
-    /**
-     * Animate sequences
-     */
-    function scopedAnimate(
-        sequence: SmartAnimationSequence,
-        options?: SegmentsAnimationOptions
-    ): void {
+  /**
+   * Animate sequences
+   */
+  function scopedAnimate(
+    sequence: SmartAnimationSequence,
+    options?: SegmentsAnimationOptions
+  ): void {
+    //const animation:AnimationPlaybackControls =
+    animateSegments(sequence, options, scope);
 
-        //const animation:AnimationPlaybackControls = 
-        animateSegments(
-            sequence,
-            options,
-            scope
-        );
+    //return animation
+  }
 
-        //return animation
-    }
-
-    return scopedAnimate;
+  return scopedAnimate;
 }

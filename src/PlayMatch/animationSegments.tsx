@@ -7,7 +7,7 @@ export function getDiscardToBoxSegment(
   duration: number,
   delay?: number,
   at?: number,
-  onComplete?:OnComplete | undefined
+  onComplete?: OnComplete | undefined
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   return getMoveRotateSegment(
     boxPosition.isHorizontal,
@@ -25,7 +25,7 @@ export function getMoveRotateSegment(
   duration: number,
   delay?: number,
   at?: number,
-  onComplete?:OnComplete | undefined
+  onComplete?: OnComplete | undefined
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   const rotation = isHorizontal ? 90 : 0;
   return [
@@ -39,7 +39,7 @@ export function getMoveRotateSegment(
       duration: duration,
       delay,
       at,
-      x:{onComplete} // so only get the one notification
+      x: { onComplete }, // so only get the one notification
     },
   ];
 }
