@@ -28,7 +28,6 @@ import { useEffect, useState } from "react";
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1123233&q=F11&can=2
 function getIsFullScreenWithHeightTolerance(tolerance:number){
   return () => {
-    console.log(`window.innerHeight: ${window.innerHeight}, screen.height: ${screen.height}, window.innerWidth: ${window.innerWidth}, screen.width: ${screen.width}`);
     return window.innerWidth === screen.width && (screen.height - window.innerHeight <= tolerance);
   }
   
