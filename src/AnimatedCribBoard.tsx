@@ -380,12 +380,12 @@ export function AnimatedCribBoard({
 
     const animatePegPosition = useCallback((segments:SmartSegment[],score:number,player:number,isFrontPeg:boolean) => {
         const { x, y } = memoed.getPegPosition(score, player + 1, isFrontPeg);
-        segments.push([`#${getPegIdentifier(player, isFrontPeg)}`, { x, y }, { duration: moveDuration, at:0 }]);
-    },[memoed, moveDuration]);
+        segments.push([`#${getPegIdentifier(player, isFrontPeg)}`, { x, y }, { duration: moveDuration, at }]);
+    },[at, memoed, moveDuration]);
 
     const animateGameScore = useCallback((segments:SmartSegment[],player:number,gameScore:number) => {
-        segments.push([`#${getGamePegId(player)}`, memoed.getGamePegPosition(player,gameScore), { duration: moveDuration, at:0 }]);
-    },[memoed, moveDuration])
+        segments.push([`#${getGamePegId(player)}`, memoed.getGamePegPosition(player,gameScore), { duration: moveDuration, at }]);
+    },[at, memoed, moveDuration])
 
     const animatePegsToStartPositions = useCallback((segments:SmartSegment[],player:number,) => {
         animatePegPosition(segments,0,player,true);
