@@ -383,7 +383,7 @@ function PlayMatchInner({
           width={cribBoardWidth}
           pegHorizontalSpacing={0.3}
           pegPadding={0.1}
-          strokeWidth={0.1}
+          strokeWidth={0.05}
           colouredScores={getColouredScores(myMatch.scores)}
         />
       </div>
