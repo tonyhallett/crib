@@ -351,7 +351,7 @@ export default function App() {
       }
       {!!playMatch && (
         <IconButton
-          style={{ position: "absolute", zIndex: 1000 }}
+          style={{ position: "absolute", zIndex: 1000, bottom:0 }}
           size="small"
           color="primary"
           onClick={() => setPlayMatch(undefined)}
