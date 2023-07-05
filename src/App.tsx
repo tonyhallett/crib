@@ -330,8 +330,7 @@ export default function App() {
   return (
     <div>
       <WoodWhenPlaying playing={!!playMatch} />
-      {/* adding orientation reduced width of app bar  */}
-      <Collapse in={!playMatch}>
+      {!playMatch &&
         <AppBar position="sticky">
           <Toolbar>
             <NavBar />
@@ -349,7 +348,7 @@ export default function App() {
             </IconButton>
           </Toolbar>
         </AppBar>
-      </Collapse>
+      }
       {!!playMatch && (
         <IconButton
           style={{ position: "absolute", zIndex: 1000 }}
