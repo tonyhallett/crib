@@ -156,7 +156,6 @@ function PlayMatchInner({
         deckAndBoxInMiddle: true, //todo options
       }
     );
-    console.log(JSON.stringify(positionsAndCardSize));
     return positionsAndCardSize;
   }, [myMatch, size.height, size.width]);
   useEffect(() => {
