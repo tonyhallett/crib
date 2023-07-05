@@ -48,19 +48,6 @@ interface PlayMatch {
 
 type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
 
-function useFetch(toFetch:string[]){
-  const fetched = useRef(false);
-  useEffect(() => {
-    if(!fetched.current){
-      toFetch.forEach((fetchUrl) => {
-        fetch(fetchUrl);
-      })
-      fetched.current = true;
-    }
-  },[toFetch])
-  
-}
-
 /* eslint-disable complexity */
 export default function App() {
   //useFetch([woodUrl,cribBoardWoodUrl]);
