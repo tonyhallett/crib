@@ -130,8 +130,6 @@ function PlayMatchInner({
   updateLocalMatch,
   landscape,
 }: PlayMatchProps) {
-  const size = getSize(landscape);
-
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
@@ -143,6 +141,7 @@ function PlayMatchInner({
   }, []);
 
   const animationManager = useRef(new AnimationManager(setCardDatasAndRef));
+  const size = useMemo(() => getSize(landscape),[landscape]);
   const [positions, cardSize] = useMemo(() => {
     return matchLayoutManager.getPositionsAndCardSize(
       size.width,

@@ -34,6 +34,7 @@ import GamesIcon from "@mui/icons-material/Games";
 import { SnackbarAction } from "notistack";
 import { useOrientation } from "./hooks/useOrientation";
 import { useFullscreenFullscreenElement } from "./hooks/useFullscreen";
+import { useWindowResize } from "./hooks/useWindowResize";
 import { RequiresFullscreen } from "./RequiresFullscreen";
 
 type MenuItem = "Friends" | "Matches";
@@ -59,6 +60,8 @@ export default function App() {
 
   const { isLoading, error, isAuthenticated, getIdTokenClaims } = useAuth0();
   const landscape = useOrientation();
+  // necessary as android is inconsistent with values when orientation changes
+  const size = useWindowResize();
   const fullscreen = useFullscreenFullscreenElement();
   const [connected, setConnected] = useState(false);
   const [connectError, setConnectError] = useState("");
@@ -374,7 +377,7 @@ export default function App() {
       {fetchedAndAuthenticated && playMatch && (
         <PlayMatch
           landscape={landscape}
-          key={`${landscape.toString()}${playMatch.match.id}`}
+          key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${size.height}`}
           myMatch={playMatch.match}
           localMatch={playMatch.localMatch}
           signalRRegistration={signalRRegistration}
