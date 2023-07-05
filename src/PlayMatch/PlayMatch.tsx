@@ -30,7 +30,6 @@ import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../cribBoardWoodUrl";
 import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
-import { useImagePreload } from "../hooks/useImagePreload";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -73,6 +72,7 @@ export interface PlayMatchProps {
   signalRRegistration: (playMatchCribClient: PlayMatchCribClient) => () => void;
   updateLocalMatch: UpdateLocalMatch;
   landscape: boolean;
+  hasRenderedAMatch: boolean;
 }
 
 export type FlipCardData = Omit<FlipCardProps, "size">;
@@ -130,9 +130,10 @@ function PlayMatchInner({
   signalRRegistration,
   updateLocalMatch,
   landscape,
+  hasRenderedAMatch,
 }: PlayMatchProps) {
   const initiallyRendered = useRef(false);
-  
+
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
@@ -143,7 +144,7 @@ function PlayMatchInner({
   }, []);
 
   const animationManager = useRef(new AnimationManager(setCardDatasAndRef));
-  const size = useMemo(() => getSize(landscape),[landscape]);
+  const size = useMemo(() => getSize(landscape), [landscape]);
   const [positions, cardSize] = useMemo(() => {
     const positionsAndCardSize = matchLayoutManager.getPositionsAndCardSize(
       size.width,
@@ -287,14 +288,19 @@ function PlayMatchInner({
     // need to prevent re-renders from setting state in here causing a loop
     if (!initiallyRendered.current) {
       if (localMatch.changeHistory.numberOfActions === -1) {
-        const animations = dealThenDiscardIfRequired(
-          myMatch,
-          localMatch,
-          positions,
-          updateLocalMatch,
-          { dealDuration: 0.5, flipDuration, discardDuration }
+        window.setTimeout(
+          () => {
+            const animations = dealThenDiscardIfRequired(
+              myMatch,
+              localMatch,
+              positions,
+              updateLocalMatch,
+              { dealDuration: 0.5, flipDuration, discardDuration }
+            );
+            animationManager.current.animate(animations);
+          },
+          hasRenderedAMatch ? 0 : 2000
         );
-        animationManager.current.animate(animations);
       } else if (
         localMatch.changeHistory.lastChangeDate ===
         myMatch.changeHistory.lastChangeDate
@@ -315,7 +321,14 @@ function PlayMatchInner({
       }
       initiallyRendered.current = true;
     }
-  }, [positions, localMatch, myMatch, setCardDatasAndRef, updateLocalMatch]);
+  }, [
+    positions,
+    localMatch,
+    myMatch,
+    setCardDatasAndRef,
+    updateLocalMatch,
+    hasRenderedAMatch,
+  ]);
 
   const mappedFlipCardDatas = useMemo(() => {
     if (cardDatas === undefined) {

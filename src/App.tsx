@@ -15,7 +15,7 @@ import { DateTransformingJsonHubProtocol } from "./signalr/DateTransformingJsonH
 import { LocalFriendship } from "./LocalMyFriend";
 import { IdToken, useAuth0 } from "@auth0/auth0-react";
 import { LocalMatch, createLocalMatch } from "./LocalMatch";
-import { AppBar, Badge, Collapse, IconButton, Toolbar } from "@mui/material";
+import { AppBar, Badge, IconButton, Toolbar } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import { CardsIcon } from "./CardsIcon";
 import { Matches } from "./Matches";
@@ -36,7 +36,7 @@ import { useOrientation } from "./hooks/useOrientation";
 import { useFullscreenFullscreenElement } from "./hooks/useFullscreen";
 import { useWindowResize } from "./hooks/useWindowResize";
 import { RequiresFullscreen } from "./RequiresFullscreen";
-import cribBoardWoodUrl from "./cribBoardWoodUrl"
+import cribBoardWoodUrl from "./cribBoardWoodUrl";
 import { useImagePreload } from "./hooks/useImagePreload";
 
 type MenuItem = "Friends" | "Matches";
@@ -50,8 +50,10 @@ type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
 
 /* eslint-disable complexity */
 export default function App() {
-  const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl)
-  const woodImageLoaded = useImagePreload(woodUrl)
+  // this is a hack - animations do not work the first time the two images are rendered
+  const hasRenderAMatch = useRef(false);
+  const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl);
+  const woodImageLoaded = useImagePreload(woodUrl);
   const { enqueueSnackbar } = useSnackbar();
   const cribHubRef = useRef<CribHub | undefined>(undefined);
   const playMatchCribClientRef = useRef<PlayMatchCribClient | undefined>(
@@ -90,6 +92,13 @@ export default function App() {
       playMatchCribClientRef.current = undefined;
     };
   }, []);
+
+  const fetchedAndAuthenticated = fetchedInitialData && isAuthenticated;
+  const canPlayMatch =
+    fetchedAndAuthenticated &&
+    playMatch &&
+    woodImageLoaded &&
+    cribBoardImageLoaded;
 
   const setSelectedMenuItemAndRef = (menuItem: MenuItem | undefined) => {
     selectedMenuItemRef.current = menuItem;
@@ -275,7 +284,11 @@ export default function App() {
       signalRConnect();
     }
   }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar]);
-
+  useEffect(() => {
+    if (!hasRenderAMatch.current && canPlayMatch) {
+      hasRenderAMatch.current = true;
+    }
+  });
   const playMatchCribHub = useMemo<PlayMatchProps["playMatchCribHub"]>(
     () => ({
       discard(discard1, discard2) {
@@ -315,7 +328,6 @@ export default function App() {
     return <div>Loading</div>;
   }
 
-  const fetchedAndAuthenticated = fetchedInitialData && isAuthenticated;
   const showMenuComponents = fetchedAndAuthenticated && playMatch === undefined;
   const friendshipsIcon = fetchedAndAuthenticated ? (
     <Badge badgeContent={friendships.length}>
@@ -334,7 +346,7 @@ export default function App() {
   return (
     <div>
       {woodImageLoaded && <WoodWhenPlaying playing={!!playMatch} />}
-      {!playMatch &&
+      {!playMatch && (
         <AppBar position="sticky">
           <Toolbar>
             <NavBar />
@@ -352,10 +364,10 @@ export default function App() {
             </IconButton>
           </Toolbar>
         </AppBar>
-      }
+      )}
       {!!playMatch && (
         <IconButton
-          style={{ position: "absolute", zIndex: 1000, bottom:0 }}
+          style={{ position: "absolute", zIndex: 1000, bottom: 0 }}
           size="small"
           color="primary"
           onClick={() => setPlayMatch(undefined)}
@@ -377,10 +389,13 @@ export default function App() {
           playMatch={doPlayMatch}
         />
       )}
-      {fetchedAndAuthenticated && playMatch && woodImageLoaded && cribBoardImageLoaded && (
+      {canPlayMatch && (
         <PlayMatch
+          hasRenderedAMatch={hasRenderAMatch.current}
           landscape={landscape}
-          key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${size.height}`}
+          key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${
+            size.height
+          }`}
           myMatch={playMatch.match}
           localMatch={playMatch.localMatch}
           signalRRegistration={signalRRegistration}

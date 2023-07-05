@@ -178,7 +178,6 @@ const createCompletionCallbacks = (
   };
 
   const lastDiscardCompleteCallback: OnComplete = () => {
-    console.log("last discard");
     localMatch.changeHistory.numberOfActions = numberOfDiscards;
     updateLocalMatch(localMatch);
     animationCompleteCallback && animationCompleteCallback();
