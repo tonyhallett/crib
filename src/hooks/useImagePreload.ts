@@ -7,9 +7,14 @@ export function useImagePreload(imageUrl: string) {
     const img = new Image();
     img.src = imageUrl;
 
-    img.addEventListener("load", () => {
+    const loadHandler = () => {
       setImageLoaded(true);
-    });
+    };
+    img.addEventListener("load",loadHandler);
+    
+    return () => {
+      img.removeEventListener('load', loadHandler);
+    };
   }, [imageUrl]);
 
   return imageLoaded;
