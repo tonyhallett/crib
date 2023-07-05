@@ -50,7 +50,6 @@ type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
 
 /* eslint-disable complexity */
 export default function App() {
-  //useFetch([woodUrl,cribBoardWoodUrl]);
   const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl)
   const woodImageLoaded = useImagePreload(woodUrl)
   const { enqueueSnackbar } = useSnackbar();
