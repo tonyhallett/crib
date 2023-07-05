@@ -1,6 +1,6 @@
 import { GlobalStyles } from "@mui/material";
 
-const woodUrl = new URL(
+export const woodUrl = new URL(
   "wood1.jpeg?as=webp",
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-ignore

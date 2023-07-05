@@ -169,7 +169,6 @@ const createCompletionCallbacks = (
   };
 
   const lastDealtCompleteCallback: OnComplete = () => {
-    console.log("last dealt");
     localMatch.changeHistory.numberOfActions = 0;
     updateLocalMatch(localMatch);
 

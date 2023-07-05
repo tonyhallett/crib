@@ -29,13 +29,15 @@ import {
 } from "./PlayMatch/PlayMatch";
 import { closeSnackbar, useSnackbar } from "notistack";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { WoodWhenPlaying } from "./WoodWhenPlaying";
+import { WoodWhenPlaying, woodUrl } from "./WoodWhenPlaying";
 import GamesIcon from "@mui/icons-material/Games";
 import { SnackbarAction } from "notistack";
 import { useOrientation } from "./hooks/useOrientation";
 import { useFullscreenFullscreenElement } from "./hooks/useFullscreen";
 import { useWindowResize } from "./hooks/useWindowResize";
 import { RequiresFullscreen } from "./RequiresFullscreen";
+import cribBoardWoodUrl from "./cribBoardWoodUrl"
+import { useImagePreload } from "./hooks/useImagePreload";
 
 type MenuItem = "Friends" | "Matches";
 
@@ -46,8 +48,24 @@ interface PlayMatch {
 
 type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
 
+function useFetch(toFetch:string[]){
+  const fetched = useRef(false);
+  useEffect(() => {
+    if(!fetched.current){
+      toFetch.forEach((fetchUrl) => {
+        fetch(fetchUrl);
+      })
+      fetched.current = true;
+    }
+  },[toFetch])
+  
+}
+
 /* eslint-disable complexity */
 export default function App() {
+  //useFetch([woodUrl,cribBoardWoodUrl]);
+  const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl)
+  const woodImageLoaded = useImagePreload(woodUrl)
   const { enqueueSnackbar } = useSnackbar();
   const cribHubRef = useRef<CribHub | undefined>(undefined);
   const playMatchCribClientRef = useRef<PlayMatchCribClient | undefined>(
@@ -329,7 +347,7 @@ export default function App() {
 
   return (
     <div>
-      <WoodWhenPlaying playing={!!playMatch} />
+      {woodImageLoaded && <WoodWhenPlaying playing={!!playMatch} />}
       {!playMatch &&
         <AppBar position="sticky">
           <Toolbar>
@@ -373,7 +391,7 @@ export default function App() {
           playMatch={doPlayMatch}
         />
       )}
-      {fetchedAndAuthenticated && playMatch && (
+      {fetchedAndAuthenticated && playMatch && woodImageLoaded && cribBoardImageLoaded && (
         <PlayMatch
           landscape={landscape}
           key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${size.height}`}

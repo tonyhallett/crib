@@ -30,6 +30,7 @@ import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../cribBoardWoodUrl";
 import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
+import { useImagePreload } from "../hooks/useImagePreload";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -131,6 +132,7 @@ function PlayMatchInner({
   landscape,
 }: PlayMatchProps) {
   const initiallyRendered = useRef(false);
+  
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
@@ -143,7 +145,7 @@ function PlayMatchInner({
   const animationManager = useRef(new AnimationManager(setCardDatasAndRef));
   const size = useMemo(() => getSize(landscape),[landscape]);
   const [positions, cardSize] = useMemo(() => {
-    return matchLayoutManager.getPositionsAndCardSize(
+    const positionsAndCardSize = matchLayoutManager.getPositionsAndCardSize(
       size.width,
       size.height,
       myMatch,
@@ -154,6 +156,8 @@ function PlayMatchInner({
         deckAndBoxInMiddle: true, //todo options
       }
     );
+    console.log(JSON.stringify(positionsAndCardSize));
+    return positionsAndCardSize;
   }, [myMatch, size.height, size.width]);
   useEffect(() => {
     document.body.style.overflow = "hidden";
