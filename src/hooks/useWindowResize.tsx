@@ -11,7 +11,13 @@ export function useWindowResize() {
   const [size, setSize] = useState(getSize());
   useEffect(() => {
     window.onresize = function () {
-      setSize(getSize());
+      const newSize = getSize();
+      if(newSize.height !== size.height || newSize.width !== size.width){
+        // chrome 1 pixel when not active window
+        if(Math.abs(newSize.height - size.height) !== 1){
+          setSize(newSize);
+        }
+      }
     };
 
     return () => {
