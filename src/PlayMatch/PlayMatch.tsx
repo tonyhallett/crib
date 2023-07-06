@@ -161,6 +161,9 @@ function PlayMatchInner({
   }, [myMatch, size.height, size.width]);
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    }
   }, []);
   useEffect(() => {
     return signalRRegistration({
