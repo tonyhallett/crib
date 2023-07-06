@@ -8,7 +8,7 @@ import {
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
-import { FlipCardData, FlipCardDatas } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
 import { getMyHandCardDatas } from "./getMyHandCardDatas";
 import { fill } from "../utilities/arrayHelpers";
 
@@ -60,6 +60,7 @@ function getOtherPlayersPeggingCardDatas(
       startFaceUp: false,
       isHorizontal: playerPositions.discard.isHorizontal,
       position: playerPositions.discard.positions[i],
+      state: FlipCardState.Todo,
     });
   }
 
@@ -70,6 +71,7 @@ function getOtherPlayersPeggingCardDatas(
       position: peggingPositions.inPlay[inPlayCardWithIndex.index],
       isHorizontal: false,
       zIndex: inPlayCardWithIndex.index,
+      state: FlipCardState.PeggingInPlay,
     };
     otherPlayerCardDatas.push(cardData);
   });
@@ -80,6 +82,7 @@ function getOtherPlayersPeggingCardDatas(
       playingCard: turnedOverCardWithIndex.playingCard,
       position: peggingPositions.turnedOver,
       isHorizontal: false,
+      state: FlipCardState.PeggingTurnedOver,
     };
     otherPlayerCardDatas.push(cardData);
   });
@@ -89,6 +92,7 @@ function getOtherPlayersPeggingCardDatas(
       startFaceUp: false,
       isHorizontal: box.isHorizontal,
       position: box.position,
+      state: FlipCardState.Todo,
     };
   });
   return [...otherPlayerCardDatas, ...boxCardDatas];
@@ -113,6 +117,7 @@ function getMyPeggingCardDatas(
           position: peggingPositions.inPlay[i], // going to need zIndex ?!
           isHorizontal: false,
           zIndex: i,
+          state: FlipCardState.PeggingInPlay,
         };
         cardDatas.push(inPlayCardData);
       }
@@ -124,6 +129,7 @@ function getMyPeggingCardDatas(
           playingCard: turnedOverCard.playingCard,
           position: peggingPositions.turnedOver,
           isHorizontal: false,
+          state: FlipCardState.PeggingTurnedOver,
         };
         cardDatas.push(turnedOverCardProps);
       }
@@ -135,6 +141,7 @@ function getMyPeggingCardDatas(
       startFaceUp: false,
       position: box.position,
       isHorizontal: box.isHorizontal,
+      state: FlipCardState.Todo,
     });
   }
 

@@ -6,7 +6,7 @@ import {
   Positions,
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
-import { FlipCardData, FlipCardDatas } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { getMyHandCardDatas } from "./getMyHandCardDatas";
 
@@ -27,6 +27,7 @@ function getDiscardMyHandAndBoxCardDatas(
         startFaceUp: false,
         position: box.position,
         isHorizontal: box.isHorizontal,
+        state: FlipCardState.Todo,
       });
     }
   }
@@ -43,6 +44,7 @@ function getOtherPlayerBoxCardDatas(
       startFaceUp: false,
       isHorizontal: box.isHorizontal,
       position: box.position,
+      state: FlipCardState.Todo,
     });
   }
   return cardDatas;
@@ -62,6 +64,7 @@ function getDiscardOtherPlayerCardDatas(
       startFaceUp: false,
       isHorizontal: playerPositions.discard.isHorizontal,
       position: playerPositions.discard.positions[i],
+      state: FlipCardState.Todo,
     });
   }
 

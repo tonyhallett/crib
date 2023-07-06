@@ -10,10 +10,10 @@ export function useImagePreload(imageUrl: string) {
     const loadHandler = () => {
       setImageLoaded(true);
     };
-    img.addEventListener("load",loadHandler);
-    
+    img.addEventListener("load", loadHandler);
+
     return () => {
-      img.removeEventListener('load', loadHandler);
+      img.removeEventListener("load", loadHandler);
     };
   }, [imageUrl]);
 

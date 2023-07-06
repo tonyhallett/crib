@@ -6,7 +6,7 @@ import {
   Positions,
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
-import { FlipCardData, UpdateLocalMatch } from "./PlayMatch";
+import { FlipCardData, FlipCardState, UpdateLocalMatch } from "./PlayMatch";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { MyMatch } from "../generatedTypes";
 import {
@@ -112,6 +112,7 @@ function getDealtPlayerCard(
     position: deck.position,
     zIndex: deckZIndex,
     animationSequence,
+    state: FlipCardState.Todo,
   };
 }
 

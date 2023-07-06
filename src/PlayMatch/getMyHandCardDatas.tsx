@@ -1,6 +1,6 @@
 import { PlayingCard } from "../generatedTypes";
 import { DiscardPositions } from "./matchLayoutManager";
-import { FlipCardData } from "./PlayMatch";
+import { FlipCardData, FlipCardState } from "./PlayMatch";
 
 export function getMyHandCardDatas(
   discardPositions: DiscardPositions,
@@ -14,6 +14,7 @@ export function getMyHandCardDatas(
       playingCard: myCard,
       position: discardPositions.positions[index],
       isHorizontal: false,
+      state: FlipCardState.Todo,
     };
     return handCardData;
   });

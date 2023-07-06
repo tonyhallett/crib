@@ -1,5 +1,5 @@
 import { PlayingCard } from "../generatedTypes";
-import { FlipCardData } from "./PlayMatch";
+import { FlipCardData, FlipCardState } from "./PlayMatch";
 import { Box, Deck } from "./matchLayoutManager";
 
 export function getNonPlayerCardDatas(
@@ -16,6 +16,7 @@ export function getNonPlayerCardDatas(
       position: deck.position,
       zIndex: 2,
       playingCard: cutCard,
+      state: FlipCardState.Todo,
     },
     additionalBoxCard: requiresAdditionalBoxCard
       ? {
@@ -23,6 +24,7 @@ export function getNonPlayerCardDatas(
           isHorizontal: deck.isHorizontal,
           position: deck.position,
           zIndex: 1,
+          state: FlipCardState.Todo,
         }
       : undefined,
     bottomDeckCard: {
@@ -30,6 +32,7 @@ export function getNonPlayerCardDatas(
       isHorizontal: deck.isHorizontal,
       position: deck.position,
       zIndex: 0,
+      state: FlipCardState.Todo,
     },
   };
 }
