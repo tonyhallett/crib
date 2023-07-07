@@ -20,6 +20,36 @@ export const FourSpades: PlayingCard = {
   suit: Suit.Spades,
 };
 
+export const FiveSpades: PlayingCard = {
+  pips: Pips.Five,
+  suit: Suit.Spades,
+};
+
+export const SixSpades: PlayingCard = {
+  pips: Pips.Six,
+  suit: Suit.Spades,
+};
+
+export const SevenSpades: PlayingCard = {
+  pips: Pips.Seven,
+  suit: Suit.Spades,
+};
+
+export const EightSpades: PlayingCard = {
+  pips: Pips.Eight,
+  suit: Suit.Spades,
+};
+
+export const NineSpades: PlayingCard = {
+  pips: Pips.Nine,
+  suit: Suit.Spades,
+};
+
+export const TenSpades: PlayingCard = {
+  pips: Pips.Ten,
+  suit: Suit.Spades,
+};
+
 export const JackSpades: PlayingCard = {
   pips: Pips.Jack,
   suit: Suit.Spades,

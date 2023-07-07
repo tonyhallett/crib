@@ -144,7 +144,6 @@ function PlayMatchInner({
   hasRenderedAMatch,
 }: PlayMatchProps) {
   const initiallyRendered = useRef(false);
-  const [scope, animate] = useAnimateSegments();
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
@@ -387,12 +386,97 @@ function PlayMatchInner({
     ? {}
     : { transform: `translateY(${cribBoardWidth}px)` };
 
-  //
+  const [peggingOverlay, bind] = usePeggingOverlay({
+    cardSize,
+    cribBoardWidth,
+    landscape,
+    mappedFlipCardDatas,
+  });
+
+  return (
+    <>
+      <div style={cribBoardStyle}>
+        <AnimatedCribBoard
+          cribBoardUrl={cribBoardWoodUrl}
+          pegHoleRadius={0.05}
+          pegRadius={0.09}
+          pegTrackBoxPaddingPercentage={0.3}
+          height={landscape ? window.innerHeight : window.innerWidth}
+          width={cribBoardWidth}
+          pegHorizontalSpacing={0.3}
+          pegPadding={0.1}
+          strokeWidth={0.05}
+          colouredScores={getColouredScores(myMatch.scores)}
+        />
+      </div>
+      {peggingOverlay}
+      <div
+        {...bind()}
+        style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
+      >
+        {mappedFlipCardDatas.map((cardData, i) => (
+          <FlipCard key={i} {...cardData} size={cardSize} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+export const PlayMatch = memo(PlayMatchInner, (prevProps, nextProps) => {
+  return prevProps.localMatch.id === nextProps.localMatch.id;
+});
+
+const maximizePeggingOverlayCardSize = (
+  numCards: number,
+  maxHeight: number,
+  heightWidthRatio: number
+) => {
+  let lastWidth = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const cardsWidth = numCards * lastWidth;
+    const cardHeight = lastWidth * heightWidthRatio;
+    if (
+      cardsWidth > document.documentElement.clientWidth ||
+      cardHeight > maxHeight
+    ) {
+      return {
+        width: lastWidth,
+        height: lastWidth * heightWidthRatio,
+        totalWidth: cardsWidth,
+      };
+    }
+    lastWidth++;
+  }
+};
+
+function usePeggingOverlay({
+  mappedFlipCardDatas,
+  cardSize,
+  landscape,
+  cribBoardWidth,
+}: {
+  mappedFlipCardDatas: FlipCardData[];
+  cardSize: Size;
+  cribBoardWidth: number;
+  landscape: boolean;
+}) {
   const lookedAtDragInitial = useRef<
     { overPeggedCards: boolean } | undefined
   >();
   const overlayCardSize = useRef<(Size & { totalWidth: number }) | undefined>();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [scope, animate] = useAnimateSegments();
+  const [scaleTranslate, setScaleTranslate] = useState<{
+    scale: number;
+    translateX: number;
+  }>({ scale: 1, translateX: 0 });
+  const peggingCardDatas = mappedFlipCardDatas
+    .filter((cardData) => cardData.state === FlipCardState.PeggingInPlay)
+    .sort((a, b) => a.position.x - b.position.x);
+  const hasPeggedCards = peggingCardDatas.length > 0;
+  const peggedCardY = hasPeggedCards
+    ? peggingCardDatas[0].position.y + (landscape ? 0 : cribBoardWidth)
+    : 0;
   const bind = useDrag(
     ({ down, initial: [initX, initY], movement: [mx, my] }) => {
       if (down) {
@@ -419,14 +503,19 @@ function PlayMatchInner({
             ),
           };
           if (lookedAtDragInitial.current.overPeggedCards) {
-            animate([[scope.current, { opacity: 1 }]]);
+            animate([[scope.current, { zIndex: 100, opacity: 1 }]]);
           }
         }
         if (lookedAtDragInitial.current.overPeggedCards) {
-          const myMax = document.documentElement.clientHeight / 2;
-          const maxScaleFactor = 3;
-          const scale = 1 + (Math.abs(my) / myMax) * maxScaleFactor;
-
+          // this needs to change
+          const myMax = Math.min(
+            document.documentElement.clientHeight - peggedCardY,
+            document.documentElement.clientHeight -
+              (peggedCardY + cardSize.width)
+          ); //document.documentElement.clientHeight / 2;
+          const maxScaleFactor = peggedCardY / overlayCardSize.current!.height;
+          const myScale = Math.min(1, Math.abs(my) / myMax);
+          const scale = 1 + myScale * (maxScaleFactor - 1);
           const unscaledWidth = overlayCardSize.current
             ? overlayCardSize.current.totalWidth
             : 0;
@@ -439,54 +528,30 @@ function PlayMatchInner({
           const absX = Math.abs(mx);
           const restrainedX = Math.min(maxX, absX);
           const xRatio = mx === 0 ? 0 : restrainedX / maxX;
-          const animateX = -(xRatio * widthDiff);
-          animate([
-            [
-              scope.current,
-              {
-                scale,
-                x: animateX,
-              },
-            ],
-          ]);
+          const translateX = -(xRatio * widthDiff);
+          setScaleTranslate({ scale, translateX: translateX });
         }
       } else {
         lookedAtDragInitial.current = undefined;
-        animate([[scope.current, { opacity: 0, scale: 1, x: 0 }]]);
+        animate([[scope.current, { zIndex: 0, opacity: 0 }]]);
       }
-    }
+    },
+    { enabled: hasPeggedCards }
   );
 
-  //memo ?
-  const maximizePeggingOverlayCardWidth = (numCards: number) => {
-    // should be using maths formula when go below above half the last tested value - newton
-    let lastWidth = 1;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const cardsWidth = numCards * lastWidth;
-      if (cardsWidth > document.documentElement.clientWidth) {
-        return lastWidth;
-      }
-      lastWidth++;
-    }
-    throw new Error("Should not get here");
-  };
-  const getPeggingOverlay = () => {
-    const peggingCardDatas = mappedFlipCardDatas
-      .filter((cardData) => cardData.state === FlipCardState.PeggingInPlay)
-      .sort((a, b) => a.position.x - b.position.x);
-    if (peggingCardDatas.length === 0) {
+  function getPeggingOverlay() {
+    if (!hasPeggedCards) {
       return undefined;
     }
-    const cardWidth = maximizePeggingOverlayCardWidth(peggingCardDatas.length);
-    const cardHeight = (cardWidth * cardSize.height) / cardSize.width;
-    overlayCardSize.current = {
-      width: cardWidth,
-      height: cardHeight,
-      totalWidth: peggingCardDatas.length * cardWidth,
-    };
+    const overlayCardSizes = maximizePeggingOverlayCardSize(
+      peggingCardDatas.length,
+      peggedCardY,
+      cardSize.height / cardSize.width
+    );
+
+    overlayCardSize.current = overlayCardSizes;
     return peggingCardDatas.map((cardData, i) => {
-      const x = i * cardWidth;
+      const x = i * overlayCardSizes.width;
       return (
         <Card
           key={i}
@@ -495,44 +560,26 @@ function PlayMatchInner({
           faceDown={false}
           cardFlip={CardFlip.AboveCard}
           position={{ x, y: 0 }}
-          size={{ width: cardWidth, height: cardHeight }}
+          size={overlayCardSizes}
           playingCard={cardData.playingCard as PlayingCard}
         />
       );
     });
-  };
+  }
 
-  return (
-    <>
-      <div style={cribBoardStyle}>
-        <AnimatedCribBoard
-          cribBoardUrl={cribBoardWoodUrl}
-          pegHoleRadius={0.05}
-          pegRadius={0.09}
-          pegTrackBoxPaddingPercentage={0.3}
-          height={landscape ? window.innerHeight : window.innerWidth}
-          width={cribBoardWidth}
-          pegHorizontalSpacing={0.3}
-          pegPadding={0.1}
-          strokeWidth={0.05}
-          colouredScores={getColouredScores(myMatch.scores)}
-        />
-      </div>
-      <div ref={scope} style={{ position: "absolute", top: 0, opacity: 0 }}>
-        {getPeggingOverlay()}
-      </div>
-      <div
-        {...bind()}
-        style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
-      >
-        {mappedFlipCardDatas.map((cardData, i) => (
-          <FlipCard key={i} {...cardData} size={cardSize} />
-        ))}
-      </div>
-    </>
-  );
+  return [
+    <div
+      key="peggingOverlay"
+      ref={scope}
+      style={{
+        position: "absolute",
+        top: 0,
+        opacity: 0,
+        transform: `translateX(${scaleTranslate.translateX}px) scale(${scaleTranslate.scale})`,
+      }}
+    >
+      {getPeggingOverlay()}
+    </div>,
+    bind,
+  ] as const;
 }
-
-export const PlayMatch = memo(PlayMatchInner, (prevProps, nextProps) => {
-  return prevProps.localMatch.id === nextProps.localMatch.id;
-});

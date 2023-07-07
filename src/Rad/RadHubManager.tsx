@@ -15,10 +15,16 @@ import { cribStorage } from "./getRad";
 import { LocalMatch } from "../LocalMatch";
 import {
   AceSpades,
+  EightSpades,
+  FiveSpades,
   FourSpades,
   JackSpades,
   KingSpades,
+  NineSpades,
   QueenSpades,
+  SevenSpades,
+  SixSpades,
+  TenSpades,
   ThreeSpades,
   TwoSpades,
 } from "../../test-helpers/cards";
@@ -336,17 +342,17 @@ export function RadHubManager() {
           inPlayCards: [
             {
               owner: "Me",
-              playingCard: FourSpades,
+              playingCard: AceSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player2",
-              playingCard: KingSpades,
+              playingCard: TwoSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player3",
-              playingCard: JackSpades,
+              playingCard: ThreeSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
@@ -356,37 +362,37 @@ export function RadHubManager() {
             },
             {
               owner: "Player2",
-              playingCard: KingSpades,
+              playingCard: FiveSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player3",
-              playingCard: JackSpades,
+              playingCard: SixSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Me",
-              playingCard: FourSpades,
+              playingCard: SevenSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player2",
-              playingCard: KingSpades,
+              playingCard: EightSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player3",
-              playingCard: JackSpades,
+              playingCard: NineSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Me",
-              playingCard: FourSpades,
+              playingCard: TenSpades,
               peggingScore: null as unknown as PegScoring,
             },
             {
               owner: "Player2",
-              playingCard: KingSpades,
+              playingCard: JackSpades,
               peggingScore: null as unknown as PegScoring,
             },
             //{ owner: "Player3", playingCard: JackSpades },
