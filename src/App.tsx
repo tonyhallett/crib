@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import functionAppPath from "./utilities/functionAppPath";
 import {
   clientFactory,
@@ -22,7 +22,7 @@ import { Matches } from "./Matches";
 import { FetchingIndicator } from "./FetchingIndicator";
 import { Friends } from "./Friends";
 import {
-  PlayMatch,
+  PlayMatch as MyMatchAndLocal,
   PlayMatchCribClient,
   PlayMatchCribHub,
   PlayMatchProps,
@@ -38,10 +38,11 @@ import { useWindowResize } from "./hooks/useWindowResize";
 import { RequiresFullscreen } from "./RequiresFullscreen";
 import cribBoardWoodUrl from "./cribBoardWoodUrl";
 import { useImagePreload } from "./hooks/useImagePreload";
+import { PlayMatchContext } from "./PlayMatchContext";
 
 type MenuItem = "Friends" | "Matches";
 
-interface PlayMatch {
+export interface MyMatchAndLocal {
   localMatch: LocalMatch;
   match: MyMatch;
 }
@@ -62,6 +63,7 @@ function ensureLocalMatch(match:MyMatch){
 
 /* eslint-disable complexity */
 export default function App() {
+  const playMatchContext = useContext(PlayMatchContext)
   // this is a hack - animations do not work the first time the two images are rendered
   const hasRenderAMatch = useRef(false);
   const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl);
@@ -93,8 +95,8 @@ export default function App() {
     MenuItem | undefined
   >(undefined);
   const selectedMenuItemRef = useRef<MenuItem | undefined>(undefined);
-  const [playMatch, setPlayMatch] = useState<PlayMatch | undefined>(undefined);
-  const playMatchRef = useRef<PlayMatch | undefined>(undefined);
+  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>(undefined);
+  const playMatchRef = useRef<MyMatchAndLocal | undefined>(undefined);
 
   const signalRRegistration = useCallback<
     PlayMatchProps["signalRRegistration"]
@@ -129,16 +131,17 @@ export default function App() {
     setMatches(matches);
   };
 
-  const setPlayMatchAndRef = (playMatch: PlayMatch | undefined) => {
+  const setPlayMatchAndRef = useCallback((playMatch: MyMatchAndLocal | undefined) => {
     playMatchRef.current = playMatch;
     setPlayMatch(playMatch);
-  };
+    playMatchContext.playMatch(playMatch)
+  },[playMatchContext]);
 
   const doPlayMatch = useCallback((match: MyMatch, localMatch: LocalMatch) => {
     setSelectedMenuItemAndRef(undefined);
     document.documentElement.requestFullscreen();
     setPlayMatchAndRef({ localMatch, match });
-  }, []);
+  }, [setPlayMatchAndRef]);
 
   const enqueueMatchesSnackbar = useCallback(
     (myMatch: MyMatch) => {
@@ -335,20 +338,20 @@ export default function App() {
     () => ({
       discard(discard1, discard2) {
         (cribHubRef.current as CribHub).discard(
-          (playMatch as PlayMatch).match.id,
+          (playMatch as MyMatchAndLocal).match.id,
           discard1,
           discard2
         );
       },
       peg(peggedCard) {
         (cribHubRef.current as CribHub).peg(
-          (playMatch as PlayMatch).match.id,
+          (playMatch as MyMatchAndLocal).match.id,
           peggedCard
         );
       },
       ready() {
         (cribHubRef.current as CribHub).ready(
-          (playMatch as PlayMatch).match.id
+          (playMatch as MyMatchAndLocal).match.id
         );
       },
     }),
@@ -416,7 +419,7 @@ export default function App() {
           style={{ position: "absolute", zIndex: 1000, bottom: 0 }}
           size="small"
           color="primary"
-          onClick={() => setPlayMatch(undefined)}
+          onClick={() => setPlayMatchAndRef(undefined)}
         >
           <MoreHorizIcon />
         </IconButton>
@@ -436,7 +439,7 @@ export default function App() {
         />
       )}
       {canPlayMatch && (
-        <PlayMatch
+        <MyMatchAndLocal
           hasRenderedAMatch={hasRenderAMatch.current}
           landscape={landscape}
           key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${

@@ -6,8 +6,9 @@ import {
   User,
 } from "@auth0/auth0-react";
 import { AuthState } from "@auth0/auth0-react/src/auth-state";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useContext } from "react";
 import { RadHubManager } from "./RadHubManager";
+import { PlayMatchContext, PlayMatchContextProvider } from "../PlayMatchContext";
 
 export const Auth0Provider = (opts: Auth0ProviderOptions): JSX.Element => {
   const [state, setState] = useState<AuthState<User>>({
@@ -77,10 +78,14 @@ export const Auth0Provider = (opts: Auth0ProviderOptions): JSX.Element => {
     handleRedirectCallback,
   ]) as unknown as Auth0ContextInterface;
 
+  const defaultPlayMatchContext = useContext(PlayMatchContext)
+
   return (
     <Auth0Context.Provider value={contextValue}>
-      <RadHubManager />
-      {opts.children}
+      <PlayMatchContextProvider value={defaultPlayMatchContext}>
+        <RadHubManager />
+        {opts.children}
+      </PlayMatchContextProvider>
     </Auth0Context.Provider>
   );
 };
