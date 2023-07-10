@@ -162,7 +162,8 @@ function getNumberOfDiscards(match: MyMatch, discardCount: number) {
 const createCompletionCallbacks = (
   localMatch: LocalMatch,
   updateLocalMatch: UpdateLocalMatch,
-  numberOfDiscards: number
+  numberOfDiscards: number,
+  numberOfMatchActions: number
 ) => {
   let animationCompleteCallback: () => void | undefined;
   const registration = (callback: () => void) => {
@@ -170,8 +171,14 @@ const createCompletionCallbacks = (
   };
 
   const lastDealtCompleteCallback: OnComplete = () => {
-    localMatch.changeHistory.numberOfActions = 0;
-    updateLocalMatch(localMatch);
+    const newLocalMatch:LocalMatch = {
+      ...localMatch,
+      changeHistory:{
+        ...localMatch.changeHistory,
+        numberOfActions:numberOfMatchActions - numberOfDiscards
+      }
+    }
+    updateLocalMatch(newLocalMatch);
 
     if (numberOfDiscards === 0) {
       animationCompleteCallback && animationCompleteCallback();
@@ -179,8 +186,16 @@ const createCompletionCallbacks = (
   };
 
   const lastDiscardCompleteCallback: OnComplete = () => {
-    localMatch.changeHistory.numberOfActions = numberOfDiscards;
-    updateLocalMatch(localMatch);
+    const newLocalMatch:LocalMatch = {
+      ...localMatch,
+      changeHistory:{
+        matchCreationDate:localMatch.changeHistory.matchCreationDate,
+        numberOfActions:numberOfMatchActions,
+        lastChangeDate:new Date()
+      }
+    }
+    
+    updateLocalMatch(newLocalMatch);
     animationCompleteCallback && animationCompleteCallback();
   };
 
@@ -240,7 +255,8 @@ function doDealPlayerCardsAndPossiblyDiscard(
   const completionCallbacks = createCompletionCallbacks(
     localMatch,
     updateLocalMatch,
-    numberOfDiscards
+    numberOfDiscards,
+    match.changeHistory.numberOfActions
   );
 
   // eslint-disable-next-line complexity

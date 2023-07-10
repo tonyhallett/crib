@@ -12,10 +12,11 @@ import {
   CribGameState,
   CribHub,
   MyMatch,
+  Pips,
   PlayingCard,
   Score,
 } from "../generatedTypes";
-import { LocalMatch } from "../LocalMatch";
+import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
 import { Box, Positions, Size, matchLayoutManager } from "./matchLayoutManager";
@@ -128,10 +129,15 @@ function getColouredScore(score: Score, index: number): ColouredScore {
 }
 function getColouredScores(scores: Score[]): ColouredScores {
   return {
-    player1: getColouredScore(scores[0], 0),
-    player2: getColouredScore(scores[1], 1),
-    player3: scores.length === 3 ? getColouredScore(scores[2], 2) : undefined,
+    pegger1: getColouredScore(scores[0], 0),
+    pegger2: getColouredScore(scores[1], 1),
+    pegger3: scores.length === 3 ? getColouredScore(scores[2], 2) : undefined,
   };
+}
+
+interface CribBoardState{
+  colouredScores:ColouredScores,
+  onComplete?:OnComplete
 }
 
 function PlayMatchInner({
@@ -146,6 +152,11 @@ function PlayMatchInner({
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
+  );
+  const [cribBoardState, setCribBoardState] = useState<CribBoardState>(
+    {
+      colouredScores:getColouredScores(myMatch.scores)
+    }
   );
 
   const cardDatasRef = useRef<FlipCardDatas | undefined>(cardDatas);
@@ -178,7 +189,7 @@ function PlayMatchInner({
   }, []);
   useEffect(() => {
     return signalRRegistration({
-      discard(playerId, cutCard) {
+      discard(playerId, cutCard,myMatch) {
         function getNew(
           prevCardDatas: FlipCardDatas,
           discardDuration: number,
@@ -186,9 +197,21 @@ function PlayMatchInner({
           cardFlipDuration: number
         ): FlipCardDatasWithCompletionRegistration {
           let animationCompleteCallback: () => void | undefined;
+          const syncChangeHistories = () => {
+            const newLocalMatch:LocalMatch = {
+              ...localMatch,
+              changeHistory:{
+                ...myMatch.changeHistory,
+                lastChangeDate:new Date()
+              }
+            }
+            updateLocalMatch(newLocalMatch);
+          }
           const complete = () => {
             animationCompleteCallback && animationCompleteCallback();
+            syncChangeHistories();
           };
+
           const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
 
           const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
@@ -218,14 +241,32 @@ function PlayMatchInner({
             return newCardData;
           };
 
-          const getCutCardAnimationData = (prevCardData: FlipCardData) => {
+          const getCutCardAnimationData = (prevCardData: FlipCardData, isJack:boolean) => {
             const newCardData = { ...prevCardData };
             newCardData.playingCard = cutCard;
             const flipAnimation: FlipAnimation = {
               flip: true,
               duration: cardFlipDuration,
               at: cardFlipDelay,
-              onComplete: complete,
+              onComplete: () => {
+                let requiresCompletion = true;
+                if(isJack){
+                  if(myMatch.gameState === CribGameState.Pegging){
+                    requiresCompletion = false;
+                    setCribBoardState({
+                      colouredScores:getColouredScores(myMatch.scores),
+                      onComplete(){
+                        complete();
+                      }
+                    })
+                  }else{
+                    throw new Error("Not implemented");
+                  }
+                }
+                if(requiresCompletion){
+                  complete();
+                }
+              }
             };
             newCardData.animationSequence = [flipAnimation];
             return newCardData;
@@ -266,7 +307,8 @@ function PlayMatchInner({
 
           if (cutCard) {
             newFlipCardDatas.cutCard = getCutCardAnimationData(
-              prevFlipCardDatas.cutCard
+              prevFlipCardDatas.cutCard,
+              myMatch.cutCard.pips === Pips.Jack
             );
           }
 
@@ -295,13 +337,13 @@ function PlayMatchInner({
         //
       },
     });
-  }, [signalRRegistration, myMatch, positions]);
+  }, [signalRRegistration, myMatch, positions, localMatch, updateLocalMatch]);
 
   /* eslint-disable complexity */
   useEffect(() => {
     // need to prevent re-renders from setting state in here causing a loop
     if (!initiallyRendered.current) {
-      if (localMatch.changeHistory.numberOfActions === -1) {
+      if (localMatch.changeHistory.numberOfActions === dealActionIndicator) {
         window.setTimeout(
           () => {
             const animations = dealThenDiscardIfRequired(
@@ -316,8 +358,8 @@ function PlayMatchInner({
           hasRenderedAMatch ? 0 : 2000
         );
       } else if (
-        localMatch.changeHistory.lastChangeDate ===
-        myMatch.changeHistory.lastChangeDate
+        localMatch.changeHistory.numberOfActions ===
+        myMatch.changeHistory.numberOfActions
       ) {
         // no animations required
         switch (myMatch.gameState) {
@@ -366,6 +408,12 @@ function PlayMatchInner({
     ];
   }, [cardDatas]);
 
+  const flipCards = useMemo(() => {
+    return mappedFlipCardDatas.map((cardData, i) => (
+      <FlipCard key={i} {...cardData} size={cardSize} />
+    ))
+  },[cardSize, mappedFlipCardDatas]);
+
   const cribBoardHeight = landscape ? window.innerHeight : window.innerWidth;
   const cribBoardWidth = cribBoardHeight * cribBoardWidthRatio;
 
@@ -406,7 +454,8 @@ function PlayMatchInner({
           pegHorizontalSpacing={0.3}
           pegPadding={0.1}
           strokeWidth={0.05}
-          colouredScores={getColouredScores(myMatch.scores)}
+          colouredScores={cribBoardState.colouredScores}
+          onComplete={cribBoardState.onComplete}
         />
       </div>
       {peggingOverlay}
@@ -414,9 +463,7 @@ function PlayMatchInner({
         {...bind()}
         style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
       >
-        {mappedFlipCardDatas.map((cardData, i) => (
-          <FlipCard key={i} {...cardData} size={cardSize} />
-        ))}
+        {flipCards}
       </div>
     </>
   );

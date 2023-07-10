@@ -50,8 +50,8 @@ function canGo(match: MyMatch): boolean {
 function newMoves(match: MyMatch, localMatch: LocalMatch | null): boolean {
   if (localMatch) {
     return (
-      match.changeHistory.lastChangeDate >
-      localMatch.changeHistory.lastChangeDate
+      match.changeHistory.numberOfActions >
+      localMatch.changeHistory.numberOfActions
     );
   }
   // todo

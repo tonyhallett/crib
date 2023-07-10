@@ -5,13 +5,13 @@ import cribBoardWoodUrl from "../cribBoardWoodUrl";
 
 export function CribBoardExample() {
   const [scores, setScores] = useState<ColouredScores>({
-    player1: {
+    pegger1: {
       frontPeg: 0,
       backPeg: 0,
       colour: "red",
       gameScore: 0,
     },
-    player2: {
+    pegger2: {
       frontPeg: 0,
       backPeg: 0,
       colour: "blue",
@@ -30,29 +30,29 @@ export function CribBoardExample() {
       <button
         onClick={() => {
           setScores((scores) => {
-            let frontPeg = scores.player1.frontPeg;
+            let frontPeg = scores.pegger1.frontPeg;
             const backPeg = frontPeg === 0 ? 0 : frontPeg;
             frontPeg++;
 
             return {
-              player1: {
+              pegger1: {
                 frontPeg,
                 backPeg,
                 colour: "red",
-                gameScore: scores.player1.gameScore,
+                gameScore: scores.pegger1.gameScore,
               },
-              player2: {
+              pegger2: {
                 frontPeg,
                 backPeg,
                 colour: "blue",
-                gameScore: scores.player2.gameScore,
+                gameScore: scores.pegger2.gameScore,
               },
-              player3: scores.player3
+              pegger3: scores.pegger3
                 ? {
                     frontPeg,
                     backPeg,
                     colour: "green",
-                    gameScore: scores.player3.gameScore,
+                    gameScore: scores.pegger3.gameScore,
                   }
                 : undefined,
             };
@@ -123,9 +123,9 @@ export function AnimatedCribBoardExample() {
           onClick={() => {
             setBegin(true);
             setScores({
-              player1: player1Score,
-              player2: player2Score,
-              player3: twoPlayers ? undefined : player3Score,
+              pegger1: player1Score,
+              pegger2: player2Score,
+              pegger3: twoPlayers ? undefined : player3Score,
             });
           }}
         >
@@ -134,9 +134,9 @@ export function AnimatedCribBoardExample() {
         <button
           onClick={() => {
             setScores({
-              player1: player1Score,
-              player2: player2Score,
-              player3: twoPlayers ? undefined : player3Score,
+              pegger1: player1Score,
+              pegger2: player2Score,
+              pegger3: twoPlayers ? undefined : player3Score,
             });
           }}
         >

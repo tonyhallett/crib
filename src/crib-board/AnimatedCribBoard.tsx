@@ -16,11 +16,12 @@ import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegmen
 import {
   ColouredScores,
   getBottomEllipseAngles,
-  getPlayerTrackPositionIndex,
+  getPeggerTrackPositionIndex as getPeggerTrackPositionIndex,
   getPegBox,
-  getReversedPlayerTrackPositionIndex,
+  getReversedPeggerTrackPositionIndex as getReversedPeggerTrackPositionIndex,
   ColouredScore,
 } from "./CribBoard";
+import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 
 export interface PegInfo {
   initial: {
@@ -50,11 +51,11 @@ function getPegInfo(colouredScore: ColouredScore): PegInfo {
 
 export function getPegInfos(colouredScores: ColouredScores) {
   const pegInfos = [
-    getPegInfo(colouredScores.player1),
-    getPegInfo(colouredScores.player2),
+    getPegInfo(colouredScores.pegger1),
+    getPegInfo(colouredScores.pegger2),
   ];
-  if (colouredScores.player3) {
-    pegInfos.push(getPegInfo(colouredScores.player3));
+  if (colouredScores.pegger3) {
+    pegInfos.push(getPegInfo(colouredScores.pegger3));
   }
   return pegInfos;
 }
@@ -70,12 +71,12 @@ export function getNewPegInfos(
   return newPegInfos;
 }
 
-export function getPegIdentifier(player: number, front: boolean) {
+export function getPegIdentifier(pegger: number, front: boolean) {
   const frontBackIdentifier = front ? "front" : "back";
-  return `player${player}_${frontBackIdentifier}_peg`;
+  return `pegger${pegger}_${frontBackIdentifier}_peg`;
 }
 
-const getGamePegId = (player: number) => `gamePeg${player}`;
+const getGamePegId = (pegger: number) => `gamePeg${pegger}`;
 
 const getIsNewGame = (newPegInfos: PegInfo[]) => {
   let isNewGame = true;
@@ -103,6 +104,7 @@ export function AnimatedCribBoard({
   at = 0,
   // could even determine distance and keep constant
   moveDuration = 2,
+  onComplete
 }: {
   cribBoardUrl: string;
   pegHoleRadius: number;
@@ -116,7 +118,7 @@ export function AnimatedCribBoard({
   pegRadius: number;
   at?: number;
   moveDuration?: number;
-  raiseDuration?: number;
+  onComplete?:() => void
 }) {
   const [scope, animate] = useAnimateSegments();
   const rendered = useRef(false);
@@ -224,29 +226,30 @@ export function AnimatedCribBoard({
         : { track: 0, from: 0 };
     };
 
-    const getTrackPegX = (track: number, player: number) => {
-      const playerTrackPositionIndex = getPlayerTrackPositionIndex(
+    const getTrackPegX = (track: number, pegger: number) => {
+      const peggerTrackPositionIndex = getPeggerTrackPositionIndex(
         track,
-        player
+        pegger
       );
       return (
         (track - 1) * (pegBoxWidth + pegTrackPadding) +
-        getPegHoleX(playerTrackPositionIndex)
+        getPegHoleX(peggerTrackPositionIndex)
       );
     };
+
     const getNonEllipsePegPosition = (
       score: number,
-      player: number
+      pegger: number
     ): { x: number; y: number } | undefined => {
       const { track, from } = getTrackAndFrom(score);
       if (track !== 0) {
-        const playerTrackPositionIndex = getPlayerTrackPositionIndex(
+        const peggerTrackPositionIndex = getPeggerTrackPositionIndex(
           track,
-          player
+          pegger
         );
         const x =
           (track - 1) * (pegBoxWidth + pegTrackPadding) +
-          getPegHoleX(playerTrackPositionIndex);
+          getPegHoleX(peggerTrackPositionIndex);
 
         const pegBox = getPegBox(from);
         const box = track === 3 ? pegBox.box - 1 : 7 - pegBox.box;
@@ -259,17 +262,17 @@ export function AnimatedCribBoard({
       }
     };
 
-    const getEllipsePegPosition = (score: number, player: number) => {
+    const getEllipsePegPosition = (score: number, pegger: number) => {
       if (score > 80 && score < 86) {
-        return getBottomEllipsePosition(score, player);
+        return getBottomEllipsePosition(score, pegger);
       } else {
-        return getTopEllipsePosition(score, player);
+        return getTopEllipsePosition(score, pegger);
       }
     };
 
-    const getTopEllipsePosition = (score: number, player: number) => {
-      const playerTrackPositionIndex =
-        getReversedPlayerTrackPositionIndex(player);
+    const getTopEllipsePosition = (score: number, pegger: number) => {
+      const peggerTrackPositionIndex =
+        getReversedPeggerTrackPositionIndex(pegger);
       let pegPosition = score % 5;
       if (pegPosition === 0) {
         pegPosition = 5;
@@ -282,71 +285,71 @@ export function AnimatedCribBoard({
         pegIndex = Math.abs(5 - pegPosition);
       }
 
-      return quadrantPositions[playerTrackPositionIndex][pegIndex];
+      return quadrantPositions[peggerTrackPositionIndex][pegIndex];
     };
 
-    const getBottomEllipsePosition = (score: number, player: number) => {
-      const playerTrackPositionIndex =
-        getReversedPlayerTrackPositionIndex(player);
+    const getBottomEllipsePosition = (score: number, pegger: number) => {
+      const peggerTrackPositionIndex =
+        getReversedPeggerTrackPositionIndex(pegger);
       let pegPosition = score % 5;
       if (pegPosition === 0) {
         pegPosition = 5;
       }
-      return bottomEllipsePegPositions[playerTrackPositionIndex][
+      return bottomEllipsePegPositions[peggerTrackPositionIndex][
         pegPosition - 1
       ];
     };
 
     const getNonWinningPegPosition = (
       score: number,
-      player: number
+      pegger: number
     ): { x: number; y: number } => {
       return (
-        getNonEllipsePegPosition(score, player) ||
-        getEllipsePegPosition(score, player)
+        getNonEllipsePegPosition(score, pegger) ||
+        getEllipsePegPosition(score, pegger)
       );
     };
     const getStartPegPosition = (
-      player: number,
+      pegger: number,
       isFrontPeg: boolean
     ): { x: number; y: number } => {
       return {
-        x: getTrackPegX(1, player),
+        x: getTrackPegX(1, pegger),
         y: isFrontPeg ? startPegFrontY : startPegBackY,
       };
     };
     const getPegPosition = (
       score: number,
-      player: number,
+      pegger: number,
       isFrontPeg: boolean
     ): { x: number; y: number } => {
       return score === 121
         ? winningPegPosition
         : score === 0
-        ? getStartPegPosition(player, isFrontPeg)
-        : getNonWinningPegPosition(score, player);
+        ? getStartPegPosition(pegger, isFrontPeg)
+        : getNonWinningPegPosition(score, pegger);
     };
 
     const colouredScores = colouredScoresRef.current;
-    const scores = [colouredScores.player1, colouredScores.player2];
-    if (colouredScores.player3) {
-      scores.push(colouredScores.player3);
+    const scores = [colouredScores.pegger1, colouredScores.pegger2];
+    if (colouredScores.pegger3) {
+      scores.push(colouredScores.pegger3);
     }
 
     const pegs: JSX.Element[] = pegInfos.current
-      .map((pegInfo, player) => {
+      .map((pegInfo, pegger) => {
         const pegs = [pegInfo.initial.frontPeg, pegInfo.initial.backPeg].map(
           (score, i) => {
             const front = i === 0;
-            const { x, y } = getPegPosition(score, player + 1, front);
+            const { x, y } = getPegPosition(score, pegger + 1, front);
             return (
               <motion.circle
                 style={{
                   x,
                   y,
                 }}
-                id={getPegIdentifier(player, front)}
-                key={`${player}_${i}`}
+                id={getPegIdentifier(pegger, front)}
+                key={`${pegger}_${i}`}
                 stroke="none"
                 r={pegRadius}
                 cx={pegHoleRadius}
@@ -366,26 +369,26 @@ export function AnimatedCribBoard({
       ));
     };
 
-    const getGamePegPosition = (player: number, score: number) => {
+    const getGamePegPosition = (pegger: number, score: number) => {
       return {
         x: getPegHoleX(score),
-        y: startGameScoreY + getPegHoleY(player),
+        y: startGameScoreY + getPegHoleY(pegger),
       };
     };
 
     const gameScorePegs = scores
-      .map((playerScore) => {
+      .map((peggerScore) => {
         return {
-          score: playerScore.gameScore,
-          colour: playerScore.colour,
+          score: peggerScore.gameScore,
+          colour: peggerScore.colour,
         };
       })
-      .map(({ score, colour }, player) => {
+      .map(({ score, colour }, pegger) => {
         return (
           <motion.circle
-            key={player}
-            id={`${getGamePegId(player)}`}
-            style={getGamePegPosition(player, score)}
+            key={pegger}
+            id={`${getGamePegId(pegger)}`}
+            style={getGamePegPosition(pegger, score)}
             stroke="none"
             r={pegRadius}
             cx={pegHoleRadius}
@@ -555,24 +558,25 @@ export function AnimatedCribBoard({
     (
       segments: SmartSegment[],
       score: number,
-      player: number,
-      isFrontPeg: boolean
+      pegger: number,
+      isFrontPeg: boolean,
+      onComplete?:OnComplete
     ) => {
-      const { x, y } = memoed.getPegPosition(score, player + 1, isFrontPeg);
+      const { x, y } = memoed.getPegPosition(score, pegger + 1, isFrontPeg);
       segments.push([
-        `#${getPegIdentifier(player, isFrontPeg)}`,
+        `#${getPegIdentifier(pegger, isFrontPeg)}`,
         { x, y },
-        { duration: moveDuration, at },
+        { duration: moveDuration, at, x:{onComplete} },
       ]);
     },
     [at, memoed, moveDuration]
   );
 
   const animateGameScore = useCallback(
-    (segments: SmartSegment[], player: number, gameScore: number) => {
+    (segments: SmartSegment[], pegger: number, gameScore: number) => {
       segments.push([
-        `#${getGamePegId(player)}`,
-        memoed.getGamePegPosition(player, gameScore),
+        `#${getGamePegId(pegger)}`,
+        memoed.getGamePegPosition(pegger, gameScore),
         { duration: moveDuration, at },
       ]);
     },
@@ -580,9 +584,9 @@ export function AnimatedCribBoard({
   );
 
   const animatePegsToStartPositions = useCallback(
-    (segments: SmartSegment[], player: number) => {
-      animatePegPosition(segments, 0, player, true);
-      animatePegPosition(segments, 0, player, false);
+    (segments: SmartSegment[], pegger: number, onComplete:OnComplete | undefined) => {
+      animatePegPosition(segments, 0, pegger, true);
+      animatePegPosition(segments, 0, pegger, false,onComplete);
     },
     [animatePegPosition]
   );
@@ -590,13 +594,14 @@ export function AnimatedCribBoard({
   const animateNewGamePegs = useCallback(
     (
       segments: SmartSegment[],
-      player: number,
+      pegger: number,
       newPegInfo: PegInfo,
-      lastPegInfo: PegInfo
+      lastPegInfo: PegInfo,
+      onComplete:OnComplete | undefined
     ) => {
-      animatePegsToStartPositions(segments, player);
+      animatePegsToStartPositions(segments, pegger,onComplete);
       if (newPegInfo.gameScore !== lastPegInfo.gameScore) {
-        animateGameScore(segments, player, newPegInfo.gameScore);
+        animateGameScore(segments, pegger, newPegInfo.gameScore);
       }
       newPegInfo.peg1Advanced = true;
     },
@@ -608,14 +613,16 @@ export function AnimatedCribBoard({
       segments: SmartSegment[],
       newPegInfo: PegInfo,
       lastPegInfo: PegInfo,
-      player: number
+      pegger: number,
+      onComplete:OnComplete | undefined
     ) => {
       newPegInfo.peg1Advanced = !lastPegInfo.peg1Advanced;
       animatePegPosition(
         segments,
         newPegInfo.frontPeg,
-        player,
-        newPegInfo.peg1Advanced
+        pegger,
+        newPegInfo.peg1Advanced,
+        onComplete
       );
     },
     [animatePegPosition]
@@ -630,11 +637,12 @@ export function AnimatedCribBoard({
 
       const animations = lastPegInfos.reduce<SmartSegment[]>(
         (segments, lastPegInfo, player) => {
+          const movedCompleted = player === lastPegInfos.length - 1 ? onComplete : undefined;
           const newPegInfo = newPegInfos[player];
           if (isNewGame) {
-            animateNewGamePegs(segments, player, newPegInfo, lastPegInfo);
+            animateNewGamePegs(segments, player, newPegInfo, lastPegInfo, movedCompleted);
           } else if (newPegInfo.frontPeg !== lastPegInfo.frontPeg) {
-            animatePeg(segments, newPegInfo, lastPegInfo, player);
+            animatePeg(segments, newPegInfo, lastPegInfo, player,movedCompleted);
           }
 
           return segments;
@@ -654,7 +662,7 @@ export function AnimatedCribBoard({
     memoed,
     animateNewGamePegs,
     animatePeg,
+    onComplete
   ]);
-
   return memoed.svg;
 }

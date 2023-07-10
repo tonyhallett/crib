@@ -494,36 +494,34 @@ export function RadHubManager() {
     localMatches.forEach((localMatch) => cribStorage.setMatch(localMatch));
   }, []);
 
+
+  
   const discardedClickHandler = useCallback(() => {
-    const cutCard: PlayingCard = KingSpades;
+    const cutAJack = true;
+    const cutCard: PlayingCard = cutAJack ? JackSpades : KingSpades;
     const myMatch = {
-      id: "New game",
+      id: "I discarded",
       changeHistory: {
-        lastChangeDate: new Date(),
+        lastChangeDate: new Date("20 May 2023 09:00"),
         matchCreationDate: new Date("20 December 2022 14:48"),
+        numberOfActions: 2,
       },
-      title: "New game",
-      gameState: CribGameState.Discard,
+      title: "I discarded",
+      gameState: CribGameState.Pegging,
       box: [],
-      myCards: [
-        AceSpades,
-        QueenSpades,
-        KingSpades,
-        JackSpades,
-        FourSpades,
-        ThreeSpades,
-      ],
-      cutCard, // should not be here just to see the animation
+      myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
+      cutCard,
       scores: [
         { games: 1, frontPeg: 22, backPeg: 9 },
-        { games: 2, frontPeg: 12, backPeg: 4 },
+        { games: 2, frontPeg: cutAJack ? 14 : 12, backPeg: cutAJack ? 12 : 4 },
       ],
       pegging: {
         turnedOverCards: [],
         inPlayCards: [],
         goHistory: [],
         nextPlayer: "Player2",
-        cannotGoes: [false, false],
+        cannotGoes: [false],
+        myCannotGo: false,
       },
       myId: "Me",
       dealerDetails: {
@@ -536,17 +534,18 @@ export function RadHubManager() {
       otherPlayers: [
         {
           id: "Player2",
-          discarded: true,
+          discarded: false,
           playerScoringHistory: null as unknown as PlayerScoringHistory,
           ready: false,
         },
       ],
+      showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
     };
     RadHubConnectionInstance.fromTheServer(
       "discard",
       myMatch.id,
       "Player2",
-      undefined,
+      cutCard,
       myMatch
     );
   }, []);

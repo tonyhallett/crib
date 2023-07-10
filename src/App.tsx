@@ -14,7 +14,7 @@ import { NavBar } from "./auth-components/NavBar";
 import { DateTransformingJsonHubProtocol } from "./signalr/DateTransformingJsonHubProtocol";
 import { LocalFriendship } from "./LocalMyFriend";
 import { IdToken, useAuth0 } from "@auth0/auth0-react";
-import { LocalMatch, createLocalMatch } from "./LocalMatch";
+import { LocalMatch, createLocalMatch, removeDealIndicator } from "./LocalMatch";
 import { AppBar, Badge, IconButton, Toolbar } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import { CardsIcon } from "./CardsIcon";
@@ -47,6 +47,18 @@ interface PlayMatch {
 }
 
 type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
+
+function getLocalMatch(match:MyMatch){
+  return cribStorage.getMatch(match.id);
+}
+function ensureLocalMatch(match:MyMatch){
+  let localMatch = getLocalMatch(match);
+  if (localMatch === null) {
+    localMatch = createLocalMatch(match);
+    cribStorage.setMatch(localMatch);
+  }
+  return localMatch;
+}
 
 /* eslint-disable complexity */
 export default function App() {
@@ -154,6 +166,19 @@ export default function App() {
     [doPlayMatch, enqueueSnackbar]
   );
 
+  const updateLocalMatch = useCallback((newLocalMatch:LocalMatch) => {
+    cribStorage.setMatch(newLocalMatch);
+    const updatedLocalMatches = localMatchesRef.current.map((localMatch) => {
+      if (localMatch) {
+        if (localMatch.id === newLocalMatch.id) {
+          return newLocalMatch;
+        }
+      }
+      return localMatch;
+    });
+    setLocalMatchesAndRef(updatedLocalMatches);
+  },[]);
+
   useEffect(() => {
     async function signalRConnect() {
       //todo store the connection and more configuration
@@ -182,20 +207,33 @@ export default function App() {
             })
           );
 
-          const localMatches = matches.map((match) => {
+          /* const localMatches = matches.map((match) => {
             let localMatch = cribStorage.getMatch(match.id);
             if (localMatch === null) {
               localMatch = createLocalMatch(match);
               cribStorage.setMatch(localMatch);
             }
             return localMatch;
-          });
+          }); */
+          const localMatches = matches.map(ensureLocalMatch);
           setLocalMatchesAndRef(localMatches);
           setFetchedInitialData(true);
         },
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(matchId, playerId, cutCard, myMatch) {
+          const localMatch = getLocalMatch(myMatch);
+          if(localMatch === null){
+            //tbd
+            throw new Error("Discard but no local match");
+          }
+          
+          const newLocalMatch = removeDealIndicator(localMatch);
+          if(newLocalMatch){
+            updateLocalMatch(newLocalMatch);
+          }
+
+
           const matches = matchesRef.current;
 
           const playMatch = playMatchRef.current;
@@ -204,11 +242,11 @@ export default function App() {
             showSnackbar = false;
             playMatchCribClientRef.current?.discard(playerId, cutCard, myMatch);
           }
-          //if(selectedMenuItemRef.current !== "Matches"){
+
           if (showSnackbar) {
             enqueueMatchesSnackbar(myMatch);
           }
-          //}
+          
           setMatchesAndRef(
             matches.map((match) => {
               if (match.id === myMatch.id) {
@@ -218,9 +256,13 @@ export default function App() {
             })
           );
         },
+
+        // common code for removing deal indicator
+
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         friendRequest(friendship) {
-          //todo
+          //todo 
           //enqueueSnackbar('You have a friend request !', { variant:"info" });
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -283,7 +325,7 @@ export default function App() {
     if (isAuthenticated && !connected) {
       signalRConnect();
     }
-  }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar]);
+  }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar, updateLocalMatch]);
   useEffect(() => {
     if (!hasRenderAMatch.current && canPlayMatch) {
       hasRenderAMatch.current = true;
@@ -312,6 +354,8 @@ export default function App() {
     }),
     [playMatch]
   );
+
+
 
   if (!fullscreen) {
     return (
@@ -342,6 +386,8 @@ export default function App() {
   ) : (
     CardsIcon
   );
+
+  
 
   return (
     <div>
@@ -400,18 +446,7 @@ export default function App() {
           localMatch={playMatch.localMatch}
           signalRRegistration={signalRRegistration}
           playMatchCribHub={playMatchCribHub}
-          updateLocalMatch={(newLocalMatch) => {
-            cribStorage.setMatch(newLocalMatch);
-            const updatedLocalMatches = localMatches.map((localMatch) => {
-              if (localMatch) {
-                if (localMatch.id === newLocalMatch.id) {
-                  return newLocalMatch;
-                }
-              }
-              return localMatch;
-            });
-            setLocalMatchesAndRef(updatedLocalMatches);
-          }}
+          updateLocalMatch={updateLocalMatch}
         />
       )}
       <div>{connectError}</div>

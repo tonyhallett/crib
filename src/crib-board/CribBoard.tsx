@@ -28,19 +28,19 @@ export function getBottomEllipseAngles(first: number) {
   ];
 }
 
-export function getPlayerTrackPositionIndex(
+export function getPeggerTrackPositionIndex(
   trackNumber: number,
-  playerNumber: number
+  peggerNumber: number
 ) {
-  return getReversedPlayerTrackPosition(trackNumber === 3, playerNumber) - 1;
+  return getReversedPeggerTrackPosition(trackNumber === 3, peggerNumber) - 1;
 }
 
-function getReversedPlayerTrackPosition(
+function getReversedPeggerTrackPosition(
   reversed: boolean,
-  playerNumber: number
+  pegger: number
 ) {
   if (reversed) {
-    switch (playerNumber) {
+    switch (pegger) {
       case 2:
         return 2;
       case 1:
@@ -49,11 +49,11 @@ function getReversedPlayerTrackPosition(
         return 1;
     }
   }
-  return playerNumber;
+  return pegger;
 }
 
-export function getReversedPlayerTrackPositionIndex(playerNumber: number) {
-  return getReversedPlayerTrackPosition(true, playerNumber) - 1;
+export function getReversedPeggerTrackPositionIndex(pegger: number) {
+  return getReversedPeggerTrackPosition(true, pegger) - 1;
 }
 
 export interface ColouredScore {
@@ -64,9 +64,9 @@ export interface ColouredScore {
 }
 
 export interface ColouredScores {
-  player1: ColouredScore;
-  player2: ColouredScore;
-  player3?: ColouredScore;
+  pegger1: ColouredScore;
+  pegger2: ColouredScore;
+  pegger3?: ColouredScore;
 }
 
 export function CribBoard({
@@ -187,26 +187,26 @@ export function CribBoard({
       : { track: 0, from: 0 };
   };
 
-  const getTrackPegX = (track: number, player: number) => {
-    const playerTrackPositionIndex = getPlayerTrackPositionIndex(track, player);
+  const getTrackPegX = (track: number, pegger: number) => {
+    const peggerTrackPositionIndex = getPeggerTrackPositionIndex(track, pegger);
     return (
       (track - 1) * (pegBoxWidth + pegTrackPadding) +
-      getPegHoleX(playerTrackPositionIndex)
+      getPegHoleX(peggerTrackPositionIndex)
     );
   };
   const getNonEllipsePegPosition = (
     score: number,
-    player: number
+    pegger: number
   ): { x: number; y: number } | undefined => {
     const { track, from } = getTrackAndFrom(score);
     if (track !== 0) {
-      const playerTrackPositionIndex = getPlayerTrackPositionIndex(
+      const peggerTrackPositionIndex = getPeggerTrackPositionIndex(
         track,
-        player
+        pegger
       );
       const x =
         (track - 1) * (pegBoxWidth + pegTrackPadding) +
-        getPegHoleX(playerTrackPositionIndex);
+        getPegHoleX(peggerTrackPositionIndex);
 
       const pegBox = getPegBox(from);
       const box = track === 3 ? pegBox.box - 1 : 7 - pegBox.box;
@@ -219,17 +219,17 @@ export function CribBoard({
     }
   };
 
-  const getEllipsePegPosition = (score: number, player: number) => {
+  const getEllipsePegPosition = (score: number, pegger: number) => {
     if (score > 80 && score < 86) {
-      return getBottomEllipsePosition(score, player);
+      return getBottomEllipsePosition(score, pegger);
     } else {
-      return getTopEllipsePosition(score, player);
+      return getTopEllipsePosition(score, pegger);
     }
   };
 
-  const getTopEllipsePosition = (score: number, player: number) => {
-    const playerTrackPositionIndex =
-      getReversedPlayerTrackPositionIndex(player);
+  const getTopEllipsePosition = (score: number, pegger: number) => {
+    const peggerTrackPositionIndex =
+      getReversedPeggerTrackPositionIndex(pegger);
     let pegPosition = score % 5;
     if (pegPosition === 0) {
       pegPosition = 5;
@@ -242,66 +242,66 @@ export function CribBoard({
       pegIndex = Math.abs(5 - pegPosition);
     }
 
-    return quadrantPositions[playerTrackPositionIndex][pegIndex];
+    return quadrantPositions[peggerTrackPositionIndex][pegIndex];
   };
 
-  const getBottomEllipsePosition = (score: number, player: number) => {
-    const playerTrackPositionIndex =
-      getReversedPlayerTrackPositionIndex(player);
+  const getBottomEllipsePosition = (score: number, pegger: number) => {
+    const peggerTrackPositionIndex =
+      getReversedPeggerTrackPositionIndex(pegger);
     let pegPosition = score % 5;
     if (pegPosition === 0) {
       pegPosition = 5;
     }
-    return bottomEllipsePegPositions[playerTrackPositionIndex][pegPosition - 1];
+    return bottomEllipsePegPositions[peggerTrackPositionIndex][pegPosition - 1];
   };
 
   const getNonWinningPegPosition = (
     score: number,
-    player: number
+    pegger: number
   ): { x: number; y: number } => {
     return (
-      getNonEllipsePegPosition(score, player) ||
-      getEllipsePegPosition(score, player)
+      getNonEllipsePegPosition(score, pegger) ||
+      getEllipsePegPosition(score, pegger)
     );
   };
   const getStartPegPosition = (
-    player: number,
+    pegger: number,
     isFrontPeg: boolean
   ): { x: number; y: number } => {
     return {
-      x: getTrackPegX(1, player),
+      x: getTrackPegX(1, pegger),
       y: isFrontPeg ? startPegFrontY : startPegBackY,
     };
   };
   const getPegPosition = (
     score: number,
-    player: number,
+    pegger: number,
     isFrontPeg: boolean
   ): { x: number; y: number } => {
     return score === 121
       ? winningPegPosition
       : score === 0
-      ? getStartPegPosition(player, isFrontPeg)
-      : getNonWinningPegPosition(score, player);
+      ? getStartPegPosition(pegger, isFrontPeg)
+      : getNonWinningPegPosition(score, pegger);
   };
-  const scores = [colouredScores.player1, colouredScores.player2];
-  if (colouredScores.player3) {
-    scores.push(colouredScores.player3);
+  const scores = [colouredScores.pegger1, colouredScores.pegger2];
+  if (colouredScores.pegger3) {
+    scores.push(colouredScores.pegger3);
   }
   const pegs = scores
-    .map((playerScore, player) => {
-      const pegs = [playerScore.frontPeg, playerScore.backPeg].map(
+    .map((peggerScore, pegger) => {
+      const pegs = [peggerScore.frontPeg, peggerScore.backPeg].map(
         (score, i) => {
-          const { x, y } = getPegPosition(score, player + 1, i === 0);
+          const { x, y } = getPegPosition(score, pegger + 1, i === 0);
           return (
             <circle
-              key={`${player}_{i}`}
+              key={`${pegger}_{i}`}
               transform={`translate(${x},${y})`}
               stroke="none"
               r={pegRadius}
               cx={pegHoleRadius}
               cy={pegHoleRadius}
-              fill={playerScore.colour}
+              fill={peggerScore.colour}
             />
           );
         }
@@ -317,18 +317,18 @@ export function CribBoard({
   };
 
   const gameScorePegs = scores
-    .map((playerScore) => {
+    .map((peggerScore) => {
       return {
-        score: playerScore.gameScore,
-        colour: playerScore.colour,
+        score: peggerScore.gameScore,
+        colour: peggerScore.colour,
       };
     })
-    .map(({ score, colour }, player) => {
+    .map(({ score, colour }, pegger) => {
       const x = getPegHoleX(score);
       return (
         <circle
-          key={player}
-          transform={`translate(${x},${startGameScoreY + getPegHoleY(player)})`}
+          key={pegger}
+          transform={`translate(${x},${startGameScoreY + getPegHoleY(pegger)})`}
           stroke="none"
           r={pegRadius}
           cx={pegHoleRadius}
