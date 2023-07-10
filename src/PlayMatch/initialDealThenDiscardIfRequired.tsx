@@ -6,7 +6,7 @@ import {
   Positions,
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
-import { FlipCardData, FlipCardState, UpdateLocalMatch } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState, UpdateLocalMatch } from "./PlayMatch";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { MyMatch } from "../generatedTypes";
 import {
@@ -15,10 +15,6 @@ import {
 } from "./animationSegments";
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
-import {
-  AnimationCompletionRegistration,
-  FlipCardDatasWithCompletionRegistration,
-} from "./AnimationManager";
 import { LocalMatch } from "../LocalMatch";
 import { DOMKeyframesDefinition } from "framer-motion";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
@@ -163,13 +159,9 @@ const createCompletionCallbacks = (
   localMatch: LocalMatch,
   updateLocalMatch: UpdateLocalMatch,
   numberOfDiscards: number,
-  numberOfMatchActions: number
+  numberOfMatchActions: number,
+  animationCompleteCallback:() => void
 ) => {
-  let animationCompleteCallback: () => void | undefined;
-  const registration = (callback: () => void) => {
-    animationCompleteCallback = callback;
-  };
-
   const lastDealtCompleteCallback: OnComplete = () => {
     const newLocalMatch:LocalMatch = {
       ...localMatch,
@@ -200,7 +192,6 @@ const createCompletionCallbacks = (
   };
 
   return {
-    registration,
     lastDiscardCompleteCallback,
     lastDealtCompleteCallback,
   };
@@ -242,8 +233,9 @@ function doDealPlayerCardsAndPossiblyDiscard(
   playerDealPositions: PlayerDealPositions,
   myCards: FlipCardData[],
   otherPlayersCards: FlipCardData[][],
-  updateLocalMatch: UpdateLocalMatch
-): AnimationCompletionRegistration {
+  updateLocalMatch: UpdateLocalMatch,
+  animationCompleteCallback:() => void
+): void /*AnimationCompletionRegistration*/ {
   const numPlayers = otherPlayersCards.length + 1;
   const dealDiscardNumbers = getPlayerCardDealDiscardNumbers(numPlayers);
 
@@ -256,7 +248,8 @@ function doDealPlayerCardsAndPossiblyDiscard(
     localMatch,
     updateLocalMatch,
     numberOfDiscards,
-    match.changeHistory.numberOfActions
+    match.changeHistory.numberOfActions,
+    animationCompleteCallback
   );
 
   // eslint-disable-next-line complexity
@@ -310,7 +303,6 @@ function doDealPlayerCardsAndPossiblyDiscard(
       }
     }
   });
-  return completionCallbacks.registration;
 }
 
 function dealPlayerCardsAndPossiblyDiscard(
@@ -318,8 +310,9 @@ function dealPlayerCardsAndPossiblyDiscard(
   localMatch: LocalMatch,
   playerDealPositions: PlayerDealPositions,
   playerDealAnimationParameters: PlayerDealAnimationParameters,
-  updateLocalMatch: UpdateLocalMatch
-): [MyCardsOtherPlayersCards, AnimationCompletionRegistration] {
+  updateLocalMatch: UpdateLocalMatch,
+  animationCompleteCallback:() => void
+): MyCardsOtherPlayersCards {
   const dealPositions = getDealPositions(
     playerDealPositions.playerPositions,
     match.pegging.nextPlayer,
@@ -329,7 +322,7 @@ function dealPlayerCardsAndPossiblyDiscard(
     match.otherPlayers.length
   );
 
-  const animationCompletionRegistration = doDealPlayerCardsAndPossiblyDiscard(
+  doDealPlayerCardsAndPossiblyDiscard(
     match,
     localMatch,
     dealPositions,
@@ -337,10 +330,10 @@ function dealPlayerCardsAndPossiblyDiscard(
     playerDealPositions,
     myCards,
     otherPlayersCards,
-    updateLocalMatch
+    updateLocalMatch,
+    animationCompleteCallback
   );
-
-  return [[myCards, otherPlayersCards], animationCompletionRegistration];
+    return [myCards, otherPlayersCards];
 }
 
 function getNumPlayerCardsToDeal(numPlayers: number): number;
@@ -374,8 +367,9 @@ export function dealThenDiscardIfRequired(
   localMatch: LocalMatch,
   positions: Positions,
   updateLocalMatch: UpdateLocalMatch,
-  dealFlipDurations: DealFlipDiscardDurations
-): FlipCardDatasWithCompletionRegistration {
+  dealFlipDurations: DealFlipDiscardDurations,
+  animationCompleteCallback:() => void
+): FlipCardDatas {
   const playerPositions = positions.playerPositions;
   const numCardsToDeal = getNumCardsToDeal(match);
   // for cut card and box
@@ -404,7 +398,7 @@ export function dealThenDiscardIfRequired(
     ? dealPlayersDuration + dealFlipDurations.dealDuration
     : dealPlayersDuration;
 
-  const [[myCards, otherPlayersCards], animationCompletionRegistration] =
+  const [myCards, otherPlayersCards] =
     dealPlayerCardsAndPossiblyDiscard(
       match,
       localMatch,
@@ -417,17 +411,15 @@ export function dealThenDiscardIfRequired(
         ...dealFlipDurations,
         discardDelay: fullDealDuration,
       },
-      updateLocalMatch
+      updateLocalMatch,
+      animationCompleteCallback
     );
 
-  return [
-    {
+    return {
       bottomDeckCard: nonPlayerCardDatas.bottomDeckCard, // has zIndex 0
       additionalBoxCard,
       cutCard: nonPlayerCardDatas.cutCard,
       myCards,
       otherPlayersCards,
-    },
-    animationCompletionRegistration,
-  ];
+    };
 }

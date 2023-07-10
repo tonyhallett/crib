@@ -26,7 +26,6 @@ import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
 import { getDiscardToBoxSegment } from "./animationSegments";
 import {
   AnimationManager,
-  FlipCardDatasWithCompletionRegistration,
 } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
@@ -160,12 +159,20 @@ function PlayMatchInner({
   );
 
   const cardDatasRef = useRef<FlipCardDatas | undefined>(cardDatas);
+  // for when there are no animations
   const setCardDatasAndRef = useCallback((newCardDatas: FlipCardDatas) => {
     cardDatasRef.current = newCardDatas;
     setCardDatas(newCardDatas);
   }, []);
 
-  const animationManager = useRef(new AnimationManager(setCardDatasAndRef));
+  const animationManager = useRef(new AnimationManager((setter) => {
+    
+    setCardDatas(prevCardDatas => {
+      const newCardDatas =  setter(prevCardDatas);
+      cardDatasRef.current = newCardDatas;
+      return newCardDatas;
+    })
+  }));
   const size = useMemo(() => getSize(landscape), [landscape]);
   const [positions, cardSize] = useMemo(() => {
     const positionsAndCardSize = matchLayoutManager.getPositionsAndCardSize(
@@ -194,9 +201,9 @@ function PlayMatchInner({
           prevCardDatas: FlipCardDatas,
           discardDuration: number,
           secondDiscardDelay: number,
-          cardFlipDuration: number
-        ): FlipCardDatasWithCompletionRegistration {
-          let animationCompleteCallback: () => void | undefined;
+          cardFlipDuration: number,
+          animationCompleteCallback:() => void
+        ): FlipCardDatas {
           const syncChangeHistories = () => {
             const newLocalMatch:LocalMatch = {
               ...localMatch,
@@ -311,22 +318,12 @@ function PlayMatchInner({
               myMatch.cutCard.pips === Pips.Jack
             );
           }
-
-          return [
-            newFlipCardDatas,
-            (callback) => {
-              animationCompleteCallback = callback;
-            },
-          ];
+          return newFlipCardDatas;
         }
-        animationManager.current.animate(
-          getNew(
-            cardDatasRef.current as FlipCardDatas,
-            discardDuration,
-            0,
-            flipDuration
-          )
-        );
+        
+        animationManager.current.animate((animationCompleteCallback,prevFlipCardDatas) => {
+          return getNew(prevFlipCardDatas as FlipCardDatas,discardDuration,0,flipDuration, animationCompleteCallback)
+        })
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       peg(playerId, peggedCard) {
@@ -346,14 +343,16 @@ function PlayMatchInner({
       if (localMatch.changeHistory.numberOfActions === dealActionIndicator) {
         window.setTimeout(
           () => {
-            const animations = dealThenDiscardIfRequired(
-              myMatch,
-              localMatch,
-              positions,
-              updateLocalMatch,
-              { dealDuration: 0.5, flipDuration, discardDuration }
-            );
-            animationManager.current.animate(animations);
+            animationManager.current.animate((animationCompleteCallback) => {
+              return dealThenDiscardIfRequired(
+                myMatch,
+                localMatch,
+                positions,
+                updateLocalMatch,
+                { dealDuration: 0.5, flipDuration, discardDuration },
+                animationCompleteCallback
+              );
+            });
           },
           hasRenderedAMatch ? 0 : 2000
         );
@@ -554,13 +553,12 @@ function usePeggingOverlay({
           }
         }
         if (lookedAtDragInitial.current.overPeggedCards) {
-          // this needs to change
           const myMax = Math.min(
             document.documentElement.clientHeight - peggedCardY,
             document.documentElement.clientHeight -
               (peggedCardY + cardSize.width)
-          ); //document.documentElement.clientHeight / 2;
-          const maxScaleFactor = peggedCardY / overlayCardSize.current!.height;
+          );
+          const maxScaleFactor = peggedCardY / (overlayCardSize.current as Size).height;
           const myScale = Math.min(1, Math.abs(my) / myMax);
           const scale = 1 + myScale * (maxScaleFactor - 1);
           const unscaledWidth = overlayCardSize.current

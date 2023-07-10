@@ -1,14 +1,16 @@
 import { FlipCardDatas } from "./PlayMatch";
 
 export type AnimationCompletionRegistration = (callback: () => void) => void;
-export type FlipCardDatasWithCompletionRegistration = [
+/* export type FlipCardDatasWithCompletionRegistration = [
   FlipCardDatas,
   AnimationCompletionRegistration
-];
+]; */
+
+type AnimationProvider = (animationCompletedCallback:() => void,prevFlipCardDatas:FlipCardDatas|undefined) => FlipCardDatas;
 
 export class AnimationManager {
-  private queue: FlipCardDatasWithCompletionRegistration[] = [];
-  constructor(private setCardDatas: (cardDatas: FlipCardDatas) => void) {}
+  private queue: AnimationProvider[] = [];
+  constructor(private setCardDatas:(setter:(cardDatas: FlipCardDatas|undefined) => FlipCardDatas) => void) {}
   private animationCompletedHander = () => {
     this.queue.shift();
     const next = this.queue.shift();
@@ -17,19 +19,21 @@ export class AnimationManager {
     }
   };
   private handleAndSetCardDatas(
-    flipCardDatasWithCompletionRegistration: FlipCardDatasWithCompletionRegistration
+    animationProvider: AnimationProvider
   ) {
-    flipCardDatasWithCompletionRegistration[1](this.animationCompletedHander);
-    this.setCardDatas(flipCardDatasWithCompletionRegistration[0]);
+    
+    this.setCardDatas(prevFlipCardDatas => {
+      return animationProvider(this.animationCompletedHander,prevFlipCardDatas);
+    });
   }
   animate(
-    flipCardDatasWithCompletionRegistration: FlipCardDatasWithCompletionRegistration
+    animationProvider: AnimationProvider
   ) {
     if (this.queue.length === 0) {
-      this.handleAndSetCardDatas(flipCardDatasWithCompletionRegistration);
-      this.queue.push(flipCardDatasWithCompletionRegistration);
+      this.handleAndSetCardDatas(animationProvider);
+      this.queue.push(animationProvider);
     } else {
-      this.queue.push(flipCardDatasWithCompletionRegistration);
+      this.queue.push(animationProvider);
     }
   }
 }
