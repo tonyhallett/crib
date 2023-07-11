@@ -36,6 +36,7 @@ interface MyMatchAction{
   methodName:string,
   getArgs():unknown[]
 }
+
 type ActionMyMatch = MyMatch & {
   actions?:MyMatchAction[]
   currentAction?:number
@@ -43,6 +44,15 @@ type ActionMyMatch = MyMatch & {
 
 const matches: ActionMyMatch[] = [
   {
+    actions:[
+      {
+        methodName:"discard",
+        getArgs() {
+          return [];
+        },
+      }
+    ],
+    currentAction:0,
     id: "New game",
     changeHistory: {
       lastChangeDate: new Date("19 May 2023 09:00"),

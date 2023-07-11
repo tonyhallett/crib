@@ -13,9 +13,9 @@ namespace CribAzureFunctionApp.Hub
     public interface CribClient
 
     {
-        Task discard(string matchId, string playerId, PlayingCard? cutCard, MyMatch myMatch);
-        Task ready(string matchId, string playerId, MyMatch myMatch);
-        Task peg(string matchId, string playerId, PlayingCard peggedCard, MyMatch myMatch);
+        Task discard(string playerId, MyMatch myMatch);
+        Task ready(string playerId, MyMatch myMatch);
+        Task peg(string playerId, PlayingCard peggedCard, MyMatch myMatch);
         Task friendRequest(Friendship friendship);
         Task friendRequestAccepted(Friendship inviterFriendship);
         Task initialPlayerData(List<Friendship> myFriends, List<MyMatch> matches);

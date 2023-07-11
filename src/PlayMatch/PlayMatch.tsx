@@ -39,7 +39,6 @@ type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
 export type PlayMatchCribClient = {
   [K in keyof PlayMatchCribClientMethods]: PlayMatchCribClientMethods[K] extends (
-    matchId: string,
     ...args: infer P
   ) => void
     ? (...args: P) => void
@@ -196,7 +195,7 @@ function PlayMatchInner({
   }, []);
   useEffect(() => {
     return signalRRegistration({
-      discard(playerId, cutCard,myMatch) {
+      discard(playerId,myMatch) {
         function getNew(
           prevCardDatas: FlipCardDatas,
           discardDuration: number,
@@ -250,7 +249,7 @@ function PlayMatchInner({
 
           const getCutCardAnimationData = (prevCardData: FlipCardData, isJack:boolean) => {
             const newCardData = { ...prevCardData };
-            newCardData.playingCard = cutCard;
+            newCardData.playingCard = myMatch.cutCard;
             const flipAnimation: FlipAnimation = {
               flip: true,
               duration: cardFlipDuration,
@@ -290,7 +289,7 @@ function PlayMatchInner({
                 const newData = getDiscardToBoxCardData(
                   boxPosition,
                   prevCardData,
-                  count === numDiscards && !cutCard ? complete : undefined
+                  count === numDiscards && !myMatch.cutCard ? complete : undefined
                 );
                 return newData;
               }
@@ -312,7 +311,7 @@ function PlayMatchInner({
             otherPlayersCards: newOtherPlayersCards,
           };
 
-          if (cutCard) {
+          if (myMatch.cutCard) {
             newFlipCardDatas.cutCard = getCutCardAnimationData(
               prevFlipCardDatas.cutCard,
               myMatch.cutCard.pips === Pips.Jack

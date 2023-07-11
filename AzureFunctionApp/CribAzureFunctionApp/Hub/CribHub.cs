@@ -190,12 +190,9 @@ namespace CribAzureFunctionApp.Hub
             matchLogic.Discard(match, playerId, discard1, discard2);
             await cribCosmos.ReplaceMatchAsync(cosmosClient, match); // concurrency todo
 
-            PlayingCard? cutCard = null;
-
-
             foreach (var player in match.GetPlayers().Select(p => p.Id))
             {
-                await Clients.User(player).discard("matchId", playerId, cutCard, myMatchFactory.ToMyMatch(match, player)); // todo pass score ? game state TDD CLIENT 
+                await Clients.User(player).discard(playerId, myMatchFactory.ToMyMatch(match, player)); // todo pass score ? game state TDD CLIENT 
             }
 
         }
@@ -214,7 +211,7 @@ namespace CribAzureFunctionApp.Hub
 
             foreach (var player in match.GetPlayers().Select(p => p.Id))
             {
-                await Clients.User(player).peg("matchId", playerId, peggedCard, myMatchFactory.ToMyMatch(match, player));
+                await Clients.User(player).peg(playerId, peggedCard, myMatchFactory.ToMyMatch(match, player));
             }
 
         }
@@ -234,7 +231,7 @@ namespace CribAzureFunctionApp.Hub
 
             foreach (var player in match.GetPlayers().Select(p => p.Id))
             {
-                await Clients.User(player).ready("matchId", playerId, myMatchFactory.ToMyMatch(match, player));
+                await Clients.User(player).ready(playerId, myMatchFactory.ToMyMatch(match, player));
             }
             // tbd what send back
         }
