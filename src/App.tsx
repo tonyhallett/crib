@@ -224,7 +224,7 @@ export default function App() {
         },
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        discard(matchId, playerId, cutCard, myMatch) {
+        discard(playerId, myMatch) {
           const localMatch = getLocalMatch(myMatch);
           if(localMatch === null){
             //tbd
@@ -241,9 +241,9 @@ export default function App() {
 
           const playMatch = playMatchRef.current;
           let showSnackbar = true;
-          if (playMatch && playMatch.match.id === matchId) {
+          if (playMatch && playMatch.match.id === myMatch.id) {
             showSnackbar = false;
-            playMatchCribClientRef.current?.discard(playerId, cutCard, myMatch);
+            playMatchCribClientRef.current?.discard(playerId, myMatch);
           }
 
           if (showSnackbar) {
@@ -282,7 +282,7 @@ export default function App() {
           //
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        peg(matchId, playerId, peggedCard, myMatch) {
+        peg(playerId, peggedCard, myMatch) {
           /* const matchWithChange = matches.find((m) => m.id === matchId);
           if(matchWithChange){
             if(selectedMenuItem !== "Matches"){
@@ -298,7 +298,7 @@ export default function App() {
           } */
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ready(matchId, playerId, myMatch) {
+        ready(playerId, myMatch) {
           /* const match = matches.find((m) => m.id === matchId);
           if(match){
             if(selectedMenuItem !== "Matches"){
