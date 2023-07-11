@@ -1,6 +1,5 @@
 import { PlayingCard } from "../generatedTypes";
 import {
-  DOMKeyframesDefinition,
   StyleKeyframesDefinition,
 } from "framer-motion";
 import { Point, Size } from "../PlayMatch/matchLayoutManager";
@@ -193,8 +192,9 @@ export function FlipCard(props: FlipCardProps) {
   );
   const zIndex = (props.zIndex ?? 1) * 2;
 
+  const flipCardId = props.playingCard ? `flipCard_${props.playingCard.pips}_${props.playingCard.suit}` : "flipCard";
   return (
-    <>
+    <div id={flipCardId}>
       <Card
         {...common}
         zIndex={zIndex}
@@ -213,6 +213,6 @@ export function FlipCard(props: FlipCardProps) {
         size={props.size}
         segments={aboveCardSegments}
       />
-    </>
+    </div>
   );
 }

@@ -47,15 +47,11 @@ function canGo(match: MyMatch): boolean {
   }
 }
 
-function newMoves(match: MyMatch, localMatch: LocalMatch | null): boolean {
-  if (localMatch) {
+function newMoves(match: MyMatch, localMatch: LocalMatch): boolean {
     return (
       match.changeHistory.numberOfActions >
       localMatch.changeHistory.numberOfActions
     );
-  }
-  // todo
-  return true;
 }
 
 const propertyNames: (keyof MatchesData)[] = [
@@ -230,7 +226,7 @@ export function Matches(props: {
             match.changeHistory.matchCreationDate
           ),
           lastChanged: new TableDisplayDate(match.changeHistory.lastChangeDate),
-          isNew: localMatch === null,
+          isNew: localMatch.changeHistory.lastChangeDate === undefined,
           newMoves: newMoves(match, localMatch),
           canGo: canGo(match),
           myScore: new MatchDisplayScore(playerScores[0]),

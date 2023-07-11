@@ -9,11 +9,12 @@ export type AnimationCompletionRegistration = (callback: () => void) => void;
 type AnimationProvider = (animationCompletedCallback:() => void,prevFlipCardDatas:FlipCardDatas|undefined) => FlipCardDatas;
 
 export class AnimationManager {
+  private animating = false;
   private queue: AnimationProvider[] = [];
   constructor(private setCardDatas:(setter:(cardDatas: FlipCardDatas|undefined) => FlipCardDatas) => void) {}
   private animationCompletedHander = () => {
-    this.queue.shift();
     const next = this.queue.shift();
+    this.animating = next !== undefined;
     if (next) {
       this.handleAndSetCardDatas(next);
     }
@@ -21,7 +22,7 @@ export class AnimationManager {
   private handleAndSetCardDatas(
     animationProvider: AnimationProvider
   ) {
-    
+    this.animating = true;
     this.setCardDatas(prevFlipCardDatas => {
       return animationProvider(this.animationCompletedHander,prevFlipCardDatas);
     });
@@ -29,9 +30,8 @@ export class AnimationManager {
   animate(
     animationProvider: AnimationProvider
   ) {
-    if (this.queue.length === 0) {
+    if (!this.animating) {
       this.handleAndSetCardDatas(animationProvider);
-      this.queue.push(animationProvider);
     } else {
       this.queue.push(animationProvider);
     }

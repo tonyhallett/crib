@@ -28,7 +28,8 @@ namespace CribAzureFunctionApp.Matches.MyMatches
             MatchPlayer me, 
             List<Score> orderedScores,
             MyPegging myPegging
-        ) Order(
+        ) 
+        Order(
             CribMatch cribMatch,
             string myId
         )

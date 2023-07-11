@@ -1,6 +1,8 @@
 import * as signalR from "@microsoft/signalr";
 import { PublicInterface } from "../utilities/typeHelpers";
 
+export type SendInterceptor = (methodName: string, ...args: unknown[]) => unknown;
+
 class RadHubConnection implements PublicInterface<signalR.HubConnection> {
   serverTimeoutInMilliseconds = 0;
   keepAliveIntervalInMilliseconds = 0;
@@ -29,8 +31,14 @@ class RadHubConnection implements PublicInterface<signalR.HubConnection> {
     throw new Error("Method not implemented.");
   }
 
+  private sendInterceptors: SendInterceptor[] = [];
+  interceptSend(interceptor:SendInterceptor){
+    this.sendInterceptors.push(interceptor);
+  }
+
   // to the server
-  send(): Promise<void> {
+  send(methodName: string, ...args: unknown[]): Promise<void> {
+    this.sendInterceptors.forEach(interceptor => interceptor(methodName, ...args));
     return Promise.resolve();
   }
   invoke<T = unknown>(): Promise<T> {
@@ -47,7 +55,7 @@ class RadHubConnection implements PublicInterface<signalR.HubConnection> {
     }
   }
 
-  //off(methodName: string): void
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   off(methodName: string, method?: (...args: unknown[]) => void): void {
     this.listeners.delete(methodName);
   }
