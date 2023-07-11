@@ -160,7 +160,6 @@ function PlayMatchInner({
       colouredScores:getColouredScores(myMatch.scores)
     }
   );
-  const [scope,animate] = useAnimateSegments();
 
   const cardDatasRef = useRef<FlipCardDatas | undefined>(cardDatas);
   // for when there are no animations
@@ -285,7 +284,7 @@ function PlayMatchInner({
          
 
           if(playerId === myMatch.myId){
-            animate([["[id^=flipCard_]",{opacity:1}]]);
+            removeMyDiscardSelection();
             newFlipCardDatas = {
               ...prevFlipCardDatas,
               myCards: prevFlipCardDatas.myCards.map((prevCardData) => {
@@ -478,8 +477,8 @@ function PlayMatchInner({
     landscape,
     mappedFlipCardDatas,
   });
-  const clickOverlay = useMyDiscard(
-    <div ref={scope}
+  const [clickOverlay,removeMyDiscardSelection] = useMyDiscard(
+    <div
         {...bind()}
         style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
       >
@@ -545,7 +544,11 @@ function findFlipCardElement(scope:HTMLDivElement,clientX:number,clientY:number)
 }
 
 // cribGameState:CribGameState but signalR is not changing the match
-function useMyDiscard(children:any,numDiscards:number,discard:(playingCard1:PlayingCard,playingCard2:PlayingCard|undefined) => unknown) {
+function useMyDiscard(
+  children:any,
+  numDiscards:number,
+  discard:(playingCard1:PlayingCard,playingCard2:PlayingCard|undefined) => unknown
+):[JSX.Element,() => void] {
   const [scope, animate] = useAnimateSegments();
   const [showDialog, setShowDialog] = useState(false);
   const [discarded, setDiscarded] = useState(false);
@@ -564,9 +567,13 @@ function useMyDiscard(children:any,numDiscards:number,discard:(playingCard1:Play
     return segment;
   }
 
-  // will need state when showing the discard overlay
   const selectedIdsRef = useRef<string[]>([]);
-  return <div ref={scope} onClick={(event) => {
+  const removeMyDiscardSelection = () => {
+    animate([["[id^=flipCard_]",{opacity:1}]]);
+  }
+
+  // eslint-disable-next-line react/jsx-key
+  return [<div ref={scope} onClick={(event) => {
     if(!discarded){
       let matchingElement = findFlipCardElement(scope.current as HTMLDivElement,event.clientX,event.clientY);
       
@@ -617,7 +624,7 @@ function useMyDiscard(children:any,numDiscards:number,discard:(playingCard1:Play
         </DialogActions>
     </Dialog>
     {children}
-  </div>
+  </div>,removeMyDiscardSelection];
 }
 
 function playingCardFromId(id:string):PlayingCard{
