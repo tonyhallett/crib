@@ -15,13 +15,14 @@ import {
   Pips,
   PlayingCard,
   Score,
+  Suit,
 } from "../generatedTypes";
 import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
 import { Box, Positions, Size, matchLayoutManager } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
-import { FlipAnimation, FlipCard, FlipCardProps } from "../FlipCard/FlipCard";
+import { FlipAnimation, FlipCard, FlipCardAnimationSequence, FlipCardProps } from "../FlipCard/FlipCard";
 import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
 import { getDiscardToBoxSegment } from "./animationSegments";
 import {
@@ -34,6 +35,9 @@ import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
 import { useDrag } from "@use-gesture/react";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
 import { Card, CardFlip } from "../FlipCard/Card";
+import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegments";
+import { SequenceTime } from "../FlipCard/motion-types";
+import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -156,6 +160,7 @@ function PlayMatchInner({
       colouredScores:getColouredScores(myMatch.scores)
     }
   );
+  const [scope,animate] = useAnimateSegments();
 
   const cardDatasRef = useRef<FlipCardDatas | undefined>(cardDatas);
   // for when there are no animations
@@ -165,7 +170,6 @@ function PlayMatchInner({
   }, []);
 
   const animationManager = useRef(new AnimationManager((setter) => {
-    
     setCardDatas(prevCardDatas => {
       const newCardDatas =  setter(prevCardDatas);
       cardDatasRef.current = newCardDatas;
@@ -221,14 +225,13 @@ function PlayMatchInner({
           const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
 
           const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
-          const discardedIndex = myMatch.otherPlayers.findIndex(
-            (otherPlayer) => otherPlayer.id === playerId
-          );
+          
           const boxPosition = getBoxPosition(myMatch, positions);
 
           const cardFlipDelay =
             discardDuration + (numDiscards - 1) * secondDiscardDelay;
 
+          let countDiscards = 0;
           const getDiscardToBoxCardData = (
             boxPosition: Box,
             prevCardData: FlipCardData,
@@ -239,7 +242,7 @@ function PlayMatchInner({
               getDiscardToBoxSegment(
                 boxPosition,
                 discardDuration,
-                count * secondDiscardDelay,
+                countDiscards * secondDiscardDelay,
                 undefined,
                 onComplete
               ),
@@ -278,39 +281,76 @@ function PlayMatchInner({
             return newCardData;
           };
 
-          const prevOtherPlayerCardDatas =
-            prevFlipCardDatas.otherPlayersCards[discardedIndex];
+          let newFlipCardDatas: FlipCardDatas;
+         
 
-          let count = 0;
-          const newDiscarderCardDatas = prevOtherPlayerCardDatas.map(
-            (prevCardData) => {
-              if (count < numDiscards) {
-                count++;
-                const newData = getDiscardToBoxCardData(
-                  boxPosition,
-                  prevCardData,
-                  count === numDiscards && !myMatch.cutCard ? complete : undefined
-                );
-                return newData;
-              }
-              return prevCardData;
+          if(playerId === myMatch.myId){
+            animate([["[id^=flipCard_]",{opacity:1}]]);
+            newFlipCardDatas = {
+              ...prevFlipCardDatas,
+              myCards: prevFlipCardDatas.myCards.map((prevCardData) => {
+                const playingCard = prevCardData.playingCard as PlayingCard;
+                if(!myMatch.myCards.some(myCard => {
+                  return myCard.suit === playingCard.suit && myCard.pips === playingCard.pips;
+                })){
+                  countDiscards++;
+                  const discardToBoxCardData = getDiscardToBoxCardData(
+                    boxPosition,
+                    prevCardData,
+                    countDiscards === numDiscards && !myMatch.cutCard ? complete : undefined
+                  );
+                  const flipAnimation: FlipAnimation = {
+                    flip:false,
+                    duration:cardFlipDuration,
+                  };
+                  (discardToBoxCardData.animationSequence as FlipCardAnimationSequence).unshift(flipAnimation);
+                  return discardToBoxCardData;
+                }else{
+                  return prevCardData;
+                }
+              })
             }
-          );
-
-          const newOtherPlayersCards = prevFlipCardDatas.otherPlayersCards.map(
-            (otherPlayerCards, i) => {
-              if (i === discardedIndex) {
-                return newDiscarderCardDatas;
+          }else{
+            const discardedIndex = myMatch.otherPlayers.findIndex(
+              (otherPlayer) => otherPlayer.id === playerId
+            );
+            const prevOtherPlayerCardDatas =
+              prevFlipCardDatas.otherPlayersCards[discardedIndex];
+  
+            
+            const newDiscarderCardDatas = prevOtherPlayerCardDatas.map(
+              (prevCardData) => {
+                if (countDiscards < numDiscards) {
+                  countDiscards++;
+                  const newData = getDiscardToBoxCardData(
+                    boxPosition,
+                    prevCardData,
+                    countDiscards === numDiscards && !myMatch.cutCard ? complete : undefined
+                  );
+                  return newData;
+                }
+                return prevCardData;
               }
-              return otherPlayerCards;
-            }
-          );
+            );
+  
+            const newOtherPlayersCards = prevFlipCardDatas.otherPlayersCards.map(
+              (otherPlayerCards, i) => {
+                if (i === discardedIndex) {
+                  return newDiscarderCardDatas;
+                }
+                return otherPlayerCards;
+              }
+            );
 
-          const newFlipCardDatas: FlipCardDatas = {
-            ...prevFlipCardDatas,
-            otherPlayersCards: newOtherPlayersCards,
-          };
+            newFlipCardDatas = {
+              ...prevFlipCardDatas,
+              otherPlayersCards: newOtherPlayersCards,
+            };
+  
+          }
+          
 
+          
           if (myMatch.cutCard) {
             newFlipCardDatas.cutCard = getCutCardAnimationData(
               prevFlipCardDatas.cutCard,
@@ -438,7 +478,17 @@ function PlayMatchInner({
     landscape,
     mappedFlipCardDatas,
   });
-
+  const clickOverlay = useMyDiscard(
+    <div ref={scope}
+        {...bind()}
+        style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
+      >
+        {flipCards}
+      </div>,
+      getNumDiscards(myMatch),
+      playMatchCribHub.discard
+    
+    );
   return (
     <>
       <div style={cribBoardStyle}>
@@ -457,14 +507,125 @@ function PlayMatchInner({
         />
       </div>
       {peggingOverlay}
-      <div
+      {clickOverlay}
+      {/* <div
         {...bind()}
         style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
       >
         {flipCards}
-      </div>
+      </div> */}
     </>
   );
+}
+
+function getNumDiscards(myMatch:MyMatch){
+  return myMatch.otherPlayers.length === 1 ? 2 : 1;
+}
+
+function getMyDiscardSelectionAnimationSegment(element:HTMLElement,selected:boolean,at?:SequenceTime):SmartSegment
+function getMyDiscardSelectionAnimationSegment(id:string,selected:boolean,at?:SequenceTime):SmartSegment
+function getMyDiscardSelectionAnimationSegment(elementOrId:string|HTMLElement,selected:boolean,at:SequenceTime = 0):SmartSegment {
+  const id = elementOrId instanceof HTMLElement ? elementOrId.id : elementOrId;
+  return [`#${id}`,{opacity:selected ?0.5 : 1},{at:at}]
+}
+
+
+function findFlipCardElement(scope:HTMLDivElement,clientX:number,clientY:number):HTMLElement|undefined{
+  const flipCards = scope.querySelectorAll("[id^=flipCard_]");
+  let matchingElement:HTMLElement|undefined;
+  for(let i=0;i<flipCards.length;i++){
+    const flipCardElement = flipCards[i] as HTMLElement;
+    const rect = flipCardElement.children[0].getBoundingClientRect();
+    if(clientX>=rect.left && clientX<=rect.right && clientY>=rect.top && clientY<=rect.bottom){
+      matchingElement = flipCardElement;
+      break;
+    }
+  }
+  return matchingElement;
+}
+
+// cribGameState:CribGameState but signalR is not changing the match
+function useMyDiscard(children:any,numDiscards:number,discard:(playingCard1:PlayingCard,playingCard2:PlayingCard|undefined) => unknown) {
+  const [scope, animate] = useAnimateSegments();
+  const [showDialog, setShowDialog] = useState(false);
+  const [discarded, setDiscarded] = useState(false);
+  const handleClose = () => {
+    setShowDialog(false);
+  };
+  const deselect = (matchingElement:HTMLElement) => {
+    const segment = getMyDiscardSelectionAnimationSegment(matchingElement,false);
+    selectedIdsRef.current.splice(selectedIdsRef.current.indexOf(matchingElement.id),1);
+    return segment;
+  }
+
+  const select = (matchingElement:HTMLElement) => {
+    const segment = getMyDiscardSelectionAnimationSegment(matchingElement,true);
+    selectedIdsRef.current.push(matchingElement.id);
+    return segment;
+  }
+
+  // will need state when showing the discard overlay
+  const selectedIdsRef = useRef<string[]>([]);
+  return <div ref={scope} onClick={(event) => {
+    if(!discarded){
+      let matchingElement = findFlipCardElement(scope.current as HTMLDivElement,event.clientX,event.clientY);
+      
+      if(matchingElement){
+        const matchingElementId = matchingElement.id;
+        // deselect if currently selected
+        if(selectedIdsRef.current.includes(matchingElementId)){
+          animate([deselect(matchingElement)]);
+        }else{
+          // already selected num discards
+          if(selectedIdsRef.current.length===numDiscards){
+            if(numDiscards === 1){
+              animate([deselect(document.getElementById(selectedIdsRef.current[0]) as HTMLElement),select(matchingElement)]);
+            }else{
+              matchingElement = undefined;
+            }
+          }else{
+            animate([select(matchingElement)]);
+          }
+          
+        }
+      }
+
+      if(matchingElement && selectedIdsRef.current.length===numDiscards){
+          setShowDialog(true);
+      }
+    }
+    
+  }}>
+    <Dialog open={showDialog} onClose={handleClose}>
+      <DialogTitle>
+          {"Discard cards ?"}
+      </DialogTitle>
+      <DialogActions>
+          <Button onClick={handleClose}>Disagree</Button>
+          <Button onClick={() => {
+            setDiscarded(true);
+            const id1 = selectedIdsRef.current[0];
+            const playingCard1 = playingCardFromId(id1);
+            const id2 = selectedIdsRef.current[1];
+            const playingCard2 = id2 !== undefined ? playingCardFromId(id2) : undefined;
+            discard(playingCard1, playingCard2);
+            handleClose();
+            // might animate further to show sending to the server
+          }} autoFocus>
+            Agree
+          </Button>
+        </DialogActions>
+    </Dialog>
+    {children}
+  </div>
+}
+
+function playingCardFromId(id:string):PlayingCard{
+  const parts = id.split("_");
+  const pipsStr = parts[1];
+  const suitStr = parts[2];
+  
+  return {pips:Pips[pipsStr as keyof typeof Pips],suit:Suit[suitStr as keyof typeof Suit]};
 }
 
 export const PlayMatch = memo(PlayMatchInner, (prevProps, nextProps) => {
