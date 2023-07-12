@@ -1,5 +1,6 @@
 import {
   CSSProperties,
+  ReactNode,
   memo,
   useCallback,
   useEffect,
@@ -175,6 +176,7 @@ function PlayMatchInner({
       return newCardDatas;
     })
   }));
+  
   const size = useMemo(() => getSize(landscape), [landscape]);
   const [positions, cardSize] = useMemo(() => {
     const positionsAndCardSize = matchLayoutManager.getPositionsAndCardSize(
@@ -451,25 +453,9 @@ function PlayMatchInner({
     ))
   },[cardSize, mappedFlipCardDatas]);
 
-  const cribBoardHeight = landscape ? window.innerHeight : window.innerWidth;
-  const cribBoardWidth = cribBoardHeight * cribBoardWidthRatio;
-
-  // do not need to translateY when provide the width
-  const cribBoardPortraitStyle: CSSProperties = {
-    position: "absolute",
-    transform: `translateX(${window.innerWidth}px) rotate(90deg)`,
-    transformOrigin: "left top",
-  };
-  const cribBoardLandscapeStyle: CSSProperties = {
-    position: "absolute",
-    right: 0,
-  };
-  const cribBoardStyle = landscape
-    ? cribBoardLandscapeStyle
-    : cribBoardPortraitStyle;
-  const cardsShiftStyle = landscape
-    ? {}
-    : { transform: `translateY(${cribBoardWidth}px)` };
+  
+  const {cribBoardHeight, cribBoardWidth} = getCribBoardSizes(landscape, cribBoardWidthRatio);
+  const {cardsShiftStyle,cribBoardStyle} = getOrientationDependentStyles(landscape,cribBoardWidth);
 
   const [peggingOverlay, bind] = usePeggingOverlay({
     cardSize,
@@ -496,7 +482,7 @@ function PlayMatchInner({
           pegHoleRadius={0.05}
           pegRadius={0.09}
           pegTrackBoxPaddingPercentage={0.3}
-          height={landscape ? window.innerHeight : window.innerWidth}
+          height={cribBoardHeight}
           width={cribBoardWidth}
           pegHorizontalSpacing={0.3}
           pegPadding={0.1}
@@ -515,6 +501,32 @@ function PlayMatchInner({
       </div> */}
     </>
   );
+}
+
+function getCribBoardSizes(landscape:boolean, ratio:number){
+  const cribBoardHeight = landscape ? window.innerHeight : window.innerWidth;
+  const cribBoardWidth = cribBoardHeight * ratio;
+  return {cribBoardHeight,cribBoardWidth}
+}
+
+function getOrientationDependentStyles(landscape:boolean,cribBoardWidth:number){
+  const cribBoardPortraitStyle: CSSProperties = {
+    position: "absolute",
+    transform: `translateX(${window.innerWidth}px) rotate(90deg)`,
+    transformOrigin: "left top",
+  };
+  const cribBoardLandscapeStyle: CSSProperties = {
+    position: "absolute",
+    right: 0,
+  };
+  const cribBoardStyle = landscape
+    ? cribBoardLandscapeStyle
+    : cribBoardPortraitStyle;
+  const cardsShiftStyle = landscape
+    ? {}
+    : { transform: `translateY(${cribBoardWidth}px)` };
+
+  return {cribBoardStyle,cardsShiftStyle}
 }
 
 function getNumDiscards(myMatch:MyMatch){
@@ -545,7 +557,7 @@ function findFlipCardElement(scope:HTMLDivElement,clientX:number,clientY:number)
 
 // cribGameState:CribGameState but signalR is not changing the match
 function useMyDiscard(
-  children:any,
+  children:ReactNode,
   numDiscards:number,
   discard:(playingCard1:PlayingCard,playingCard2:PlayingCard|undefined) => unknown
 ):[JSX.Element,() => void] {
