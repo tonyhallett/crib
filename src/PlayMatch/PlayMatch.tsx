@@ -102,24 +102,8 @@ export interface FlipCardDatas {
 
 const discardDuration = 0.5;
 const flipDuration = 0.5;
-const cribBoardWidthRatio = 0.35;
-function getSize(isLandscape: boolean) {
-  if (isLandscape) {
-    const cribBoardWidth =
-      document.documentElement.clientHeight * cribBoardWidthRatio;
-    return {
-      width: document.documentElement.clientWidth - cribBoardWidth,
-      height: document.documentElement.clientHeight,
-    };
-  } else {
-    const cribBoardWidth =
-      document.documentElement.clientWidth * cribBoardWidthRatio;
-    return {
-      width: document.documentElement.clientWidth,
-      height: document.documentElement.clientHeight - cribBoardWidth,
-    };
-  }
-}
+
+
 
 const colours: CSSProperties["color"][] = ["red", "blue", "green"];
 function getColouredScore(score: Score, index: number): ColouredScore {
@@ -177,11 +161,11 @@ function PlayMatchInner({
     })
   }));
   
-  const size = useMemo(() => getSize(landscape), [landscape]);
+  const {cribBoardSize, playAreaSize,styles} = useMemo(() => getOrientationDependentValues(landscape), [landscape]);
   const [positions, cardSize] = useMemo(() => {
     const positionsAndCardSize = matchLayoutManager.getPositionsAndCardSize(
-      size.width,
-      size.height,
+      playAreaSize.width,
+      playAreaSize.height,
       myMatch,
       {
         peggingOverlayPercentage: 0.15,
@@ -191,7 +175,7 @@ function PlayMatchInner({
       }
     );
     return positionsAndCardSize;
-  }, [myMatch, size.height, size.width]);
+  }, [myMatch, playAreaSize]);
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -454,19 +438,19 @@ function PlayMatchInner({
   },[cardSize, mappedFlipCardDatas]);
 
   
-  const {cribBoardHeight, cribBoardWidth} = getCribBoardSizes(landscape, cribBoardWidthRatio);
-  const {cardsShiftStyle,cribBoardStyle} = getOrientationDependentStyles(landscape,cribBoardWidth);
+  //const {cribBoardHeight, cribBoardWidth} = getCribBoardSize(landscape, cribBoardWidthRatio);
+  //const {cardsShiftStyle,cribBoardStyle} = getOrientationDependentStyles(landscape,cribBoardWidth);
 
   const [peggingOverlay, bind] = usePeggingOverlay({
     cardSize,
-    cribBoardWidth,
+    cribBoardWidth:cribBoardSize.width,
     landscape,
     mappedFlipCardDatas,
   });
   const [clickOverlay,removeMyDiscardSelection] = useMyDiscard(
     <div
         {...bind()}
-        style={{ perspective: 5000, ...cardsShiftStyle, touchAction: "none" }}
+        style={{ perspective: 5000, ...styles.cardsShiftStyle, touchAction: "none" }}
       >
         {flipCards}
       </div>,
@@ -476,14 +460,14 @@ function PlayMatchInner({
     );
   return (
     <>
-      <div style={cribBoardStyle}>
+      <div style={styles.cribBoardStyle}>
         <AnimatedCribBoard
           cribBoardUrl={cribBoardWoodUrl}
           pegHoleRadius={0.05}
           pegRadius={0.09}
           pegTrackBoxPaddingPercentage={0.3}
-          height={cribBoardHeight}
-          width={cribBoardWidth}
+          height={cribBoardSize.height}
+          width={cribBoardSize.width}
           pegHorizontalSpacing={0.3}
           pegPadding={0.1}
           strokeWidth={0.05}
@@ -503,10 +487,30 @@ function PlayMatchInner({
   );
 }
 
-function getCribBoardSizes(landscape:boolean, ratio:number){
-  const cribBoardHeight = landscape ? window.innerHeight : window.innerWidth;
-  const cribBoardWidth = cribBoardHeight * ratio;
-  return {cribBoardHeight,cribBoardWidth}
+function getSize(isLandscape: boolean, cribBoardWidth:number) {
+  if (isLandscape) {
+    return {
+      width: window.innerWidth - cribBoardWidth,
+      height: window.innerHeight,
+    };
+  } else {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight - cribBoardWidth,
+    };
+  }
+}
+function getCribBoardSize(landscape:boolean, ratio:number){
+  const height = landscape ? window.innerHeight : window.innerWidth;
+  const width = height * ratio;
+  return {height,width}
+}
+
+function getOrientationDependentValues(landscape:boolean){
+  const cribBoardSize = getCribBoardSize(landscape,0.35);
+  const playAreaSize = getSize(landscape,cribBoardSize.width);
+  const styles = getOrientationDependentStyles(landscape,cribBoardSize.width);
+  return {cribBoardSize,playAreaSize,styles}
 }
 
 function getOrientationDependentStyles(landscape:boolean,cribBoardWidth:number){
