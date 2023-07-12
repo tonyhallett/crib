@@ -1,16 +1,16 @@
 import { ChangeHistory, CribGameState, MyMatch } from "./generatedTypes";
 
-type LocalChangeHistory = Omit<ChangeHistory,"lastChangeDate"> & {
-  lastChangeDate?: Date
-}
+type LocalChangeHistory = Omit<ChangeHistory, "lastChangeDate"> & {
+  lastChangeDate?: Date;
+};
 
 export interface LocalMatch {
   id: string;
   changeHistory: LocalChangeHistory;
 }
 
-function iHaveNotDiscarded(myMatch:MyMatch){
-  return myMatch.myCards.length !== 4
+function iHaveNotDiscarded(myMatch: MyMatch) {
+  return myMatch.myCards.length !== 4;
 }
 
 export const dealActionIndicator = -1;
@@ -24,21 +24,22 @@ export function createLocalMatch(myMatch: MyMatch): LocalMatch {
   return {
     id: myMatch.id,
     changeHistory: {
-      matchCreationDate:changeHistory.matchCreationDate,
+      matchCreationDate: changeHistory.matchCreationDate,
       numberOfActions,
     },
   };
 }
 
-export function removeDealIndicator(localMatch:LocalMatch):LocalMatch | undefined {
-  if(localMatch.changeHistory.numberOfActions === dealActionIndicator){
+export function removeDealIndicator(
+  localMatch: LocalMatch
+): LocalMatch | undefined {
+  if (localMatch.changeHistory.numberOfActions === dealActionIndicator) {
     return {
       ...localMatch,
-      changeHistory:{
+      changeHistory: {
         ...localMatch.changeHistory,
-        numberOfActions:0
-      }
-    }
+        numberOfActions: 0,
+      },
+    };
   }
 }
-

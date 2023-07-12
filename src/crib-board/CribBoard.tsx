@@ -35,10 +35,7 @@ export function getPeggerTrackPositionIndex(
   return getReversedPeggerTrackPosition(trackNumber === 3, peggerNumber) - 1;
 }
 
-function getReversedPeggerTrackPosition(
-  reversed: boolean,
-  pegger: number
-) {
+function getReversedPeggerTrackPosition(reversed: boolean, pegger: number) {
   if (reversed) {
     switch (pegger) {
       case 2:

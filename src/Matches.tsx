@@ -48,10 +48,10 @@ function canGo(match: MyMatch): boolean {
 }
 
 function newMoves(match: MyMatch, localMatch: LocalMatch): boolean {
-    return (
-      match.changeHistory.numberOfActions >
-      localMatch.changeHistory.numberOfActions
-    );
+  return (
+    match.changeHistory.numberOfActions >
+    localMatch.changeHistory.numberOfActions
+  );
 }
 
 const propertyNames: (keyof MatchesData)[] = [

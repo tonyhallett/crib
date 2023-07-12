@@ -104,7 +104,7 @@ export function AnimatedCribBoard({
   at = 0,
   // could even determine distance and keep constant
   moveDuration = 2,
-  onComplete
+  onComplete,
 }: {
   cribBoardUrl: string;
   pegHoleRadius: number;
@@ -118,7 +118,7 @@ export function AnimatedCribBoard({
   pegRadius: number;
   at?: number;
   moveDuration?: number;
-  onComplete?:() => void
+  onComplete?: () => void;
 }) {
   const [scope, animate] = useAnimateSegments();
   const rendered = useRef(false);
@@ -560,13 +560,13 @@ export function AnimatedCribBoard({
       score: number,
       pegger: number,
       isFrontPeg: boolean,
-      onComplete?:OnComplete
+      onComplete?: OnComplete
     ) => {
       const { x, y } = memoed.getPegPosition(score, pegger + 1, isFrontPeg);
       segments.push([
         `#${getPegIdentifier(pegger, isFrontPeg)}`,
         { x, y },
-        { duration: moveDuration, at, x:{onComplete} },
+        { duration: moveDuration, at, x: { onComplete } },
       ]);
     },
     [at, memoed, moveDuration]
@@ -584,9 +584,13 @@ export function AnimatedCribBoard({
   );
 
   const animatePegsToStartPositions = useCallback(
-    (segments: SmartSegment[], pegger: number, onComplete:OnComplete | undefined) => {
+    (
+      segments: SmartSegment[],
+      pegger: number,
+      onComplete: OnComplete | undefined
+    ) => {
       animatePegPosition(segments, 0, pegger, true);
-      animatePegPosition(segments, 0, pegger, false,onComplete);
+      animatePegPosition(segments, 0, pegger, false, onComplete);
     },
     [animatePegPosition]
   );
@@ -597,9 +601,9 @@ export function AnimatedCribBoard({
       pegger: number,
       newPegInfo: PegInfo,
       lastPegInfo: PegInfo,
-      onComplete:OnComplete | undefined
+      onComplete: OnComplete | undefined
     ) => {
-      animatePegsToStartPositions(segments, pegger,onComplete);
+      animatePegsToStartPositions(segments, pegger, onComplete);
       if (newPegInfo.gameScore !== lastPegInfo.gameScore) {
         animateGameScore(segments, pegger, newPegInfo.gameScore);
       }
@@ -614,7 +618,7 @@ export function AnimatedCribBoard({
       newPegInfo: PegInfo,
       lastPegInfo: PegInfo,
       pegger: number,
-      onComplete:OnComplete | undefined
+      onComplete: OnComplete | undefined
     ) => {
       newPegInfo.peg1Advanced = !lastPegInfo.peg1Advanced;
       animatePegPosition(
@@ -637,12 +641,25 @@ export function AnimatedCribBoard({
 
       const animations = lastPegInfos.reduce<SmartSegment[]>(
         (segments, lastPegInfo, player) => {
-          const movedCompleted = player === lastPegInfos.length - 1 ? onComplete : undefined;
+          const movedCompleted =
+            player === lastPegInfos.length - 1 ? onComplete : undefined;
           const newPegInfo = newPegInfos[player];
           if (isNewGame) {
-            animateNewGamePegs(segments, player, newPegInfo, lastPegInfo, movedCompleted);
+            animateNewGamePegs(
+              segments,
+              player,
+              newPegInfo,
+              lastPegInfo,
+              movedCompleted
+            );
           } else if (newPegInfo.frontPeg !== lastPegInfo.frontPeg) {
-            animatePeg(segments, newPegInfo, lastPegInfo, player,movedCompleted);
+            animatePeg(
+              segments,
+              newPegInfo,
+              lastPegInfo,
+              player,
+              movedCompleted
+            );
           }
 
           return segments;
@@ -662,7 +679,7 @@ export function AnimatedCribBoard({
     memoed,
     animateNewGamePegs,
     animatePeg,
-    onComplete
+    onComplete,
   ]);
   return memoed.svg;
 }

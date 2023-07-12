@@ -1,7 +1,10 @@
 import * as signalR from "@microsoft/signalr";
 import { PublicInterface } from "../utilities/typeHelpers";
 
-export type SendInterceptor = (methodName: string, ...args: unknown[]) => unknown;
+export type SendInterceptor = (
+  methodName: string,
+  ...args: unknown[]
+) => unknown;
 
 class RadHubConnection implements PublicInterface<signalR.HubConnection> {
   serverTimeoutInMilliseconds = 0;
@@ -32,13 +35,15 @@ class RadHubConnection implements PublicInterface<signalR.HubConnection> {
   }
 
   private sendInterceptors: SendInterceptor[] = [];
-  interceptSend(interceptor:SendInterceptor){
+  interceptSend(interceptor: SendInterceptor) {
     this.sendInterceptors.push(interceptor);
   }
 
   // to the server
   send(methodName: string, ...args: unknown[]): Promise<void> {
-    this.sendInterceptors.forEach(interceptor => interceptor(methodName, ...args));
+    this.sendInterceptors.forEach((interceptor) =>
+      interceptor(methodName, ...args)
+    );
     return Promise.resolve();
   }
   invoke<T = unknown>(): Promise<T> {

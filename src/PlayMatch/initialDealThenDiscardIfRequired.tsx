@@ -6,7 +6,12 @@ import {
   Positions,
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
-import { FlipCardData, FlipCardDatas, FlipCardState, UpdateLocalMatch } from "./PlayMatch";
+import {
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+  UpdateLocalMatch,
+} from "./PlayMatch";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { MyMatch } from "../generatedTypes";
 import {
@@ -160,16 +165,16 @@ const createCompletionCallbacks = (
   updateLocalMatch: UpdateLocalMatch,
   numberOfDiscards: number,
   numberOfMatchActions: number,
-  animationCompleteCallback:() => void
+  animationCompleteCallback: () => void
 ) => {
   const lastDealtCompleteCallback: OnComplete = () => {
-    const newLocalMatch:LocalMatch = {
+    const newLocalMatch: LocalMatch = {
       ...localMatch,
-      changeHistory:{
+      changeHistory: {
         ...localMatch.changeHistory,
-        numberOfActions:numberOfMatchActions - numberOfDiscards
-      }
-    }
+        numberOfActions: numberOfMatchActions - numberOfDiscards,
+      },
+    };
     updateLocalMatch(newLocalMatch);
 
     if (numberOfDiscards === 0) {
@@ -178,15 +183,15 @@ const createCompletionCallbacks = (
   };
 
   const lastDiscardCompleteCallback: OnComplete = () => {
-    const newLocalMatch:LocalMatch = {
+    const newLocalMatch: LocalMatch = {
       ...localMatch,
-      changeHistory:{
-        matchCreationDate:localMatch.changeHistory.matchCreationDate,
-        numberOfActions:numberOfMatchActions,
-        lastChangeDate:new Date()
-      }
-    }
-    
+      changeHistory: {
+        matchCreationDate: localMatch.changeHistory.matchCreationDate,
+        numberOfActions: numberOfMatchActions,
+        lastChangeDate: new Date(),
+      },
+    };
+
     updateLocalMatch(newLocalMatch);
     animationCompleteCallback && animationCompleteCallback();
   };
@@ -234,7 +239,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
   myCards: FlipCardData[],
   otherPlayersCards: FlipCardData[][],
   updateLocalMatch: UpdateLocalMatch,
-  animationCompleteCallback:() => void
+  animationCompleteCallback: () => void
 ): void /*AnimationCompletionRegistration*/ {
   const numPlayers = otherPlayersCards.length + 1;
   const dealDiscardNumbers = getPlayerCardDealDiscardNumbers(numPlayers);
@@ -311,7 +316,7 @@ function dealPlayerCardsAndPossiblyDiscard(
   playerDealPositions: PlayerDealPositions,
   playerDealAnimationParameters: PlayerDealAnimationParameters,
   updateLocalMatch: UpdateLocalMatch,
-  animationCompleteCallback:() => void
+  animationCompleteCallback: () => void
 ): MyCardsOtherPlayersCards {
   const dealPositions = getDealPositions(
     playerDealPositions.playerPositions,
@@ -333,7 +338,7 @@ function dealPlayerCardsAndPossiblyDiscard(
     updateLocalMatch,
     animationCompleteCallback
   );
-    return [myCards, otherPlayersCards];
+  return [myCards, otherPlayersCards];
 }
 
 function getNumPlayerCardsToDeal(numPlayers: number): number;
@@ -368,7 +373,7 @@ export function dealThenDiscardIfRequired(
   positions: Positions,
   updateLocalMatch: UpdateLocalMatch,
   dealFlipDurations: DealFlipDiscardDurations,
-  animationCompleteCallback:() => void
+  animationCompleteCallback: () => void
 ): FlipCardDatas {
   const playerPositions = positions.playerPositions;
   const numCardsToDeal = getNumCardsToDeal(match);
@@ -398,28 +403,27 @@ export function dealThenDiscardIfRequired(
     ? dealPlayersDuration + dealFlipDurations.dealDuration
     : dealPlayersDuration;
 
-  const [myCards, otherPlayersCards] =
-    dealPlayerCardsAndPossiblyDiscard(
-      match,
-      localMatch,
-      {
-        playerPositions,
-        boxPosition,
-        deck: dealerPositions.deck,
-      },
-      {
-        ...dealFlipDurations,
-        discardDelay: fullDealDuration,
-      },
-      updateLocalMatch,
-      animationCompleteCallback
-    );
+  const [myCards, otherPlayersCards] = dealPlayerCardsAndPossiblyDiscard(
+    match,
+    localMatch,
+    {
+      playerPositions,
+      boxPosition,
+      deck: dealerPositions.deck,
+    },
+    {
+      ...dealFlipDurations,
+      discardDelay: fullDealDuration,
+    },
+    updateLocalMatch,
+    animationCompleteCallback
+  );
 
-    return {
-      bottomDeckCard: nonPlayerCardDatas.bottomDeckCard, // has zIndex 0
-      additionalBoxCard,
-      cutCard: nonPlayerCardDatas.cutCard,
-      myCards,
-      otherPlayersCards,
-    };
+  return {
+    bottomDeckCard: nonPlayerCardDatas.bottomDeckCard, // has zIndex 0
+    additionalBoxCard,
+    cutCard: nonPlayerCardDatas.cutCard,
+    myCards,
+    otherPlayersCards,
+  };
 }

@@ -32,75 +32,84 @@ import {
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MyMatchAndLocal } from "../App";
-import { Button, Checkbox, FormControlLabel, MenuItem, Select } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 
-interface MyMatchAction{
-  methodName:string,
-  args:unknown[]
+interface MyMatchAction {
+  methodName: string;
+  args: unknown[];
 }
 
 type ActionMyMatch = MyMatch & {
-  actions:MyMatchAction[]
-  currentAction:number
-}
+  actions: MyMatchAction[];
+  currentAction: number;
+};
 
 const matches: ActionMyMatch[] = [
   {
-    actions:[
+    actions: [
       {
-        methodName:"discard",
-        args:["Player2", {
-          id: "New game",
-          changeHistory: {
-            lastChangeDate: new Date("20 May 2023 09:00"),
-            matchCreationDate: new Date("20 December 2022 14:48"),
-            numberOfActions: 2,
-          },
-          title: "New game",
-          gameState: CribGameState.Discard,
-          box: [],
-          myCards: [
-            AceSpades,
-            QueenSpades,
-            KingSpades,
-            JackSpades,
-            FourSpades,
-            ThreeSpades,
-          ],
-          cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
-          scores: [
-            { games: 1, frontPeg: 22, backPeg: 9 },
-            { games: 2, frontPeg: 12, backPeg: 4 },
-          ],
-          pegging: {
-            turnedOverCards: [],
-            inPlayCards: [],
-            goHistory: [],
-            nextPlayer: "Player2",
-            cannotGoes: [false],
-            myCannotGo: false,
-          },
-          myId: "Me",
-          dealerDetails: {
-            first: "Me",
-            current: "Player2",
-          },
-          myReady: false,
-          matchWinDeterminant: "BestOf_3",
-          myScoringHistory: null as unknown as PlayerScoringHistory,
-          otherPlayers: [
-            {
-              id: "Player2",
-              discarded: true,
-              playerScoringHistory: null as unknown as PlayerScoringHistory,
-              ready: false,
+        methodName: "discard",
+        args: [
+          "Player2",
+          {
+            id: "New game",
+            changeHistory: {
+              lastChangeDate: new Date("20 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 2,
             },
-          ],
-          showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-        }]
-      }
+            title: "New game",
+            gameState: CribGameState.Discard,
+            box: [],
+            myCards: [
+              AceSpades,
+              QueenSpades,
+              KingSpades,
+              JackSpades,
+              FourSpades,
+              ThreeSpades,
+            ],
+            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          },
+        ],
+      },
     ],
-    currentAction:0,
+    currentAction: 0,
 
     id: "New game",
     changeHistory: {
@@ -151,52 +160,57 @@ const matches: ActionMyMatch[] = [
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
-    actions:[{
-      methodName:"discard",
-      args:["Player2", {
-        id: "I discarded (Jack cut)",
-        changeHistory: {
-          lastChangeDate: new Date("20 May 2023 09:00"),
-          matchCreationDate: new Date("20 December 2022 14:48"),
-          numberOfActions: 2,
-        },
-        title: "I discarded (Jack cut)",
-        gameState: CribGameState.Pegging,
-        box: [],
-        myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
-        cutCard: JackSpades,
-        scores: [
-          { games: 1, frontPeg: 22, backPeg: 9 },
-          { games: 2, frontPeg: 14, backPeg: 12 },
-        ],
-        pegging: {
-          turnedOverCards: [],
-          inPlayCards: [],
-          goHistory: [],
-          nextPlayer: "Player2",
-          cannotGoes: [false],
-          myCannotGo: false,
-        },
-        myId: "Me",
-        dealerDetails: {
-          first: "Me",
-          current: "Player2",
-        },
-        myReady: false,
-        matchWinDeterminant: "BestOf_3",
-        myScoringHistory: null as unknown as PlayerScoringHistory,
-        otherPlayers: [
+    actions: [
+      {
+        methodName: "discard",
+        args: [
+          "Player2",
           {
-            id: "Player2",
-            discarded: true,
-            playerScoringHistory: null as unknown as PlayerScoringHistory,
-            ready: false,
+            id: "I discarded (Jack cut)",
+            changeHistory: {
+              lastChangeDate: new Date("20 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 2,
+            },
+            title: "I discarded (Jack cut)",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
+            cutCard: JackSpades,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 14, backPeg: 12 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
-        showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-    }]
-    }],
-    currentAction:0,
+      },
+    ],
+    currentAction: 0,
 
     id: "I discarded (Jack cut)",
     changeHistory: {
@@ -239,114 +253,132 @@ const matches: ActionMyMatch[] = [
     ],
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
-  
+
   {
-    currentAction:0,
-    actions:[
+    currentAction: 0,
+    actions: [
       {
-        methodName:"discard",
-        args:["Player2", {
-          id: "3 player discard",
-          changeHistory: {
-            lastChangeDate: new Date("20 May 2023 09:00"),
-            matchCreationDate: new Date("20 December 2022 14:48"),
-            numberOfActions: 2,
-          },
-          title: "3 player discard",
-          gameState: CribGameState.Discard,
-          box: [],
-          myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
-          cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
-          scores: [
-            { games: 1, frontPeg: 22, backPeg: 9 },
-            { games: 2, frontPeg: 12, backPeg: 4 },
-            { games: 0, frontPeg: 1, backPeg: 2 },
-          ],
-          pegging: {
-            turnedOverCards: [],
-            inPlayCards: [],
-            goHistory: [],
-            nextPlayer: "Player2",
-            cannotGoes: [false, false],
-            myCannotGo: false,
-          },
-          myId: "Me",
-          dealerDetails: {
-            first: "Me",
-            current: "Player2",
-          },
-          myReady: false,
-          matchWinDeterminant: "BestOf_3",
-          myScoringHistory: null as unknown as PlayerScoringHistory,
-          otherPlayers: [
-            {
-              id: "Player2",
-              discarded: true,
-              playerScoringHistory: null as unknown as PlayerScoringHistory,
-              ready: false,
+        methodName: "discard",
+        args: [
+          "Player2",
+          {
+            id: "3 player discard",
+            changeHistory: {
+              lastChangeDate: new Date("20 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 2,
             },
-            {
-              id: "Player3",
-              discarded: false,
-              playerScoringHistory: null as unknown as PlayerScoringHistory,
-              ready: false,
+            title: "3 player discard",
+            gameState: CribGameState.Discard,
+            box: [],
+            myCards: [
+              AceSpades,
+              QueenSpades,
+              KingSpades,
+              JackSpades,
+              TwoSpades,
+            ],
+            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 0, frontPeg: 1, backPeg: 2 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false, false],
+              myCannotGo: false,
             },
-          ],
-          showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-        }]
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: false,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          },
+        ],
       },
       {
-        methodName:"discard",
-        args:["Player3", {
-          id: "3 player discard",
-          changeHistory: {
-            lastChangeDate: new Date("21 May 2023 09:00"),
-            matchCreationDate: new Date("20 December 2022 14:48"),
-            numberOfActions: 3,
-          },
-          title: "3 player discard",
-          gameState: CribGameState.Discard,
-          box: [],
-          myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
-          cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
-          scores: [
-            { games: 1, frontPeg: 22, backPeg: 9 },
-            { games: 2, frontPeg: 12, backPeg: 4 },
-            { games: 0, frontPeg: 1, backPeg: 2 },
-          ],
-          pegging: {
-            turnedOverCards: [],
-            inPlayCards: [],
-            goHistory: [],
-            nextPlayer: "Player2",
-            cannotGoes: [false, false],
-            myCannotGo: false,
-          },
-          myId: "Me",
-          dealerDetails: {
-            first: "Me",
-            current: "Player2",
-          },
-          myReady: false,
-          matchWinDeterminant: "BestOf_3",
-          myScoringHistory: null as unknown as PlayerScoringHistory,
-          otherPlayers: [
-            {
-              id: "Player2",
-              discarded: true,
-              playerScoringHistory: null as unknown as PlayerScoringHistory,
-              ready: false,
+        methodName: "discard",
+        args: [
+          "Player3",
+          {
+            id: "3 player discard",
+            changeHistory: {
+              lastChangeDate: new Date("21 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 3,
             },
-            {
-              id: "Player3",
-              discarded: true,
-              playerScoringHistory: null as unknown as PlayerScoringHistory,
-              ready: false,
+            title: "3 player discard",
+            gameState: CribGameState.Discard,
+            box: [],
+            myCards: [
+              AceSpades,
+              QueenSpades,
+              KingSpades,
+              JackSpades,
+              TwoSpades,
+            ],
+            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 0, frontPeg: 1, backPeg: 2 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false, false],
+              myCannotGo: false,
             },
-          ],
-          showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-        }]
-      }
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          },
+        ],
+      },
     ],
     id: "3 player discard",
     changeHistory: {
@@ -516,9 +548,9 @@ const matches: ActionMyMatch[] = [
       },
     ],
   }, */
-   {
-    actions:[],
-    currentAction:0,
+  {
+    actions: [],
+    currentAction: 0,
     id: "5",
     changeHistory: {
       lastChangeDate: new Date("19 May 2023 09:00"),
@@ -681,7 +713,7 @@ const matches: ActionMyMatch[] = [
   }, */
 ];
 
-function useForceRender(){
+function useForceRender() {
   const [dummyForceRender, setDummyForceRender] = useState(0);
   return () => setDummyForceRender(dummyForceRender + 1);
 }
@@ -691,58 +723,71 @@ export function RadHubManager() {
   const playMatchContext = useContext(PlayMatchContext);
   const [addedInitialPlayerData, setAddedInitialPlayerData] = useState(false);
 
-  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal|undefined>();
+  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>();
   const playMatchRef = useRef(playMatch);
-  const setPlayMatchAndRef = (playMatch:MyMatchAndLocal|undefined) => {
+  const setPlayMatchAndRef = (playMatch: MyMatchAndLocal | undefined) => {
     playMatchRef.current = playMatch;
     setPlayMatch(playMatch);
-  }
+  };
   const [selectedMatchId, setSelectedMatchId] = useState<string>(matches[0].id);
   const [usePlayingMatch, setUsePlayingMatch] = useState(true);
   const forceRender = useForceRender();
-  const actionMatchId = !!playMatch && usePlayingMatch ? playMatch.match.id : selectedMatchId;
-  const actionMatch = matches.find(match => match.id === actionMatchId) as ActionMyMatch;
-  const myMatchAction = actionMatch.actions[actionMatch.currentAction]
-  
-  
+  const actionMatchId =
+    !!playMatch && usePlayingMatch ? playMatch.match.id : selectedMatchId;
+  const actionMatch = matches.find(
+    (match) => match.id === actionMatchId
+  ) as ActionMyMatch;
+  const myMatchAction = actionMatch.actions[actionMatch.currentAction];
+
   useEffect(() => {
-    if(!subscribedRef.current){
-      RadHubConnectionInstance.interceptSend((methodName,...args) => {
-        if(methodName === "Discard"){
+    if (!subscribedRef.current) {
+      RadHubConnectionInstance.interceptSend((methodName, ...args) => {
+        if (methodName === "Discard") {
           // 0 is the matchId
           const discard1 = args[1] as PlayingCard;
           const discard2 = args[2] as PlayingCard;
           const match = (playMatchRef.current as MyMatchAndLocal).match;
 
-          const cardMatch = (card1:PlayingCard, card2:PlayingCard|undefined) => {
-            if(card2 === undefined) return false;
+          const cardMatch = (
+            card1: PlayingCard,
+            card2: PlayingCard | undefined
+          ) => {
+            if (card2 === undefined) return false;
             return card1.suit === card2.suit && card1.pips === card2.pips;
-          }
-          const newMyCards = match.myCards.filter(card => !(cardMatch(card,discard1) || cardMatch(card, discard2)));
-          const changedMatch:MyMatch = {
+          };
+          const newMyCards = match.myCards.filter(
+            (card) => !(cardMatch(card, discard1) || cardMatch(card, discard2))
+          );
+          const changedMatch: MyMatch = {
             ...match,
             myCards: newMyCards,
-            changeHistory:{
-              ...match.changeHistory,  
-              lastChangeDate:new Date(),
-              numberOfActions:match.changeHistory.numberOfActions + 1,
-            }
-          }
-          const othersDiscarded = match.otherPlayers.every(otherPlayer => otherPlayer.discarded);
-          if(othersDiscarded){
+            changeHistory: {
+              ...match.changeHistory,
+              lastChangeDate: new Date(),
+              numberOfActions: match.changeHistory.numberOfActions + 1,
+            },
+          };
+          const othersDiscarded = match.otherPlayers.every(
+            (otherPlayer) => otherPlayer.discarded
+          );
+          if (othersDiscarded) {
             changedMatch.gameState = CribGameState.Pegging;
-            changedMatch.cutCard = {pips:Pips.Ace, suit:Suit.Spades};
+            changedMatch.cutCard = { pips: Pips.Ace, suit: Suit.Spades };
           }
-          RadHubConnectionInstance.fromTheServer("discard", match.myId,changedMatch);
+          RadHubConnectionInstance.fromTheServer(
+            "discard",
+            match.myId,
+            changedMatch
+          );
         }
       });
-      playMatchContext.subscribe(playMatch => {
+      playMatchContext.subscribe((playMatch) => {
         setPlayMatchAndRef(playMatch);
       });
       subscribedRef.current = true;
     }
-  },[playMatchContext])
-  
+  }, [playMatchContext]);
+
   const addInitialPlayerDataClickHandler = useCallback(() => {
     const myFriends: Friendship[] = [
       {
@@ -773,7 +818,7 @@ export function RadHubManager() {
         otherId: "otherid3",
       },
     ];
-    
+
     RadHubConnectionInstance.fromTheServer(
       "initialPlayerData",
       myFriends,
@@ -788,8 +833,6 @@ export function RadHubManager() {
     localMatches.forEach((localMatch) => cribStorage.setMatch(localMatch));
   }, []);
 
-
-  
   return (
     <motion.div
       drag
@@ -800,34 +843,67 @@ export function RadHubManager() {
         padding: 50,
         backgroundColor: "white",
         position: "fixed",
-        zIndex: 1000000,
+        zIndex: 10000,
       }}
     >
-      {
-      !addedInitialPlayerData && <><Button style={{display:"block"}} onClick={addInitialPlayerDataClickHandler}>
-        Add InitialPlayerData
-      </Button>
-      <Button style={{display:"block"}} onClick={addLocalMatchesClickHandler}>Add local matches</Button>
-      </>
-      }
-      <FormControlLabel disabled={playMatch === undefined} label="Use playing match ?" control={<Checkbox checked={usePlayingMatch} onChange={(evt) => {
-        setUsePlayingMatch(evt.target.checked);
-      }}/>}/>
-      <Select value={selectedMatchId} label="Select match" onChange={ event => setSelectedMatchId(event.target.value)}>
-        {matches.map(match => {
-          return <MenuItem key={match.id} value={match.id}>{match.title}</MenuItem>
+      {!addedInitialPlayerData && (
+        <>
+          <Button
+            style={{ display: "block" }}
+            onClick={addInitialPlayerDataClickHandler}
+          >
+            Add InitialPlayerData
+          </Button>
+          <Button
+            style={{ display: "block" }}
+            onClick={addLocalMatchesClickHandler}
+          >
+            Add local matches
+          </Button>
+        </>
+      )}
+      <FormControlLabel
+        disabled={playMatch === undefined}
+        label="Use playing match ?"
+        control={
+          <Checkbox
+            checked={usePlayingMatch}
+            onChange={(evt) => {
+              setUsePlayingMatch(evt.target.checked);
+            }}
+          />
+        }
+      />
+      <Select
+        MenuProps={{ style: { zIndex: 10000 } }}
+        value={selectedMatchId}
+        label="Select match"
+        onChange={(event) => setSelectedMatchId(event.target.value)}
+      >
+        {matches.map((match) => {
+          return (
+            <MenuItem key={match.id} value={match.id}>
+              {match.title}
+            </MenuItem>
+          );
         })}
       </Select>
-      <Button disabled={!addedInitialPlayerData || myMatchAction === undefined} onClick={() => {
-        RadHubConnectionInstance.fromTheServer(
-          myMatchAction.methodName,
-          ...myMatchAction.args
-        );
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        actionMatch.currentAction++;
-        forceRender();
-        
-      }}>{myMatchAction === undefined ? "No more actions" : myMatchAction.methodName}</Button>
+      <Button
+        disabled={!addedInitialPlayerData || myMatchAction === undefined}
+        onClick={() => {
+          RadHubConnectionInstance.fromTheServer(
+            myMatchAction.methodName,
+            ...myMatchAction.args
+          );
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          actionMatch.currentAction++;
+          forceRender();
+        }}
+      >
+        {myMatchAction === undefined
+          ? "No more actions"
+          : myMatchAction.methodName}
+      </Button>
     </motion.div>
   );
 }

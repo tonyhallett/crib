@@ -1,5 +1,12 @@
 import * as signalR from "@microsoft/signalr";
-import { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useContext,
+} from "react";
 import functionAppPath from "./utilities/functionAppPath";
 import {
   clientFactory,
@@ -14,7 +21,11 @@ import { NavBar } from "./auth-components/NavBar";
 import { DateTransformingJsonHubProtocol } from "./signalr/DateTransformingJsonHubProtocol";
 import { LocalFriendship } from "./LocalMyFriend";
 import { IdToken, useAuth0 } from "@auth0/auth0-react";
-import { LocalMatch, createLocalMatch, removeDealIndicator } from "./LocalMatch";
+import {
+  LocalMatch,
+  createLocalMatch,
+  removeDealIndicator,
+} from "./LocalMatch";
 import { AppBar, Badge, IconButton, Toolbar } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import { CardsIcon } from "./CardsIcon";
@@ -49,10 +60,10 @@ export interface MyMatchAndLocal {
 
 type CribConnection = ReturnType<(typeof clientFactory)["crib"]>;
 
-function getLocalMatch(match:MyMatch){
+function getLocalMatch(match: MyMatch) {
   return cribStorage.getMatch(match.id);
 }
-function ensureLocalMatch(match:MyMatch){
+function ensureLocalMatch(match: MyMatch) {
   let localMatch = getLocalMatch(match);
   if (localMatch === null) {
     localMatch = createLocalMatch(match);
@@ -63,7 +74,7 @@ function ensureLocalMatch(match:MyMatch){
 
 /* eslint-disable complexity */
 export default function App() {
-  const playMatchContext = useContext(PlayMatchContext)
+  const playMatchContext = useContext(PlayMatchContext);
   // this is a hack - animations do not work the first time the two images are rendered
   const hasRenderAMatch = useRef(false);
   const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl);
@@ -95,7 +106,9 @@ export default function App() {
     MenuItem | undefined
   >(undefined);
   const selectedMenuItemRef = useRef<MenuItem | undefined>(undefined);
-  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>(undefined);
+  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>(
+    undefined
+  );
   const playMatchRef = useRef<MyMatchAndLocal | undefined>(undefined);
 
   const signalRRegistration = useCallback<
@@ -131,17 +144,23 @@ export default function App() {
     setMatches(matches);
   };
 
-  const setPlayMatchAndRef = useCallback((playMatch: MyMatchAndLocal | undefined) => {
-    playMatchRef.current = playMatch;
-    setPlayMatch(playMatch);
-    playMatchContext.playMatch(playMatch)
-  },[playMatchContext]);
+  const setPlayMatchAndRef = useCallback(
+    (playMatch: MyMatchAndLocal | undefined) => {
+      playMatchRef.current = playMatch;
+      setPlayMatch(playMatch);
+      playMatchContext.playMatch(playMatch);
+    },
+    [playMatchContext]
+  );
 
-  const doPlayMatch = useCallback((match: MyMatch, localMatch: LocalMatch) => {
-    setSelectedMenuItemAndRef(undefined);
-    document.documentElement.requestFullscreen();
-    setPlayMatchAndRef({ localMatch, match });
-  }, [setPlayMatchAndRef]);
+  const doPlayMatch = useCallback(
+    (match: MyMatch, localMatch: LocalMatch) => {
+      setSelectedMenuItemAndRef(undefined);
+      document.documentElement.requestFullscreen();
+      setPlayMatchAndRef({ localMatch, match });
+    },
+    [setPlayMatchAndRef]
+  );
 
   const enqueueMatchesSnackbar = useCallback(
     (myMatch: MyMatch) => {
@@ -169,7 +188,7 @@ export default function App() {
     [doPlayMatch, enqueueSnackbar]
   );
 
-  const updateLocalMatch = useCallback((newLocalMatch:LocalMatch) => {
+  const updateLocalMatch = useCallback((newLocalMatch: LocalMatch) => {
     cribStorage.setMatch(newLocalMatch);
     const updatedLocalMatches = localMatchesRef.current.map((localMatch) => {
       if (localMatch) {
@@ -180,7 +199,7 @@ export default function App() {
       return localMatch;
     });
     setLocalMatchesAndRef(updatedLocalMatches);
-  },[]);
+  }, []);
 
   useEffect(() => {
     async function signalRConnect() {
@@ -226,16 +245,15 @@ export default function App() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(playerId, myMatch) {
           const localMatch = getLocalMatch(myMatch);
-          if(localMatch === null){
+          if (localMatch === null) {
             //tbd
             throw new Error("Discard but no local match");
           }
-          
+
           const newLocalMatch = removeDealIndicator(localMatch);
-          if(newLocalMatch){
+          if (newLocalMatch) {
             updateLocalMatch(newLocalMatch);
           }
-
 
           const matches = matchesRef.current;
 
@@ -249,7 +267,7 @@ export default function App() {
           if (showSnackbar) {
             enqueueMatchesSnackbar(myMatch);
           }
-          
+
           setMatchesAndRef(
             matches.map((match) => {
               if (match.id === myMatch.id) {
@@ -262,10 +280,9 @@ export default function App() {
 
         // common code for removing deal indicator
 
-
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         friendRequest(friendship) {
-          //todo 
+          //todo
           //enqueueSnackbar('You have a friend request !', { variant:"info" });
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -328,7 +345,13 @@ export default function App() {
     if (isAuthenticated && !connected) {
       signalRConnect();
     }
-  }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar, updateLocalMatch]);
+  }, [
+    isAuthenticated,
+    connected,
+    getIdTokenClaims,
+    enqueueMatchesSnackbar,
+    updateLocalMatch,
+  ]);
   useEffect(() => {
     if (!hasRenderAMatch.current && canPlayMatch) {
       hasRenderAMatch.current = true;
@@ -357,8 +380,6 @@ export default function App() {
     }),
     [playMatch]
   );
-
-
 
   if (!fullscreen) {
     return (
@@ -389,8 +410,6 @@ export default function App() {
   ) : (
     CardsIcon
   );
-
-  
 
   return (
     <div>
