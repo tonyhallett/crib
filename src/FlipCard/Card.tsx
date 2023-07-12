@@ -16,7 +16,7 @@ import { getSVG } from "./getSVG";
 import { Point, Size } from "../PlayMatch/matchLayoutManager";
 import { PlayingCard } from "../generatedTypes";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { SegmentAnimationOptionsWithTransitionEnd } from "../fixAnimationSequence/createAnimationsFromSegments";
+import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
 
 export enum CardFlip {
   BelowCard,
@@ -52,7 +52,7 @@ export type DomSegmentOptionalElementOrSelector = [
 export type DomSegmentOptionalElementOrSelectorWithOptions = [
   ElementOrSelector | undefined,
   DOMKeyframesDefinition,
-  SegmentAnimationOptionsWithTransitionEnd & At
+  SegmentAnimationOptionsWithTransitionEndAndAt
 ];
 export type OptionalDomSegment =
   | DomSegmentOptionalElementOrSelector

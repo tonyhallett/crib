@@ -110,10 +110,11 @@ export type SegmentAnimationOptionsWithTransitionEnd =
   SegmentAnimationOptionsWithValueOverrides & {
     transitionEnd?: Target | DynamicOption<Target>;
   };
+export type SegmentAnimationOptionsWithTransitionEndAndAt = SegmentAnimationOptionsWithTransitionEnd & At;
 export type SmartDomSegmentWithTransition = [
   ElementOrSelector,
   DOMKeyframesDefinition,
-  SegmentAnimationOptionsWithTransitionEnd & At
+  SegmentAnimationOptionsWithTransitionEndAndAt
 ];
 export type SmartSegment =
   | MotionValueSegment

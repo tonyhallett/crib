@@ -23,33 +23,37 @@ import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
 import { LocalMatch } from "../LocalMatch";
 import { DOMKeyframesDefinition } from "framer-motion";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
+import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
+import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/Card";
 
 interface DealPosition {
   playerPositions: PlayerPositions;
-  originalPosition: number;
+  // in order 0 is me, other players are clockwise
+  playerIndex: number;
 }
 
 function getNextIndex(currentIndex: number, numPlayers: number): number {
   return currentIndex === numPlayers - 1 ? 0 : currentIndex + 1;
 }
 
+// first DealPosition is the player dealt to first, remaining are clockwise
 function getDealPositions(
   playerPositions: PlayerPositions[],
   nextPlayerId: string,
-  playerIds: string[]
+  playerIds: string[] // in order 0 is me, other players are clockwise
 ): DealPosition[] {
   const numPlayers = playerPositions.length;
   const firstToDealToIndex = playerIds.findIndex((pid) => pid == nextPlayerId);
   let nextIndex = getNextIndex(firstToDealToIndex, numPlayers);
   const dealPositions: DealPosition[] = [
     {
-      originalPosition: firstToDealToIndex,
+      playerIndex: firstToDealToIndex,
       playerPositions: playerPositions[firstToDealToIndex],
     },
   ];
   while (dealPositions.length != playerPositions.length) {
     dealPositions.push({
-      originalPosition: nextIndex,
+      playerIndex: nextIndex,
       playerPositions: playerPositions[nextIndex],
     });
     nextIndex = getNextIndex(nextIndex, numPlayers);
@@ -62,10 +66,24 @@ type AnimatedFlipCardData = FlipCardData & {
   animationSequence: FlipCardAnimationSequence;
 };
 
+type ZIndexAnimationOptions = Omit<SegmentAnimationOptionsWithTransitionEndAndAt,'duration'>
+function createZIndexAnimationSegment(zIndex:number,options:ZIndexAnimationOptions):DomSegmentOptionalElementOrSelectorWithOptions{
+  return [
+    undefined,
+    {
+      zIndex
+    } as DOMKeyframesDefinition,
+    {
+      ...options,
+      duration: 0.00001,
+    },
+  ]
+}
+
 function getDealtPlayerCard(
   discardPositions: DiscardPositions,
-  cardNumber: number,
-  dealNumber: number,
+  cardIndex: number,
+  dealNumber: number, // lower the deal number the earlier dealt and higher z-index
   isMyCard: boolean,
   dealDuration: number,
   flipDuration: number,
@@ -79,25 +97,22 @@ function getDealtPlayerCard(
 
   const handZIndex = 4; // more than the box for discards
 
+  const moveRotateAt = dealNumber * dealDuration;
   const animationSequence: FlipCardAnimationSequence = [
     getMoveRotateSegment(
       discardPositions.isHorizontal,
-      discardPositions.positions[cardNumber],
+      discardPositions.positions[cardIndex],
       dealDuration,
       undefined,
-      dealNumber * dealDuration
+      moveRotateAt // at - lower deal number less wait
     ),
-    [
-      undefined,
+    createZIndexAnimationSegment(
+      handZIndex, //more than the box card
       {
-        zIndex: handZIndex, //more than the box card
-      } as DOMKeyframesDefinition,
-      {
-        at: dealNumber * dealDuration + dealDuration,
-        duration: 0.00001,
+        at: moveRotateAt + dealDuration,
         onComplete: isMyCard ? undefined : onComplete,
       },
-    ],
+    )
   ];
   if (isMyCard) {
     const flipAnimation: FlipAnimation = {
@@ -207,8 +222,7 @@ function addDiscardAnimation(
   box: Box,
   discardDuration: number,
   discardAt: number,
-  lastDiscard: boolean,
-  lastDiscardOnComplete: OnComplete
+  lastDiscardOnComplete: OnComplete | undefined
 ) {
   dealtCard.animationSequence.push(
     getDiscardToBoxSegment(
@@ -216,7 +230,7 @@ function addDiscardAnimation(
       discardDuration,
       undefined,
       discardAt,
-      lastDiscard ? lastDiscardOnComplete : undefined
+      lastDiscardOnComplete
     )
   );
 }
@@ -224,10 +238,9 @@ function addDiscardAnimation(
 function isOtherPlayerDiscarded(
   match: MyMatch,
   otherPlayerPosition: number,
-  isMe: boolean
+  isMe:boolean
 ) {
-  if (isMe) return false;
-  return match.otherPlayers[otherPlayerPosition].discarded;
+  return isMe ? false : match.otherPlayers[otherPlayerPosition].discarded;
 }
 
 function doDealPlayerCardsAndPossiblyDiscard(
@@ -240,7 +253,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
   otherPlayersCards: FlipCardData[][],
   updateLocalMatch: UpdateLocalMatch,
   animationCompleteCallback: () => void
-): void /*AnimationCompletionRegistration*/ {
+): void  {
   const numPlayers = otherPlayersCards.length + 1;
   const dealDiscardNumbers = getPlayerCardDealDiscardNumbers(numPlayers);
 
@@ -259,21 +272,27 @@ function doDealPlayerCardsAndPossiblyDiscard(
 
   // eslint-disable-next-line complexity
   dealPositions.forEach((dealPosition, dealPositionIndex) => {
-    const isMe = dealPosition.originalPosition === 0;
-    const discardPositions = dealPosition.playerPositions.discard;
-    const otherPlayerPosition = dealPosition.originalPosition - 1;
+    const isMe = dealPosition.playerIndex === 0;
+
+    const otherPlayerPosition = dealPosition.playerIndex - 1;
     const otherPlayerDiscarded = isOtherPlayerDiscarded(
       match,
       otherPlayerPosition,
       isMe
     );
+
+    const cards = isMe ? myCards : otherPlayersCards[otherPlayerPosition];
+    
     for (let i = 0; i < dealDiscardNumbers.deal; i++) {
+      /*
+        D1 first dealt etc
+        e.g 4 players
+        [D1_1, D2_1, D3_1, D4_1, D1_2, D2_2 etc ] 
+      */
       const dealNumber = dealPositionIndex + i * numPlayers;
-      const isLastDealtCard =
-        dealPositionIndex === dealPositions.length - 1 &&
-        i === dealDiscardNumbers.deal - 1;
+      
       const dealtCard = getDealtPlayerCard(
-        discardPositions,
+        dealPosition.playerPositions.discard,
         i,
         dealNumber,
         isMe,
@@ -281,33 +300,39 @@ function doDealPlayerCardsAndPossiblyDiscard(
         playerDealAnimationParameters.flipDuration,
         playerDealPositions.deck,
         dealDiscardNumbers.deal * numPlayers,
-        isLastDealtCard
+        isLastDealtCard(dealPositionIndex,numPlayers,i,dealDiscardNumbers.deal)
           ? completionCallbacks.lastDealtCompleteCallback
           : undefined
       );
 
       if (isMe) {
         dealtCard.playingCard = match.myCards[i];
-        myCards.push(dealtCard);
-      } else {
-        if (otherPlayerDiscarded && i < dealDiscardNumbers.discard) {
+      } else if (otherPlayerDiscarded && i < dealDiscardNumbers.discard) {
           addDiscardAnimation(
             dealtCard,
             playerDealPositions.boxPosition,
             playerDealAnimationParameters.discardDuration,
             playerDealAnimationParameters.discardDelay +
               discardCount * playerDealAnimationParameters.discardDuration,
-            discardCount === numberOfDiscards - 1,
-            completionCallbacks.lastDiscardCompleteCallback
+            discardCount === numberOfDiscards - 1 ?
+             completionCallbacks.lastDiscardCompleteCallback : undefined
           );
 
           discardCount++;
-        }
-
-        otherPlayersCards[otherPlayerPosition].push(dealtCard);
       }
+      cards.push(dealtCard);
     }
   });
+}
+
+function isLastDealtCard(
+  dealPositionIndex:number,
+  numPlayers:number,
+  playerDealtCardNumber:number,
+  numCardsToDeal:number
+){
+  return dealPositionIndex === numPlayers - 1 &&
+        playerDealtCardNumber === numCardsToDeal - 1;
 }
 
 function dealPlayerCardsAndPossiblyDiscard(

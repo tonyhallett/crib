@@ -33,7 +33,7 @@ import { Matches } from "./Matches";
 import { FetchingIndicator } from "./FetchingIndicator";
 import { Friends } from "./Friends";
 import {
-  PlayMatch as MyMatchAndLocal,
+  PlayMatch,
   PlayMatchCribClient,
   PlayMatchCribHub,
   PlayMatchProps,
@@ -156,7 +156,6 @@ export default function App() {
   const doPlayMatch = useCallback(
     (match: MyMatch, localMatch: LocalMatch) => {
       setSelectedMenuItemAndRef(undefined);
-      document.documentElement.requestFullscreen();
       setPlayMatchAndRef({ localMatch, match });
     },
     [setPlayMatchAndRef]
@@ -221,22 +220,12 @@ export default function App() {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cribConnection = clientFactory.crib(connection, {
         initialPlayerData(friendships, matches) {
-          //setMatches(matches);
           setMatchesAndRef(matches);
           setFriendships(
             friendships.map((f) => {
               return { ...f, fromServer: true };
             })
           );
-
-          /* const localMatches = matches.map((match) => {
-            let localMatch = cribStorage.getMatch(match.id);
-            if (localMatch === null) {
-              localMatch = createLocalMatch(match);
-              cribStorage.setMatch(localMatch);
-            }
-            return localMatch;
-          }); */
           const localMatches = matches.map(ensureLocalMatch);
           setLocalMatchesAndRef(localMatches);
           setFetchedInitialData(true);
@@ -458,7 +447,7 @@ export default function App() {
         />
       )}
       {canPlayMatch && (
-        <MyMatchAndLocal
+        <PlayMatch
           hasRenderedAMatch={hasRenderAMatch.current}
           landscape={landscape}
           key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${
