@@ -253,7 +253,6 @@ const matches: ActionMyMatch[] = [
     ],
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
-
   {
     currentAction: 0,
     actions: [
@@ -262,13 +261,13 @@ const matches: ActionMyMatch[] = [
         args: [
           "Player2",
           {
-            id: "3 player discard",
+            id: "3 player discard - no discards",
             changeHistory: {
               lastChangeDate: new Date("20 May 2023 09:00"),
               matchCreationDate: new Date("20 December 2022 14:48"),
               numberOfActions: 2,
             },
-            title: "3 player discard",
+            title: "3 player discard - no discards",
             gameState: CribGameState.Discard,
             box: [],
             myCards: [
@@ -323,13 +322,13 @@ const matches: ActionMyMatch[] = [
         args: [
           "Player3",
           {
-            id: "3 player discard",
+            id: "3 player discard - no discards",
             changeHistory: {
               lastChangeDate: new Date("21 May 2023 09:00"),
               matchCreationDate: new Date("20 December 2022 14:48"),
               numberOfActions: 3,
             },
-            title: "3 player discard",
+            title: "3 player discard - no discards",
             gameState: CribGameState.Discard,
             box: [],
             myCards: [
@@ -380,13 +379,13 @@ const matches: ActionMyMatch[] = [
         ],
       },
     ],
-    id: "3 player discard",
+    id: "3 player discard - no discards",
     changeHistory: {
       lastChangeDate: new Date("19 May 2023 09:00"),
       matchCreationDate: new Date("20 December 2022 14:48"),
       numberOfActions: 1,
     },
-    title: "3 player discard",
+    title: "3 player discard - no discards",
     gameState: CribGameState.Discard,
     box: [],
     myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
@@ -416,6 +415,58 @@ const matches: ActionMyMatch[] = [
       {
         id: "Player2",
         discarded: false,
+        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        ready: false,
+      },
+      {
+        id: "Player3",
+        discarded: false,
+        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        ready: false,
+      },
+    ],
+    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+  },
+
+  {
+    currentAction: 0,
+    actions: [],
+    id: "3 player discard - p2 discarded",
+    changeHistory: {
+      lastChangeDate: new Date("19 May 2023 09:00"),
+      matchCreationDate: new Date("20 December 2022 14:48"),
+      numberOfActions: 1,
+    },
+    title: "3 player discard - p2 discarded",
+    gameState: CribGameState.Discard,
+    box: [],
+    myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
+    cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
+    scores: [
+      { games: 1, frontPeg: 22, backPeg: 9 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+      { games: 0, frontPeg: 1, backPeg: 2 },
+    ],
+    pegging: {
+      turnedOverCards: [],
+      inPlayCards: [],
+      goHistory: [],
+      nextPlayer: "Player2",
+      cannotGoes: [false, false],
+      myCannotGo: false,
+    },
+    myId: "Me",
+    dealerDetails: {
+      first: "Me",
+      current: "Player2",
+    },
+    myReady: false,
+    matchWinDeterminant: "BestOf_3",
+    myScoringHistory: null as unknown as PlayerScoringHistory,
+    otherPlayers: [
+      {
+        id: "Player2",
+        discarded: true,
         playerScoringHistory: null as unknown as PlayerScoringHistory,
         ready: false,
       },

@@ -21,11 +21,10 @@ import {
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
 import { LocalMatch } from "../LocalMatch";
-import { DOMKeyframesDefinition } from "framer-motion";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
-import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/Card";
 import { MatchDetail } from "../App";
+import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
+import { createDiscardZIndexAnimationSegment } from "./getDiscardToBoxZIndexStartSegment";
 
 interface DealPosition {
   playerPositions: PlayerPositions;
@@ -66,20 +65,6 @@ function getDealPositions(
 type AnimatedFlipCardData = FlipCardData & {
   animationSequence: FlipCardAnimationSequence;
 };
-
-type ZIndexAnimationOptions = Omit<SegmentAnimationOptionsWithTransitionEndAndAt,'duration'>
-function createZIndexAnimationSegment(zIndex:number,options:ZIndexAnimationOptions):DomSegmentOptionalElementOrSelectorWithOptions{
-  return [
-    undefined,
-    {
-      zIndex
-    } as DOMKeyframesDefinition,
-    {
-      ...options,
-      duration: 0.00001,
-    },
-  ]
-}
 
 function getDealtPlayerCard(
   discardPositions: DiscardPositions,
@@ -223,9 +208,11 @@ function addDiscardAnimation(
   box: Box,
   discardDuration: number,
   discardAt: number,
+  discardNumber: number,
   lastDiscardOnComplete: OnComplete | undefined
 ) {
   dealtCard.animationSequence.push(
+    createDiscardZIndexAnimationSegment(discardNumber),
     getDiscardToBoxSegment(
       box,
       discardDuration,
@@ -315,6 +302,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
             playerDealAnimationParameters.discardDuration,
             playerDealAnimationParameters.discardDelay +
               discardCount * playerDealAnimationParameters.discardDuration,
+            discardCount,
             discardCount === numberOfDiscards - 1 ?
              completionCallbacks.lastDiscardCompleteCallback : undefined
           );

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { WoodWhenPlaying } from "../WoodWhenPlaying";
-import { Pips, Suit } from "../generatedTypes";
+import { WoodWhenPlaying } from "../../WoodWhenPlaying";
+import { Pips, Suit } from "../../generatedTypes";
 import { FlipCardProps, FlipCard, FlipAnimation } from "./FlipCard";
-import { Size } from "../PlayMatch/matchLayoutManager";
+import { Size } from "../../PlayMatch/matchLayoutManager";
 import { DomSegmentOptionalElementOrSelectorWithOptions } from "./Card";
 
 const magnification = 3;
@@ -11,6 +11,7 @@ export function FlipCardDemo() {
   const [flip, setFlip] = useState<boolean | undefined>(undefined);
   let flipOnly: FlipCardProps["animationSequence"] = undefined;
   let moveThenFlip: FlipCardProps["animationSequence"] = undefined;
+  let moveOnly: FlipCardProps["animationSequence"] = undefined;
   if (flip !== undefined) {
     const flipAnimation: FlipAnimation = {
       flip,
@@ -27,6 +28,7 @@ export function FlipCardDemo() {
     ];
     flipOnly = [flipAnimation];
     moveThenFlip = [movementSegment, flipAnimation];
+    moveOnly = [movementSegment]
   }
 
   return (

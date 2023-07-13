@@ -38,12 +38,13 @@ import cribBoardWoodUrl from "../cribBoardWoodUrl";
 import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
 import { useDrag } from "@use-gesture/react";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { Card, CardFlip } from "../FlipCard/Card";
 import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegments";
 import { SequenceTime } from "../FlipCard/motion-types";
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
+import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
+
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -104,7 +105,7 @@ export interface FlipCardDatas {
   otherPlayersCards: FlipCardData[][];
 }
 
-const discardDuration = 5; //0.5;
+const discardDuration = 0.5;
 const flipDuration = 0.5;
 
 const colours: CSSProperties["color"][] = ["red", "blue", "green"];
@@ -128,6 +129,8 @@ interface CribBoardState {
   colouredScores: ColouredScores;
   onComplete?: OnComplete;
 }
+
+
 
 function PlayMatchInner({
   matchDetail,
@@ -250,6 +253,7 @@ function PlayMatchInner({
             animationCompleteCallback && animationCompleteCallback();
             syncChangeHistories();
           };
+          const iDiscarded = playerId === myMatch.myId;
 
           const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
 
@@ -268,6 +272,7 @@ function PlayMatchInner({
           ) => {
             const newCardData = { ...prevCardData };
             newCardData.animationSequence = [
+              getDiscardToBoxZIndexStartSegment(myMatch, countDiscards),
               getDiscardToBoxSegment(
                 boxPosition,
                 discardDuration,
@@ -281,14 +286,14 @@ function PlayMatchInner({
 
           const getCutCardAnimationData = (
             prevCardData: FlipCardData,
-            isJack: boolean
+            isJack: boolean,
           ) => {
             const newCardData = { ...prevCardData };
             newCardData.playingCard = myMatch.cutCard;
             const flipAnimation: FlipAnimation = {
               flip: true,
               duration: cardFlipDuration,
-              at: cardFlipDelay,
+              at: cardFlipDelay + (iDiscarded ? cardFlipDuration : 0),
               onComplete: () => {
                 let requiresCompletion = true;
                 if (isJack) {
@@ -315,7 +320,8 @@ function PlayMatchInner({
 
           let newFlipCardDatas: FlipCardDatas;
 
-          if (playerId === myMatch.myId) {
+          
+          if (iDiscarded) {
             removeMyDiscardSelection();
             newFlipCardDatas = {
               ...prevFlipCardDatas,
@@ -571,15 +577,17 @@ function getMyDiscardSelectionAnimationSegment(
 }
 
 const myDiscardFlipCardSelector = "[id^=flipCard_]";
+function findMyDiscardFlipCards(scope: HTMLDivElement,){
+  return scope.querySelectorAll(myDiscardFlipCardSelector);
+}
 function findFlipCardElement(
-  scope: HTMLDivElement,
   clientX: number,
-  clientY: number
+  clientY: number,
+  myDiscardFlipElements:NodeListOf<Element>
 ): HTMLElement | undefined {
-  const flipCards = scope.querySelectorAll(myDiscardFlipCardSelector);
   let matchingElement: HTMLElement | undefined;
-  for (let i = 0; i < flipCards.length; i++) {
-    const flipCardElement = flipCards[i] as HTMLElement;
+  for (let i = 0; i < myDiscardFlipElements.length; i++) {
+    const flipCardElement = myDiscardFlipElements[i] as HTMLElement;
     const rect = flipCardElement.children[0].getBoundingClientRect();
     if (
       clientX >= rect.left &&
@@ -641,43 +649,47 @@ function useMyDiscard(
       ref={scope}
       onClick={(event) => {
         if (!discarded) {
-          let matchingElement = findFlipCardElement(
-            scope.current as HTMLDivElement,
-            event.clientX,
-            event.clientY
-          );
-
-          if (matchingElement) {
-            const matchingElementId = matchingElement.id;
-            // deselect if currently selected
-            if (selectedIdsRef.current.includes(matchingElementId)) {
-              animate([deselect(matchingElement)]);
-            } else {
-              // already selected num discards
-              if (selectedIdsRef.current.length === numDiscards) {
-                if (numDiscards === 1) {
-                  animate([
-                    deselect(
-                      document.getElementById(
-                        selectedIdsRef.current[0]
-                      ) as HTMLElement
-                    ),
-                    select(matchingElement),
-                  ]);
-                } else {
-                  matchingElement = undefined;
-                }
+          const myDiscardFlipElements = findMyDiscardFlipCards(scope.current as HTMLDivElement);
+          if(myDiscardFlipElements.length >= 5){
+            let matchingElement = findFlipCardElement(
+              event.clientX,
+              event.clientY,
+              myDiscardFlipElements
+            );
+  
+            if (matchingElement) {
+              const matchingElementId = matchingElement.id;
+              // deselect if currently selected
+              if (selectedIdsRef.current.includes(matchingElementId)) {
+                animate([deselect(matchingElement)]);
               } else {
-                animate([select(matchingElement)]);
+                // already selected num discards
+                if (selectedIdsRef.current.length === numDiscards) {
+                  if (numDiscards === 1) {
+                    animate([
+                      deselect(
+                        document.getElementById(
+                          selectedIdsRef.current[0]
+                        ) as HTMLElement
+                      ),
+                      select(matchingElement),
+                    ]);
+                  } else {
+                    matchingElement = undefined;
+                  }
+                } else {
+                  animate([select(matchingElement)]);
+                }
               }
             }
-          }
-
-          if (
-            matchingElement &&
-            selectedIdsRef.current.length === numDiscards
-          ) {
-            setShowDialog(true);
+  
+            if (
+              matchingElement &&
+              selectedIdsRef.current.length === numDiscards
+            ) {
+              setShowDialog(true);
+            }
+          
           }
         }
       }}
@@ -856,12 +868,10 @@ function usePeggingOverlay({
     return peggingCardDatas.map((cardData, i) => {
       const x = i * overlayCardSizes.width;
       return (
-        <Card
+        <FlipCard
           key={i}
-          segments={[]}
           isHorizontal={false}
-          faceDown={false}
-          cardFlip={CardFlip.AboveCard}
+          startFaceUp={true}
           position={{ x, y: 0 }}
           size={overlayCardSizes}
           playingCard={cardData.playingCard as PlayingCard}

@@ -245,13 +245,9 @@ export default function App() {
           }
 
           const playMatchId = playMatchIdRef.current;
-          let showSnackbar = true;
           if (playMatchId === myMatch.id) {
-            showSnackbar = false;
             playMatchCribClientRef.current?.discard(playerId, myMatch);
-          }
-
-          if (showSnackbar) {
+          }else{
             enqueueMatchesSnackbar(myMatch.id,myMatch.title);
           }
 
@@ -263,6 +259,7 @@ export default function App() {
               return matchDetail;
             })
           );
+          playMatchContext.playMatch(newMatchDetail);
         },
 
         // common code for removing deal indicator
@@ -332,13 +329,7 @@ export default function App() {
     if (isAuthenticated && !connected) {
       signalRConnect();
     }
-  }, [
-    isAuthenticated,
-    connected,
-    getIdTokenClaims,
-    enqueueMatchesSnackbar,
-    updateLocalMatch,
-  ]);
+  }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar, updateLocalMatch, playMatchContext]);
   useEffect(() => {
     if (!hasRenderAMatch.current && canPlayMatch) {
       hasRenderAMatch.current = true;
