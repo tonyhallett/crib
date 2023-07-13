@@ -93,13 +93,11 @@ function addScopeIfNoSelector(scope: unknown, segments: CardSegment[]) {
 }
 
 export function Card(props: CardProps) {
-  const animationCounter = useRef(0);
   const lastProps = useRef<CardProps | undefined>(undefined);
   const [scope, animate] = useAnimateSegments();
   useEffect(() => {
     if (lastProps.current !== props && props.segments) {
       const segments = addScopeIfNoSelector(scope.current, props.segments);
-      animationCounter.current = 0;
       animate(segments);
     }
     lastProps.current = props;
