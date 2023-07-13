@@ -4,6 +4,7 @@ import { HeadCell, SortableTable, TableRowData } from "./SortableTable";
 import { CribGameState, MyMatch, Score } from "./generatedTypes";
 import GamesIcon from "@mui/icons-material/Games";
 import { TableDisplayDate } from "./TableDisplayDate";
+import { MatchDetail } from "./App";
 
 interface MatchesData {
   gameState: CribGameState;
@@ -206,13 +207,13 @@ function getMatchWinDeterminantDisplay(matchWinDeterminant: string) {
 }
 
 export function Matches(props: {
-  matches: MyMatch[];
-  localMatches: LocalMatch[];
-  playMatch: (match: MyMatch, localMatch: LocalMatch) => void;
+  matchDetails: MatchDetail[];
+  playMatch: (matchId:string) => void;
 }) {
-  const rows: TableRowData<MatchesData>[] = props.matches.map(
-    (match, index) => {
-      const localMatch = props.localMatches[index];
+  const rows: TableRowData<MatchesData>[] = props.matchDetails.map(
+    (matchDetail) => {
+      const match = matchDetail.match;
+      const localMatch = matchDetail.localMatch;
       const playerScores = getPlayerScores(match);
       return {
         key: match.id,
@@ -248,7 +249,7 @@ export function Matches(props: {
         additionalElements: [
           <IconButton
             key={0}
-            onClick={() => props.playMatch(match, localMatch)}
+            onClick={() => props.playMatch(matchDetail.match.id)}
           >
             <GamesIcon />
           </IconButton>,

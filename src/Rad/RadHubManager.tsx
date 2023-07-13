@@ -31,7 +31,7 @@ import {
   TwoSpades,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
-import { MyMatchAndLocal } from "../App";
+import { MatchDetail } from "../App";
 import {
   Button,
   Checkbox,
@@ -723,9 +723,9 @@ export function RadHubManager() {
   const playMatchContext = useContext(PlayMatchContext);
   const [addedInitialPlayerData, setAddedInitialPlayerData] = useState(false);
 
-  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>();
+  const [playMatch, setPlayMatch] = useState<MatchDetail | undefined>();
   const playMatchRef = useRef(playMatch);
-  const setPlayMatchAndRef = (playMatch: MyMatchAndLocal | undefined) => {
+  const setPlayMatchAndRef = (playMatch: MatchDetail | undefined) => {
     playMatchRef.current = playMatch;
     setPlayMatch(playMatch);
   };
@@ -746,7 +746,7 @@ export function RadHubManager() {
           // 0 is the matchId
           const discard1 = args[1] as PlayingCard;
           const discard2 = args[2] as PlayingCard;
-          const match = (playMatchRef.current as MyMatchAndLocal).match;
+          const match = (playMatchRef.current as MatchDetail).match;
 
           const cardMatch = (
             card1: PlayingCard,

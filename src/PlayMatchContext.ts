@@ -1,14 +1,14 @@
 import { createContext } from "react";
-import { MyMatchAndLocal } from "./App";
+import { MatchDetail } from "./App";
 
-type PlayMatchSubscription = (playMatch: MyMatchAndLocal | undefined) => void;
+type PlayMatchSubscription = (playMatch: MatchDetail | undefined) => void;
 export interface PlayMatchContext {
-  playMatch(playMatch: MyMatchAndLocal | undefined): void;
+  playMatch(playMatch: MatchDetail | undefined): void;
   subscribe(playMatchSubscription: PlayMatchSubscription): void;
 }
 const subscribers: PlayMatchSubscription[] = [];
 export const PlayMatchContext = createContext<PlayMatchContext>({
-  playMatch(playMatch: MyMatchAndLocal | undefined) {
+  playMatch(playMatch: MatchDetail | undefined) {
     subscribers.forEach((subscriber) => subscriber(playMatch));
   },
   subscribe(playMatchSubscription: PlayMatchSubscription) {

@@ -25,6 +25,7 @@ import { DOMKeyframesDefinition } from "framer-motion";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
 import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/Card";
+import { MatchDetail } from "../App";
 
 interface DealPosition {
   playerPositions: PlayerPositions;
@@ -393,13 +394,14 @@ function getPlayerCardDealDiscardNumbers(numPlayers: number): {
 }
 
 export function dealThenDiscardIfRequired(
-  match: MyMatch,
-  localMatch: LocalMatch,
+  matchDetail: MatchDetail,
   positions: Positions,
   updateLocalMatch: UpdateLocalMatch,
   dealFlipDurations: DealFlipDiscardDurations,
   animationCompleteCallback: () => void
 ): FlipCardDatas {
+  const match = matchDetail.match;
+  const localMatch = matchDetail.localMatch;
   const playerPositions = positions.playerPositions;
   const numCardsToDeal = getNumCardsToDeal(match);
   // for cut card and box

@@ -53,7 +53,7 @@ import { PlayMatchContext } from "./PlayMatchContext";
 
 type MenuItem = "Friends" | "Matches";
 
-export interface MyMatchAndLocal {
+export interface MatchDetail {
   localMatch: LocalMatch;
   match: MyMatch;
 }
@@ -98,18 +98,17 @@ export default function App() {
   const [connectError, setConnectError] = useState("");
   const [fetchedInitialData, setFetchedInitialData] = useState(false);
   const [friendships, setFriendships] = useState<LocalFriendship[]>([]);
-  const [matches, setMatches] = useState<MyMatch[]>([]);
-  const matchesRef = useRef<MyMatch[]>([]);
-  const [localMatches, setLocalMatches] = useState<LocalMatch[]>([]);
-  const localMatchesRef = useRef<LocalMatch[]>([]);
+  const [matchDetails, setMatchDetails] = useState<MatchDetail[]>([]);
+  const matchDetailsRef = useRef<MatchDetail[]>([]);
+
   const [selectedMenuItem, setSelectedMenuItem] = useState<
     MenuItem | undefined
   >(undefined);
   const selectedMenuItemRef = useRef<MenuItem | undefined>(undefined);
-  const [playMatch, setPlayMatch] = useState<MyMatchAndLocal | undefined>(
+  const [playMatchId, setPlayMatchId] = useState<string | undefined>(
     undefined
   );
-  const playMatchRef = useRef<MyMatchAndLocal | undefined>(undefined);
+  const playMatchIdRef = useRef<string | undefined>(undefined);
 
   const signalRRegistration = useCallback<
     PlayMatchProps["signalRRegistration"]
@@ -123,7 +122,7 @@ export default function App() {
   const fetchedAndAuthenticated = fetchedInitialData && isAuthenticated;
   const canPlayMatch =
     fetchedAndAuthenticated &&
-    playMatch &&
+    playMatchId !== undefined &&
     woodImageLoaded &&
     cribBoardImageLoaded;
 
@@ -135,43 +134,37 @@ export default function App() {
     setSelectedMenuItemAndRef(menuItem);
   }, []);
 
-  const setLocalMatchesAndRef = (localMatches: LocalMatch[]) => {
-    localMatchesRef.current = localMatches;
-    setLocalMatches(localMatches);
-  };
-  const setMatchesAndRef = (matches: MyMatch[]) => {
-    matchesRef.current = matches;
-    setMatches(matches);
-  };
+  const setMatchDetailsAndRef = (matchDetails: MatchDetail[]) => {
+    matchDetailsRef.current = matchDetails;
+    setMatchDetails(matchDetails);
+  }
 
-  const setPlayMatchAndRef = useCallback(
-    (playMatch: MyMatchAndLocal | undefined) => {
-      playMatchRef.current = playMatch;
-      setPlayMatch(playMatch);
-      playMatchContext.playMatch(playMatch);
+  const setPlayMatchIdAndRef = useCallback(
+    (matchId: string | undefined) => {
+      playMatchIdRef.current = matchId;
+      setPlayMatchId(matchId);
+      const matchDetail = matchId === undefined ? undefined : matchDetailsRef.current.find(matchDetail => matchDetail.match.id === matchId);
+      playMatchContext.playMatch(matchDetail);
     },
     [playMatchContext]
   );
 
   const doPlayMatch = useCallback(
-    (match: MyMatch, localMatch: LocalMatch) => {
+    (matchId:string) => {
       setSelectedMenuItemAndRef(undefined);
-      setPlayMatchAndRef({ localMatch, match });
+      setPlayMatchIdAndRef(matchId);
     },
-    [setPlayMatchAndRef]
+    [setPlayMatchIdAndRef]
   );
 
   const enqueueMatchesSnackbar = useCallback(
-    (myMatch: MyMatch) => {
+    (matchId: string,matchTitle:string) => {
       const action: SnackbarAction = (key) => {
         return (
           <IconButton
             onClick={() => {
               closeSnackbar(key);
-              const localMatch = localMatchesRef.current.find(
-                (localMatch) => localMatch?.id === myMatch.id
-              );
-              doPlayMatch(myMatch, localMatch as LocalMatch);
+              doPlayMatch(matchId);
             }}
           >
             <GamesIcon />
@@ -179,7 +172,7 @@ export default function App() {
         );
       };
 
-      enqueueSnackbar(`Action in '${myMatch.title}' !`, {
+      enqueueSnackbar(`Action in '${matchTitle}' !`, {
         variant: "info",
         action,
       });
@@ -189,15 +182,13 @@ export default function App() {
 
   const updateLocalMatch = useCallback((newLocalMatch: LocalMatch) => {
     cribStorage.setMatch(newLocalMatch);
-    const updatedLocalMatches = localMatchesRef.current.map((localMatch) => {
-      if (localMatch) {
-        if (localMatch.id === newLocalMatch.id) {
-          return newLocalMatch;
-        }
+    const updatedMatchDetails = matchDetailsRef.current.map((matchDetail) => {
+      if (matchDetail.match.id === newLocalMatch.id) {
+        return { ...matchDetail, localMatch: newLocalMatch };
       }
-      return localMatch;
-    });
-    setLocalMatchesAndRef(updatedLocalMatches);
+      return matchDetail;
+    })
+    setMatchDetailsAndRef(updatedMatchDetails);
   }, []);
 
   useEffect(() => {
@@ -220,49 +211,56 @@ export default function App() {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cribConnection = clientFactory.crib(connection, {
         initialPlayerData(friendships, matches) {
-          setMatchesAndRef(matches);
           setFriendships(
             friendships.map((f) => {
               return { ...f, fromServer: true };
             })
           );
-          const localMatches = matches.map(ensureLocalMatch);
-          setLocalMatchesAndRef(localMatches);
+          const matchDetails = matches.map(match => {
+            return {
+              localMatch:ensureLocalMatch(match),
+              match
+            }
+          });
+          setMatchDetailsAndRef(matchDetails);
           setFetchedInitialData(true);
         },
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(playerId, myMatch) {
-          const localMatch = getLocalMatch(myMatch);
-          if (localMatch === null) {
-            //tbd
-            throw new Error("Discard but no local match");
+          const matchDetails = matchDetailsRef.current;
+          const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
+          if(matchDetail === undefined){
+            // tbd
+            throw new Error("Discard but no match");
           }
-
-          const newLocalMatch = removeDealIndicator(localMatch);
+          const newMatchDetail:MatchDetail = {
+            ...matchDetail,
+            match: myMatch
+          }
+          const newLocalMatch = removeDealIndicator(matchDetail.localMatch);
           if (newLocalMatch) {
-            updateLocalMatch(newLocalMatch);
+            cribStorage.setMatch(newLocalMatch);
+            newMatchDetail.localMatch = newLocalMatch;
           }
 
-          const matches = matchesRef.current;
-
-          const playMatch = playMatchRef.current;
+          const playMatchId = playMatchIdRef.current;
           let showSnackbar = true;
-          if (playMatch && playMatch.match.id === myMatch.id) {
+          if (playMatchId === myMatch.id) {
             showSnackbar = false;
             playMatchCribClientRef.current?.discard(playerId, myMatch);
           }
 
           if (showSnackbar) {
-            enqueueMatchesSnackbar(myMatch);
+            enqueueMatchesSnackbar(myMatch.id,myMatch.title);
           }
 
-          setMatchesAndRef(
-            matches.map((match) => {
-              if (match.id === myMatch.id) {
-                return myMatch;
+          setMatchDetailsAndRef(
+            matchDetails.map((matchDetail) => {
+              if (matchDetail.match.id === myMatch.id) {
+                return newMatchDetail;
               }
-              return match;
+              return matchDetail;
             })
           );
         },
@@ -350,24 +348,24 @@ export default function App() {
     () => ({
       discard(discard1, discard2) {
         (cribHubRef.current as CribHub).discard(
-          (playMatch as MyMatchAndLocal).match.id,
+          playMatchId as string,
           discard1,
           discard2
         );
       },
       peg(peggedCard) {
         (cribHubRef.current as CribHub).peg(
-          (playMatch as MyMatchAndLocal).match.id,
+          playMatchId as string,
           peggedCard
         );
       },
       ready() {
         (cribHubRef.current as CribHub).ready(
-          (playMatch as MyMatchAndLocal).match.id
+          playMatchId as string
         );
       },
     }),
-    [playMatch]
+    [playMatchId]
   );
 
   if (!fullscreen) {
@@ -385,7 +383,7 @@ export default function App() {
     return <div>Loading</div>;
   }
 
-  const showMenuComponents = fetchedAndAuthenticated && playMatch === undefined;
+  const showMenuComponents = fetchedAndAuthenticated && playMatchId === undefined;
   const friendshipsIcon = fetchedAndAuthenticated ? (
     <Badge badgeContent={friendships.length}>
       <PeopleIcon fontSize="large" />
@@ -395,15 +393,15 @@ export default function App() {
   );
 
   const matchesIcon = fetchedAndAuthenticated ? (
-    <Badge badgeContent={matches.length}>{CardsIcon}</Badge>
+    <Badge badgeContent={matchDetails.length}>{CardsIcon}</Badge>
   ) : (
     CardsIcon
   );
-
+  const playMatch = matchDetails.find((matchDetail) => { return matchDetail.match.id === playMatchId; });
   return (
     <div>
-      {woodImageLoaded && <WoodWhenPlaying playing={!!playMatch} />}
-      {!playMatch && (
+      {woodImageLoaded && <WoodWhenPlaying playing={!!playMatchId} />}
+      {!playMatchId && (
         <AppBar position="sticky">
           <Toolbar>
             <NavBar />
@@ -422,12 +420,12 @@ export default function App() {
           </Toolbar>
         </AppBar>
       )}
-      {!!playMatch && (
+      {!!playMatchId && (
         <IconButton
           style={{ position: "absolute", zIndex: 1000, bottom: 0 }}
           size="small"
           color="primary"
-          onClick={() => setPlayMatchAndRef(undefined)}
+          onClick={() => setPlayMatchIdAndRef(undefined)}
         >
           <MoreHorizIcon />
         </IconButton>
@@ -441,8 +439,7 @@ export default function App() {
       )}
       {showMenuComponents && selectedMenuItem === "Matches" && (
         <Matches
-          matches={matches}
-          localMatches={localMatches}
+          matchDetails={matchDetails}
           playMatch={doPlayMatch}
         />
       )}
@@ -450,11 +447,10 @@ export default function App() {
         <PlayMatch
           hasRenderedAMatch={hasRenderAMatch.current}
           landscape={landscape}
-          key={`${landscape.toString()}-${playMatch.match.id}-${size.width}-${
+          key={`${landscape.toString()}-${playMatchId}-${size.width}-${
             size.height
           }`}
-          myMatch={playMatch.match}
-          localMatch={playMatch.localMatch}
+          matchDetail={playMatch as MatchDetail}
           signalRRegistration={signalRRegistration}
           playMatchCribHub={playMatchCribHub}
           updateLocalMatch={updateLocalMatch}

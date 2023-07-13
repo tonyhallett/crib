@@ -43,6 +43,7 @@ import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegmen
 import { SequenceTime } from "../FlipCard/motion-types";
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
+import { MatchDetail } from "../App";
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
@@ -78,8 +79,7 @@ function getBoxPosition(myMatch: MyMatch, positions: Positions) {
 export type UpdateLocalMatch = (localMatch: LocalMatch) => void;
 
 export interface PlayMatchProps {
-  myMatch: MyMatch;
-  localMatch: LocalMatch;
+  matchDetail:MatchDetail;
   playMatchCribHub: PlayMatchCribHub;
   signalRRegistration: (playMatchCribClient: PlayMatchCribClient) => () => void;
   updateLocalMatch: UpdateLocalMatch;
@@ -130,14 +130,14 @@ interface CribBoardState {
 }
 
 function PlayMatchInner({
-  localMatch,
-  myMatch,
+  matchDetail,
   playMatchCribHub,
   signalRRegistration,
   updateLocalMatch,
   landscape,
   hasRenderedAMatch,
 }: PlayMatchProps) {
+  const myMatch = matchDetail.match;
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
@@ -242,7 +242,7 @@ function PlayMatchInner({
         ): FlipCardDatas {
           const syncChangeHistories = () => {
             const newLocalMatch: LocalMatch = {
-              ...localMatch,
+              ...matchDetail.localMatch,
               changeHistory: {
                 ...myMatch.changeHistory,
                 lastChangeDate: new Date(),
@@ -424,24 +424,24 @@ function PlayMatchInner({
     });
   }, [
     signalRRegistration,
-    myMatch,
+    matchDetail,
     positions,
-    localMatch,
     updateLocalMatch,
     removeMyDiscardSelection,
   ]);
 
   /* eslint-disable complexity */
   useEffect(() => {
+    const localMatch = matchDetail.localMatch;
+    const myMatch = matchDetail.match;
     // need to prevent re-renders from setting state in here causing a loop
     if (!initiallyRendered.current) {
-      if (localMatch.changeHistory.numberOfActions === dealActionIndicator) {
+      if (matchDetail.localMatch.changeHistory.numberOfActions === dealActionIndicator) {
         window.setTimeout(
           () => {
             animationManager.current.animate((animationCompleteCallback) => {
               return dealThenDiscardIfRequired(
-                myMatch,
-                localMatch,
+                matchDetail,
                 positions,
                 updateLocalMatch,
                 { dealDuration: 0.5, flipDuration, discardDuration },
@@ -473,8 +473,7 @@ function PlayMatchInner({
     }
   }, [
     positions,
-    localMatch,
-    myMatch,
+    matchDetail,
     setCardDatasAndRef,
     updateLocalMatch,
     hasRenderedAMatch,
@@ -731,7 +730,7 @@ function playingCardFromId(id: string): PlayingCard {
 }
 
 export const PlayMatch = memo(PlayMatchInner, (prevProps, nextProps) => {
-  return prevProps.localMatch.id === nextProps.localMatch.id;
+  return prevProps.matchDetail.localMatch.id === nextProps.matchDetail.localMatch.id;
 });
 
 const maximizePeggingOverlayCardSize = (
