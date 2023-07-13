@@ -185,12 +185,8 @@ function PlayMatchInner({
     if (cardDatas === undefined) {
       return [];
     }
-    const flattenedOtherPlayerCards = cardDatas.otherPlayersCards.reduce(
-      (acc, otherPlayerCards) => {
-        return acc.concat(otherPlayerCards);
-      },
-      [] as FlipCardData[]
-    );
+
+    const flattenedOtherPlayerCards = cardDatas.otherPlayersCards.flat();
     const additionalBoxCard = cardDatas.additionalBoxCard
       ? [cardDatas.additionalBoxCard]
       : [];
