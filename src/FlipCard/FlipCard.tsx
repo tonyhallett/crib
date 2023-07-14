@@ -12,7 +12,7 @@ import { SegmentAnimationOptionsWithTransitionEnd, SegmentAnimationOptionsWithTr
 import { At } from "../fixAnimationSequence/motion-types";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 export interface FlipAnimation {
   flip: boolean; // true is flip false is flip back
@@ -142,26 +142,22 @@ function populateSequence(scope:unknown,flipCardAnimationSequence:FlipCardAnimat
 }
 
 
-export function FlipCard(props: FlipCardProps) {
+function FlipCardInner(props: FlipCardProps) {
   const [scope, animate] = useAnimateSegments();
-  const lastProps = useRef<FlipCardProps | undefined>(undefined);
   useEffect(() => {
-    if (lastProps.current !== props && props.animationSequence) {
+    if(props.animationSequence){
       const animationSequence = populateSequence(
         scope.current,
         props.animationSequence
       );
       animate(animationSequence);
     }
-    lastProps.current = props;
   }, [animate, props, scope]);
 
   const common: CommonCardProps = {
     isHorizontal: props.isHorizontal,
     size: props.size,
   };
-
-  
 
   const rotation = props.isHorizontal ? 90 : 0;
 
@@ -202,3 +198,7 @@ export function FlipCard(props: FlipCardProps) {
     </motion.div>
   );
 }
+
+export const FlipCard = memo(FlipCardInner, (prevProps, nextProps) => {
+  return prevProps.animationSequence === nextProps.animationSequence;
+});
