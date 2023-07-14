@@ -1,6 +1,5 @@
 import {
   CSSProperties,
-  ReactNode,
   memo,
   useCallback,
   useEffect,
@@ -16,12 +15,11 @@ import {
   Pips,
   PlayingCard,
   Score,
-  Suit,
 } from "../generatedTypes";
 import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
-import { Box, Positions, Size, matchLayoutManager } from "./matchLayoutManager";
+import { Box, Positions, matchLayoutManager } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
 import {
   FlipAnimation,
@@ -36,14 +34,11 @@ import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../cribBoardWoodUrl";
 import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
-import { useDrag } from "@use-gesture/react";
-import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegments";
-import { SequenceTime } from "../FlipCard/motion-types";
-import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
+import { usePeggingOverlay } from "./usePeggingOverlay";
+import { useMyDiscard } from "./useMyDiscard";
 
 
 type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
@@ -214,7 +209,8 @@ function PlayMatchInner({
     landscape,
     mappedFlipCardDatas,
   });
-  const [clickOverlay, removeMyDiscardSelection] = useMyDiscard(
+  
+  const [myDiscardOverlay, removeMyDiscardSelection] = useMyDiscard(
     <div
       {...bind()}
       style={{
@@ -228,6 +224,7 @@ function PlayMatchInner({
     getNumDiscards(myMatch),
     playMatchCribHub.discard
   );
+
   useOverflowHidden();
   useEffect(() => {
     return signalRRegistration({
@@ -344,7 +341,7 @@ function PlayMatchInner({
                       : undefined
                   );
                   const flipAnimation: FlipAnimation = {
-                    flip: false,
+                    flip: true,
                     duration: cardFlipDuration,
                   };
                   (
@@ -499,7 +496,7 @@ function PlayMatchInner({
         />
       </div>
       {peggingOverlay}
-      {clickOverlay}
+      {myDiscardOverlay}
     </>
   );
 }
@@ -557,342 +554,6 @@ function getNumDiscards(myMatch: MyMatch) {
   return myMatch.otherPlayers.length === 1 ? 2 : 1;
 }
 
-function getMyDiscardSelectionAnimationSegment(
-  element: HTMLElement,
-  selected: boolean,
-  at?: SequenceTime
-): SmartSegment;
-function getMyDiscardSelectionAnimationSegment(
-  id: string,
-  selected: boolean,
-  at?: SequenceTime
-): SmartSegment;
-function getMyDiscardSelectionAnimationSegment(
-  elementOrId: string | HTMLElement,
-  selected: boolean,
-  at: SequenceTime = 0
-): SmartSegment {
-  const id = elementOrId instanceof HTMLElement ? elementOrId.id : elementOrId;
-  return [`#${id}`, { opacity: selected ? 0.5 : 1 }, { at: at }];
-}
-
-const myDiscardFlipCardSelector = "[id^=flipCard_]";
-function findMyDiscardFlipCards(scope: HTMLDivElement,){
-  return scope.querySelectorAll(myDiscardFlipCardSelector);
-}
-function findFlipCardElement(
-  clientX: number,
-  clientY: number,
-  myDiscardFlipElements:NodeListOf<Element>
-): HTMLElement | undefined {
-  let matchingElement: HTMLElement | undefined;
-  for (let i = 0; i < myDiscardFlipElements.length; i++) {
-    const flipCardElement = myDiscardFlipElements[i] as HTMLElement;
-    const rect = flipCardElement.children[0].getBoundingClientRect();
-    if (
-      clientX >= rect.left &&
-      clientX <= rect.right &&
-      clientY >= rect.top &&
-      clientY <= rect.bottom
-    ) {
-      matchingElement = flipCardElement;
-      break;
-    }
-  }
-  return matchingElement;
-}
-
-// cribGameState:CribGameState but signalR is not changing the match
-function useMyDiscard(
-  children: ReactNode,
-  numDiscards: number,
-  discard: (
-    playingCard1: PlayingCard,
-    playingCard2: PlayingCard | undefined
-  ) => unknown
-): [JSX.Element, () => void] {
-  const [scope, animate] = useAnimateSegments();
-  const [showDialog, setShowDialog] = useState(false);
-  const [discarded, setDiscarded] = useState(false);
-  const handleClose = () => {
-    setShowDialog(false);
-  };
-  const deselect = (matchingElement: HTMLElement) => {
-    const segment = getMyDiscardSelectionAnimationSegment(
-      matchingElement,
-      false
-    );
-    selectedIdsRef.current.splice(
-      selectedIdsRef.current.indexOf(matchingElement.id),
-      1
-    );
-    return segment;
-  };
-
-  const select = (matchingElement: HTMLElement) => {
-    const segment = getMyDiscardSelectionAnimationSegment(
-      matchingElement,
-      true
-    );
-    selectedIdsRef.current.push(matchingElement.id);
-    return segment;
-  };
-
-  const selectedIdsRef = useRef<string[]>([]);
-  const removeMyDiscardSelection = () => {
-    animate([[myDiscardFlipCardSelector, { opacity: 1 }]]);
-  };
-
-  return [
-    // eslint-disable-next-line react/jsx-key
-    <div
-      ref={scope}
-      onClick={(event) => {
-        if (!discarded) {
-          const myDiscardFlipElements = findMyDiscardFlipCards(scope.current as HTMLDivElement);
-          if(myDiscardFlipElements.length >= 5){
-            let matchingElement = findFlipCardElement(
-              event.clientX,
-              event.clientY,
-              myDiscardFlipElements
-            );
-  
-            if (matchingElement) {
-              const matchingElementId = matchingElement.id;
-              // deselect if currently selected
-              if (selectedIdsRef.current.includes(matchingElementId)) {
-                animate([deselect(matchingElement)]);
-              } else {
-                // already selected num discards
-                if (selectedIdsRef.current.length === numDiscards) {
-                  if (numDiscards === 1) {
-                    animate([
-                      deselect(
-                        document.getElementById(
-                          selectedIdsRef.current[0]
-                        ) as HTMLElement
-                      ),
-                      select(matchingElement),
-                    ]);
-                  } else {
-                    matchingElement = undefined;
-                  }
-                } else {
-                  animate([select(matchingElement)]);
-                }
-              }
-            }
-  
-            if (
-              matchingElement &&
-              selectedIdsRef.current.length === numDiscards
-            ) {
-              setShowDialog(true);
-            }
-          
-          }
-        }
-      }}
-    >
-      <Dialog open={showDialog} onClose={handleClose}>
-        <DialogTitle>{getDiscardDialogTitle(numDiscards)}</DialogTitle>
-        <DialogActions>
-          <Button onClick={handleClose}>Disagree</Button>
-          <Button
-            onClick={() => {
-              setDiscarded(true);
-              const id1 = selectedIdsRef.current[0];
-              const playingCard1 = playingCardFromId(id1);
-              const id2 = selectedIdsRef.current[1];
-              const playingCard2 =
-                id2 !== undefined ? playingCardFromId(id2) : undefined;
-              discard(playingCard1, playingCard2);
-              handleClose();
-              // might animate further to show sending to the server
-            }}
-            autoFocus
-          >
-            Agree
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {children}
-    </div>,
-    removeMyDiscardSelection,
-  ];
-}
-
-function getDiscardDialogTitle(numDiscards: number) {
-  return `Discard card${numDiscards === 1 ? "" : "s"} ?`;
-}
-
-function playingCardFromId(id: string): PlayingCard {
-  const parts = id.split("_");
-  const pipsStr = parts[1];
-  const suitStr = parts[2];
-
-  return {
-    pips: Pips[pipsStr as keyof typeof Pips],
-    suit: Suit[suitStr as keyof typeof Suit],
-  };
-}
-
 export const PlayMatch = memo(PlayMatchInner, (prevProps, nextProps) => {
   return prevProps.matchDetail.localMatch.id === nextProps.matchDetail.localMatch.id;
 });
-
-const maximizePeggingOverlayCardSize = (
-  numCards: number,
-  maxHeight: number,
-  heightWidthRatio: number
-) => {
-  let lastWidth = 1;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const cardsWidth = numCards * lastWidth;
-    const cardHeight = lastWidth * heightWidthRatio;
-    if (
-      cardsWidth > document.documentElement.clientWidth ||
-      cardHeight > maxHeight
-    ) {
-      return {
-        width: lastWidth,
-        height: lastWidth * heightWidthRatio,
-        totalWidth: cardsWidth,
-      };
-    }
-    lastWidth++;
-  }
-};
-
-function usePeggingOverlay({
-  mappedFlipCardDatas,
-  cardSize,
-  landscape,
-  cribBoardWidth,
-}: {
-  mappedFlipCardDatas: FlipCardData[];
-  cardSize: Size;
-  cribBoardWidth: number;
-  landscape: boolean;
-}) {
-  const lookedAtDragInitial = useRef<
-    { overPeggedCards: boolean } | undefined
-  >();
-  const overlayCardSize = useRef<(Size & { totalWidth: number }) | undefined>();
-  const [scope, animate] = useAnimateSegments();
-  const [scaleTranslate, setScaleTranslate] = useState<{
-    scale: number;
-    translateX: number;
-  }>({ scale: 1, translateX: 0 });
-  const peggingCardDatas = mappedFlipCardDatas
-    .filter((cardData) => cardData.state === FlipCardState.PeggingInPlay)
-    .sort((a, b) => a.position.x - b.position.x);
-  const hasPeggedCards = peggingCardDatas.length > 0;
-  const peggedCardY = hasPeggedCards
-    ? peggingCardDatas[0].position.y + (landscape ? 0 : cribBoardWidth)
-    : 0;
-  const bind = useDrag(
-    ({ down, initial: [initX, initY], movement: [mx, my] }) => {
-      if (down) {
-        if (lookedAtDragInitial.current === undefined) {
-          const overCards = mappedFlipCardDatas.filter((cardData) => {
-            if (cardData.playingCard === undefined) {
-              return false;
-            }
-            const position = cardData.position;
-            const compareY = position.y + (landscape ? 0 : cribBoardWidth);
-            if (
-              initX > position.x &&
-              initX < position.x + cardSize.width &&
-              initY > compareY &&
-              initY < compareY + cardSize.height
-            ) {
-              return true;
-            }
-          });
-
-          lookedAtDragInitial.current = {
-            overPeggedCards: overCards.some(
-              (cardData) => cardData.state === FlipCardState.PeggingInPlay
-            ),
-          };
-          if (lookedAtDragInitial.current.overPeggedCards) {
-            animate([[scope.current, { zIndex: 100, opacity: 1 }]]);
-          }
-        }
-        if (lookedAtDragInitial.current.overPeggedCards) {
-          const myMax = Math.min(
-            document.documentElement.clientHeight - peggedCardY,
-            document.documentElement.clientHeight -
-              (peggedCardY + cardSize.width)
-          );
-          const maxScaleFactor =
-            peggedCardY / (overlayCardSize.current as Size).height;
-          const myScale = Math.min(1, Math.abs(my) / myMax);
-          const scale = 1 + myScale * (maxScaleFactor - 1);
-          const unscaledWidth = overlayCardSize.current
-            ? overlayCardSize.current.totalWidth
-            : 0;
-          const scaledWidth = unscaledWidth * scale;
-          const widthDiff = scaledWidth - unscaledWidth;
-
-          const maxXFactor = 0.75;
-          const maxX = (document.documentElement.clientWidth / 2) * maxXFactor;
-          if (mx < 0) mx = 0; // there is probably a useDrag option to constrain
-          const absX = Math.abs(mx);
-          const restrainedX = Math.min(maxX, absX);
-          const xRatio = mx === 0 ? 0 : restrainedX / maxX;
-          const translateX = -(xRatio * widthDiff);
-          setScaleTranslate({ scale, translateX: translateX });
-        }
-      } else {
-        lookedAtDragInitial.current = undefined;
-        animate([[scope.current, { zIndex: 0, opacity: 0 }]]);
-      }
-    },
-    { enabled: hasPeggedCards }
-  );
-
-  function getPeggingOverlay() {
-    if (!hasPeggedCards) {
-      return undefined;
-    }
-    const overlayCardSizes = maximizePeggingOverlayCardSize(
-      peggingCardDatas.length,
-      peggedCardY,
-      cardSize.height / cardSize.width
-    );
-
-    overlayCardSize.current = overlayCardSizes;
-    return peggingCardDatas.map((cardData, i) => {
-      const x = i * overlayCardSizes.width;
-      return (
-        <FlipCard
-          key={i}
-          isHorizontal={false}
-          startFaceUp={true}
-          position={{ x, y: 0 }}
-          size={overlayCardSizes}
-          playingCard={cardData.playingCard as PlayingCard}
-        />
-      );
-    });
-  }
-
-  return [
-    <div
-      key="peggingOverlay"
-      ref={scope}
-      style={{
-        position: "absolute",
-        top: 0,
-        opacity: 0,
-        transform: `translateX(${scaleTranslate.translateX}px) scale(${scaleTranslate.scale})`,
-      }}
-    >
-      {getPeggingOverlay()}
-    </div>,
-    bind,
-  ] as const;
-}

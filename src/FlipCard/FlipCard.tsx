@@ -12,10 +12,10 @@ import { SegmentAnimationOptionsWithTransitionEnd, SegmentAnimationOptionsWithTr
 import { At } from "../fixAnimationSequence/motion-types";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { memo, useEffect, useRef } from "react";
+import { MutableRefObject, memo, useEffect, useRef } from "react";
 
 export interface FlipAnimation {
-  flip: boolean; // true is flip false is flip back
+  flip: true;
   duration: number;
   at?: number;
   onComplete?: OnComplete;
@@ -103,16 +103,23 @@ function addScopeIfNoSelector(scope: unknown, cardSegment: CardSegment):SmartSeg
   return cardSegment as SmartSegment;
 }
 
-function addFlipSegments(flipAnimation:FlipAnimation,smartAnimationSequence:SmartAnimationSequence){
+function addFlipSegments(
+  flipAnimation:FlipAnimation,
+  smartAnimationSequence:SmartAnimationSequence,
+  flipped:MutableRefObject<boolean>
+){
+  const isFlipped = !flipped.current;
+  flipped.current = isFlipped;
+
   const belowCardSegment = getFlipCardSegment(
-    flipAnimation.flip,
+    isFlipped,
     CardFlip.BelowCard,
     flipAnimation.duration,
     flipAnimation.at,
     flipAnimation.onComplete // note single complete
   );
   const aboveCardSegment = getFlipCardSegment(
-    flipAnimation.flip,
+    isFlipped,
     CardFlip.AboveCard,
     flipAnimation.duration,
     flipAnimation.at
@@ -128,12 +135,16 @@ function addFlipSegments(flipAnimation:FlipAnimation,smartAnimationSequence:Smar
   }
 }
 
-function populateSequence(scope:unknown,flipCardAnimationSequence:FlipCardAnimationSequence) : SmartAnimationSequence{
+function populateSequence(
+  scope:unknown,
+  flipCardAnimationSequence:FlipCardAnimationSequence,
+  flipped:MutableRefObject<boolean>
+) : SmartAnimationSequence{
   const animationSequence : SmartAnimationSequence = [];
   for (let i = 0; i < flipCardAnimationSequence.length; i++) {
     const segment = flipCardAnimationSequence[i];
     if (isFlipAnimation(segment)) {
-      addFlipSegments(segment, animationSequence);
+      addFlipSegments(segment, animationSequence,flipped);
     } else {
       animationSequence.push(addScopeIfNoSelector(scope,segment));
     }
@@ -144,11 +155,13 @@ function populateSequence(scope:unknown,flipCardAnimationSequence:FlipCardAnimat
 
 function FlipCardInner(props: FlipCardProps) {
   const [scope, animate] = useAnimateSegments();
+  const flipped = useRef(false);
   useEffect(() => {
     if(props.animationSequence){
       const animationSequence = populateSequence(
         scope.current,
-        props.animationSequence
+        props.animationSequence,
+        flipped
       );
       animate(animationSequence);
     }
