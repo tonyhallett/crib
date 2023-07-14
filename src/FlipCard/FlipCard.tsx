@@ -182,7 +182,8 @@ function FlipCardInner(props: FlipCardProps) {
       {
         zIndex:props.zIndex,
         width:props.size.width,
-        height:props.size.height
+        height:props.size.height,
+        filter: "drop-shadow(-2px 2px 5px #000)"
         
       }
     } initial={{

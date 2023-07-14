@@ -60,7 +60,7 @@ function getOtherPlayersPeggingCardDatas(
       startFaceUp: false,
       isHorizontal: playerPositions.discard.isHorizontal,
       position: playerPositions.discard.positions[i],
-      state: FlipCardState.Todo,
+      state: FlipCardState.Hand,
     });
   }
 

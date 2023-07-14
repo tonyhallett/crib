@@ -35,6 +35,7 @@ import { Friends } from "./Friends";
 import {
   PlayMatch,
   PlayMatchCribClient,
+  PlayMatchCribClientMethods,
   PlayMatchCribHub,
   PlayMatchProps,
 } from "./PlayMatch/PlayMatch";
@@ -158,7 +159,7 @@ export default function App() {
   );
 
   const enqueueMatchesSnackbar = useCallback(
-    (matchId: string,matchTitle:string) => {
+    (matchId: string,matchTitle:string,matchAction:string) => {
       const action: SnackbarAction = (key) => {
         return (
           <IconButton
@@ -172,7 +173,7 @@ export default function App() {
         );
       };
 
-      enqueueSnackbar(`Action in '${matchTitle}' !`, {
+      enqueueSnackbar(`${matchAction} in '${matchTitle}' !`, {
         variant: "info",
         action,
       });
@@ -208,6 +209,41 @@ export default function App() {
       const cribHub = hubFactory.crib(connection);
       cribHubRef.current = cribHub;
 
+      const gameAction = <TAction extends keyof PlayMatchCribClientMethods>(action:TAction,myMatch:MyMatch,args:Parameters<PlayMatchCribClientMethods[TAction]>) => {
+        const actionMessage = action[0].toUpperCase() + action.slice(1);
+        const matchDetails = matchDetailsRef.current;
+          const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
+          if(matchDetail === undefined){
+            // tbd
+            throw new Error(`${actionMessage} but no match`);
+          }
+          const newMatchDetail:MatchDetail = {
+            ...matchDetail,
+            match: myMatch
+          }
+          const newLocalMatch = removeDealIndicator(matchDetail.localMatch);
+          if (newLocalMatch) {
+            cribStorage.setMatch(newLocalMatch);
+            newMatchDetail.localMatch = newLocalMatch;
+          }
+
+          const playMatchId = playMatchIdRef.current;
+          if (playMatchId === myMatch.id) {
+            (playMatchCribClientRef.current as PlayMatchCribClient)[action].apply(null,args);
+          }else{
+            enqueueMatchesSnackbar(myMatch.id,myMatch.title,actionMessage);
+          }
+
+          setMatchDetailsAndRef(
+            matchDetails.map((matchDetail) => {
+              if (matchDetail.match.id === myMatch.id) {
+                return newMatchDetail;
+              }
+              return matchDetail;
+            })
+          );
+          playMatchContext.playMatch(newMatchDetail);
+      };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cribConnection = clientFactory.crib(connection, {
         initialPlayerData(friendships, matches) {
@@ -228,7 +264,8 @@ export default function App() {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(playerId, myMatch) {
-          const matchDetails = matchDetailsRef.current;
+          gameAction("discard",myMatch,[playerId,myMatch]);
+          /* const matchDetails = matchDetailsRef.current;
           const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
           if(matchDetail === undefined){
             // tbd
@@ -248,7 +285,7 @@ export default function App() {
           if (playMatchId === myMatch.id) {
             playMatchCribClientRef.current?.discard(playerId, myMatch);
           }else{
-            enqueueMatchesSnackbar(myMatch.id,myMatch.title);
+            enqueueMatchesSnackbar(myMatch.id,myMatch.title,"Discard");
           }
 
           setMatchDetailsAndRef(
@@ -259,7 +296,7 @@ export default function App() {
               return matchDetail;
             })
           );
-          playMatchContext.playMatch(newMatchDetail);
+          playMatchContext.playMatch(newMatchDetail); */
         },
 
         // common code for removing deal indicator
@@ -284,6 +321,7 @@ export default function App() {
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         peg(playerId, peggedCard, myMatch) {
+          gameAction("peg",myMatch,[playerId,peggedCard,myMatch]);
           /* const matchWithChange = matches.find((m) => m.id === matchId);
           if(matchWithChange){
             if(selectedMenuItem !== "Matches"){

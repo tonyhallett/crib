@@ -28,7 +28,7 @@ import {
   FlipCardProps,
 } from "../FlipCard/FlipCard";
 import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
-import { getDiscardToBoxSegment } from "./animationSegments";
+import { getDiscardToBoxSegment, getMoveRotateSegment } from "./animationSegments";
 import { AnimationManager } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
@@ -39,9 +39,10 @@ import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyDiscard } from "./useMyDiscard";
+import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
 
 
-type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
+export type PlayMatchCribClientMethods = Pick<CribClient, "discard" | "ready" | "peg">;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
 export type PlayMatchCribClient = {
   [K in keyof PlayMatchCribClientMethods]: PlayMatchCribClientMethods[K] extends (
@@ -85,6 +86,7 @@ export interface PlayMatchProps {
 
 export enum FlipCardState {
   Todo,
+  Hand,
   PeggingInPlay,
   PeggingTurnedOver,
 }
@@ -413,8 +415,92 @@ function PlayMatchInner({
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      peg(playerId, peggedCard) {
-        //
+      peg(playerId, peggedCard, myMatch) {
+        const numCardsInState = (flipCards:FlipCardData[],state: FlipCardState) => {
+          return flipCards.filter(cardData => cardData.state === state).length;
+        };
+        const numPeggingInPlayCards = (flipCards:FlipCardData[]) => {
+          return numCardsInState(flipCards,FlipCardState.PeggingInPlay);
+        }
+
+        const getPeggedCardPosition = (prevFlipCardDatas:FlipCardDatas):number => {
+          return numPeggingInPlayCards(prevFlipCardDatas.myCards) + numPeggingInPlayCards(prevFlipCardDatas.otherPlayersCards.flat());
+        };
+        animationManager.current.animate(
+          (animationCompleteCallback, prevFlipCardDatas) => {
+            prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
+            
+            const isMe = myMatch.myId === playerId;
+            const newFlipCardDatas = { ...prevFlipCardDatas };
+            const peggedCardPosition = getPeggedCardPosition(prevFlipCardDatas);
+            const peggingPosition = positions.peggingPositions.inPlay[peggedCardPosition];
+
+            const getMoveToPeggingPositionAnimationSequence = ():FlipCardAnimationSequence => {
+              return [
+                createZIndexAnimationSegment(5 + peggedCardPosition,{}),
+                getMoveRotateSegment(false,peggingPosition,discardDuration,undefined,undefined,() => {
+                  // todo updating local state and refactor 
+                  animationCompleteCallback();
+                }),
+              ]
+            }
+
+            if(isMe){
+              // if selection adds an animation will need to remove
+              const newMyFlipCardDatas = prevFlipCardDatas.myCards.map((prevCardData) => {
+                const playingCard = prevCardData.playingCard as PlayingCard;
+                if(playingCard && playingCard.pips === peggedCard.pips && playingCard.suit === peggedCard.suit){
+                  const newCardData = {
+                    ...prevCardData,
+                  }
+                  newCardData.state = FlipCardState.PeggingInPlay;
+                  newCardData.animationSequence = getMoveToPeggingPositionAnimationSequence();
+                  return newCardData;
+                }else{
+                  return prevCardData;
+                }
+              });
+              newFlipCardDatas.myCards = newMyFlipCardDatas;
+            }else{
+              const peggerIndex = myMatch.otherPlayers.findIndex(
+                (otherPlayer) => otherPlayer.id === playerId
+              );
+              const prevOtherPlayerCardDatas =
+              prevFlipCardDatas.otherPlayersCards[peggerIndex];
+
+              let done = false;
+              const newOtherPlayerCardDatas = prevOtherPlayerCardDatas.map(
+                (prevCardData) => {
+                  if(!done && prevCardData.state === FlipCardState.Hand){
+                    done = true;
+                    const newCardData = { ...prevCardData };
+                    newCardData.state = FlipCardState.PeggingInPlay;
+                    newCardData.playingCard = peggedCard;
+                    const animationSequence = getMoveToPeggingPositionAnimationSequence();
+                    animationSequence.unshift({
+                      flip:true,
+                      duration:flipDuration,
+                    } as FlipAnimation);
+                    newCardData.animationSequence = animationSequence;
+                    return newCardData;
+                  }
+                  return prevCardData;
+              });
+
+              const newOtherPlayersCards =
+              prevFlipCardDatas.otherPlayersCards.map((otherPlayerCards, i) => {
+                if (i === peggerIndex) {
+                  return newOtherPlayerCardDatas;
+                }
+                return otherPlayerCards;
+              });
+              newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
+            }
+            return newFlipCardDatas;
+            // will need to setCribBoardState
+            // will need to ensure that the state changes !!!!!
+          }
+        );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ready(playerId) {

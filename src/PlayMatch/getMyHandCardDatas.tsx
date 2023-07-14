@@ -14,7 +14,7 @@ export function getMyHandCardDatas(
       playingCard: myCard,
       position: discardPositions.positions[index],
       isHorizontal: false,
-      state: FlipCardState.Todo,
+      state: FlipCardState.Hand,
     };
     return handCardData;
   });

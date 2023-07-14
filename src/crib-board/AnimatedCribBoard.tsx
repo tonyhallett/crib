@@ -410,6 +410,7 @@ export function AnimatedCribBoard({
         height={height}
         width={width}
         viewBox={viewBox}
+        style={{filter:"drop-shadow(-6px 2px 10px #000)"}}
       >
         <defs>
           <symbol id="pegCircle">
