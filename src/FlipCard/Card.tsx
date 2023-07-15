@@ -1,7 +1,5 @@
-import {
-  motion,
-} from "framer-motion";
-import { CSSProperties} from "react";
+import { motion } from "framer-motion";
+import { CSSProperties } from "react";
 import { getSVG } from "./getSVG";
 import { Size } from "../PlayMatch/matchLayoutManager";
 import { PlayingCard } from "../generatedTypes";
@@ -23,8 +21,8 @@ function getAnimateCardStyle(props: CardProps) {
     width: props.size.width, // necessary on FlipCard / Card and SVG
     height: props.size.height,
 
-    position:"absolute", // the two cards need to occupy the same space 
-    
+    position: "absolute", // the two cards need to occupy the same space
+
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
 
@@ -39,7 +37,7 @@ export interface CardProps {
   size: Size;
   isHorizontal: boolean;
   playingCard?: PlayingCard;
-  className:string
+  className: string;
 }
 
 export function Card(props: CardProps) {
@@ -47,7 +45,7 @@ export function Card(props: CardProps) {
   const Svg = getSVG(props);
 
   const rotationY = props.cardFlip === CardFlip.BelowCard ? 180 : 0;
-  
+
   return (
     <motion.div
       className={props.className}

@@ -1,13 +1,11 @@
-import {
-  useRef,
-  useState
-} from "react";
-import { PlayingCard } from "../generatedTypes";
+import { useRef, useState } from "react";
+import { CribGameState, PlayingCard } from "../generatedTypes";
 import { Size } from "./matchLayoutManager";
-import { FlipCard } from "../FlipCard/FlipCard";
+import { FlipCard, classNameFromPlayingCard } from "../FlipCard/FlipCard";
 import { useDrag } from "@use-gesture/react";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
 import { FlipCardData, FlipCardState } from "./PlayMatch";
+import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
 
 const maximizePeggingOverlayCardSize = (
   numCards: number,
@@ -34,109 +32,128 @@ const maximizePeggingOverlayCardSize = (
 };
 
 export function usePeggingOverlay({
-  mappedFlipCardDatas, cardSize, landscape, cribBoardWidth,
+  flipCardDatas,
+  cardSize,
+  gameState,
 }: {
-  mappedFlipCardDatas: FlipCardData[];
+  flipCardDatas: FlipCardData[];
   cardSize: Size;
-  cribBoardWidth: number;
-  landscape: boolean;
+  gameState: CribGameState;
 }) {
   const lookedAtDragInitial = useRef<
-    { overPeggedCards: boolean; } | undefined
+    { overPeggedCards: boolean } | undefined
   >();
-  const overlayCardSize = useRef<(Size & { totalWidth: number; }) | undefined>();
+  const overlayCardSizeRef = useRef<
+    (Size & { totalWidth: number }) | undefined
+  >();
+  const peggedCardYRef = useRef(0);
   const [scope, animate] = useAnimateSegments();
   const [scaleTranslate, setScaleTranslate] = useState<{
     scale: number;
     translateX: number;
   }>({ scale: 1, translateX: 0 });
-  const peggingCardDatas = mappedFlipCardDatas
-    .filter((cardData) => cardData.state === FlipCardState.PeggingInPlay)
-    .sort((a, b) => a.position.x - b.position.x);
-  const hasPeggedCards = peggingCardDatas.length > 0;
-  const peggedCardY = hasPeggedCards
-    ? peggingCardDatas[0].position.y + (landscape ? 0 : cribBoardWidth)
-    : 0;
+
+  const peggingCardDatas = flipCardDatas.filter(
+    (cardData) => cardData.state === FlipCardState.PeggingInPlay
+  );
+
+  const applyInitial = (initX: number, initY: number) => {
+    if (lookedAtDragInitial.current === undefined) {
+      const cardsUnderPointWithState = getCardsUnderPointWithState(
+        flipCardDatas,
+        initX,
+        initY,
+        FlipCardState.PeggingInPlay
+      );
+      lookedAtDragInitial.current = {
+        overPeggedCards: cardsUnderPointWithState.length > 0,
+      };
+      if (lookedAtDragInitial.current.overPeggedCards) {
+        peggedCardYRef.current = document
+          .getElementsByClassName(
+            classNameFromPlayingCard(
+              peggingCardDatas[0].playingCard as PlayingCard
+            )
+          )[0]
+          .getBoundingClientRect().y;
+
+        overlayCardSizeRef.current = maximizePeggingOverlayCardSize(
+          peggingCardDatas.length,
+          peggedCardYRef.current,
+          cardSize.height / cardSize.width
+        );
+        animate([[scope.current, { zIndex: 100, opacity: 1 }]]);
+      }
+    }
+    return lookedAtDragInitial.current.overPeggedCards;
+  };
+
+  const applyDown = (initX: number, initY: number, mx: number, my: number) => {
+    const overPeggedCards = applyInitial(initX, initY);
+    const peggedCardY = peggedCardYRef.current;
+    if (overPeggedCards) {
+      const myMax = Math.min(
+        document.documentElement.clientHeight - peggedCardY,
+        document.documentElement.clientHeight - (peggedCardY + cardSize.width)
+      );
+
+      const maxScaleFactor =
+        peggedCardY / (overlayCardSizeRef.current as Size).height;
+      const myScale = Math.min(1, Math.abs(my) / myMax);
+      const scale = 1 + myScale * (maxScaleFactor - 1);
+      const unscaledWidth = overlayCardSizeRef.current
+        ? overlayCardSizeRef.current.totalWidth
+        : 0;
+      const scaledWidth = unscaledWidth * scale;
+      const widthDiff = scaledWidth - unscaledWidth;
+
+      const maxXFactor = 0.75;
+      const maxX = (document.documentElement.clientWidth / 2) * maxXFactor;
+      if (mx < 0) mx = 0; // there is probably a useDrag option to constrain
+      const absX = Math.abs(mx);
+      const restrainedX = Math.min(maxX, absX);
+      const xRatio = mx === 0 ? 0 : restrainedX / maxX;
+      const translateX = -(xRatio * widthDiff);
+      setScaleTranslate({ scale, translateX: translateX });
+    }
+  };
+
+  const up = () => {
+    lookedAtDragInitial.current = undefined;
+    overlayCardSizeRef.current = undefined;
+    animate([[scope.current, { zIndex: 0, opacity: 0 }]]);
+  };
+
   const bind = useDrag(
     ({ down, initial: [initX, initY], movement: [mx, my] }) => {
       if (down) {
-        if (lookedAtDragInitial.current === undefined) {
-          const overCards = mappedFlipCardDatas.filter((cardData) => {
-            if (cardData.playingCard === undefined) {
-              return false;
-            }
-            const position = cardData.position;
-            const compareY = position.y + (landscape ? 0 : cribBoardWidth);
-            if (initX > position.x &&
-              initX < position.x + cardSize.width &&
-              initY > compareY &&
-              initY < compareY + cardSize.height) {
-              return true;
-            }
-          });
-
-          lookedAtDragInitial.current = {
-            overPeggedCards: overCards.some(
-              (cardData) => cardData.state === FlipCardState.PeggingInPlay
-            ),
-          };
-          if (lookedAtDragInitial.current.overPeggedCards) {
-            animate([[scope.current, { zIndex: 100, opacity: 1 }]]);
-          }
-        }
-        if (lookedAtDragInitial.current.overPeggedCards) {
-          const myMax = Math.min(
-            document.documentElement.clientHeight - peggedCardY,
-            document.documentElement.clientHeight -
-            (peggedCardY + cardSize.width)
-          );
-          const maxScaleFactor = peggedCardY / (overlayCardSize.current as Size).height;
-          const myScale = Math.min(1, Math.abs(my) / myMax);
-          const scale = 1 + myScale * (maxScaleFactor - 1);
-          const unscaledWidth = overlayCardSize.current
-            ? overlayCardSize.current.totalWidth
-            : 0;
-          const scaledWidth = unscaledWidth * scale;
-          const widthDiff = scaledWidth - unscaledWidth;
-
-          const maxXFactor = 0.75;
-          const maxX = (document.documentElement.clientWidth / 2) * maxXFactor;
-          if (mx < 0) mx = 0; // there is probably a useDrag option to constrain
-          const absX = Math.abs(mx);
-          const restrainedX = Math.min(maxX, absX);
-          const xRatio = mx === 0 ? 0 : restrainedX / maxX;
-          const translateX = -(xRatio * widthDiff);
-          setScaleTranslate({ scale, translateX: translateX });
-        }
+        applyDown(initX, initY, mx, my);
       } else {
-        lookedAtDragInitial.current = undefined;
-        animate([[scope.current, { zIndex: 0, opacity: 0 }]]);
+        up();
       }
     },
-    { enabled: hasPeggedCards }
+    { enabled: gameState === CribGameState.Pegging }
   );
 
   function getPeggingOverlay() {
-    if (!hasPeggedCards) {
+    if (overlayCardSizeRef.current === undefined) {
       return undefined;
     }
-    const overlayCardSizes = maximizePeggingOverlayCardSize(
-      peggingCardDatas.length,
-      peggedCardY,
-      cardSize.height / cardSize.width
-    );
 
-    overlayCardSize.current = overlayCardSizes;
     return peggingCardDatas.map((cardData, i) => {
-      const x = i * overlayCardSizes.width;
+      const overlayCardSize = overlayCardSizeRef.current as Size;
+      const x = i * overlayCardSize.width;
       return (
         <FlipCard
           key={i}
           isHorizontal={false}
           startFaceUp={true}
           position={{ x, y: 0 }}
-          size={overlayCardSizes}
-          playingCard={cardData.playingCard as PlayingCard} />
+          size={overlayCardSize}
+          playingCard={cardData.playingCard as PlayingCard}
+          applyClass={false}
+          applyDropShadow={false}
+        />
       );
     });
   }

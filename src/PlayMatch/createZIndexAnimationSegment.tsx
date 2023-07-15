@@ -2,15 +2,18 @@ import { DOMKeyframesDefinition } from "framer-motion";
 import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
 import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/FlipCard";
 
-export type ZIndexAnimationOptions = Omit<SegmentAnimationOptionsWithTransitionEndAndAt,'duration'>
+export type ZIndexAnimationOptions = Omit<
+  SegmentAnimationOptionsWithTransitionEndAndAt,
+  "duration"
+>;
 export function createZIndexAnimationSegment(
-  zIndex: number, 
+  zIndex: number,
   options: ZIndexAnimationOptions
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   return [
     undefined,
     {
-      zIndex
+      zIndex,
     } as DOMKeyframesDefinition,
     {
       ...options,

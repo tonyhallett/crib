@@ -9,7 +9,6 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import { FlipCardDemo } from "./FlipCard/New/FlipCardDemo";
 
 const rootNode = document.getElementById("app");
 

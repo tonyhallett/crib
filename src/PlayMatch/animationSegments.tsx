@@ -1,6 +1,6 @@
 import { Box, Point } from "./matchLayoutManager";
-import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/Card";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
+import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/FlipCard";
 
 export function getDiscardToBoxSegment(
   boxPosition: Box,

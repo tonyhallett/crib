@@ -106,9 +106,7 @@ export default function App() {
     MenuItem | undefined
   >(undefined);
   const selectedMenuItemRef = useRef<MenuItem | undefined>(undefined);
-  const [playMatchId, setPlayMatchId] = useState<string | undefined>(
-    undefined
-  );
+  const [playMatchId, setPlayMatchId] = useState<string | undefined>(undefined);
   const playMatchIdRef = useRef<string | undefined>(undefined);
 
   const signalRRegistration = useCallback<
@@ -138,20 +136,25 @@ export default function App() {
   const setMatchDetailsAndRef = (matchDetails: MatchDetail[]) => {
     matchDetailsRef.current = matchDetails;
     setMatchDetails(matchDetails);
-  }
+  };
 
   const setPlayMatchIdAndRef = useCallback(
     (matchId: string | undefined) => {
       playMatchIdRef.current = matchId;
       setPlayMatchId(matchId);
-      const matchDetail = matchId === undefined ? undefined : matchDetailsRef.current.find(matchDetail => matchDetail.match.id === matchId);
+      const matchDetail =
+        matchId === undefined
+          ? undefined
+          : matchDetailsRef.current.find(
+              (matchDetail) => matchDetail.match.id === matchId
+            );
       playMatchContext.playMatch(matchDetail);
     },
     [playMatchContext]
   );
 
   const doPlayMatch = useCallback(
-    (matchId:string) => {
+    (matchId: string) => {
       setSelectedMenuItemAndRef(undefined);
       setPlayMatchIdAndRef(matchId);
     },
@@ -159,7 +162,7 @@ export default function App() {
   );
 
   const enqueueMatchesSnackbar = useCallback(
-    (matchId: string,matchTitle:string,matchAction:string) => {
+    (matchId: string, matchTitle: string, matchAction: string) => {
       const action: SnackbarAction = (key) => {
         return (
           <IconButton
@@ -188,7 +191,7 @@ export default function App() {
         return { ...matchDetail, localMatch: newLocalMatch };
       }
       return matchDetail;
-    })
+    });
     setMatchDetailsAndRef(updatedMatchDetails);
   }, []);
 
@@ -209,40 +212,49 @@ export default function App() {
       const cribHub = hubFactory.crib(connection);
       cribHubRef.current = cribHub;
 
-      const gameAction = <TAction extends keyof PlayMatchCribClientMethods>(action:TAction,myMatch:MyMatch,args:Parameters<PlayMatchCribClientMethods[TAction]>) => {
+      const gameAction = <TAction extends keyof PlayMatchCribClientMethods>(
+        action: TAction,
+        myMatch: MyMatch,
+        args: Parameters<PlayMatchCribClientMethods[TAction]>
+      ) => {
         const actionMessage = action[0].toUpperCase() + action.slice(1);
         const matchDetails = matchDetailsRef.current;
-          const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
-          if(matchDetail === undefined){
-            // tbd
-            throw new Error(`${actionMessage} but no match`);
-          }
-          const newMatchDetail:MatchDetail = {
-            ...matchDetail,
-            match: myMatch
-          }
-          const newLocalMatch = removeDealIndicator(matchDetail.localMatch);
-          if (newLocalMatch) {
-            cribStorage.setMatch(newLocalMatch);
-            newMatchDetail.localMatch = newLocalMatch;
-          }
+        const matchDetail = matchDetails.find(
+          (matchDetail) => matchDetail.match.id === myMatch.id
+        );
+        if (matchDetail === undefined) {
+          // tbd
+          throw new Error(`${actionMessage} but no match`);
+        }
+        const newMatchDetail: MatchDetail = {
+          ...matchDetail,
+          match: myMatch,
+        };
+        const newLocalMatch = removeDealIndicator(matchDetail.localMatch);
+        if (newLocalMatch) {
+          cribStorage.setMatch(newLocalMatch);
+          newMatchDetail.localMatch = newLocalMatch;
+        }
 
-          const playMatchId = playMatchIdRef.current;
-          if (playMatchId === myMatch.id) {
-            (playMatchCribClientRef.current as PlayMatchCribClient)[action].apply(null,args);
-          }else{
-            enqueueMatchesSnackbar(myMatch.id,myMatch.title,actionMessage);
-          }
-
-          setMatchDetailsAndRef(
-            matchDetails.map((matchDetail) => {
-              if (matchDetail.match.id === myMatch.id) {
-                return newMatchDetail;
-              }
-              return matchDetail;
-            })
+        const playMatchId = playMatchIdRef.current;
+        if (playMatchId === myMatch.id) {
+          (playMatchCribClientRef.current as PlayMatchCribClient)[action].apply(
+            null,
+            args
           );
-          playMatchContext.playMatch(newMatchDetail);
+        } else {
+          enqueueMatchesSnackbar(myMatch.id, myMatch.title, actionMessage);
+        }
+
+        setMatchDetailsAndRef(
+          matchDetails.map((matchDetail) => {
+            if (matchDetail.match.id === myMatch.id) {
+              return newMatchDetail;
+            }
+            return matchDetail;
+          })
+        );
+        playMatchContext.playMatch(newMatchDetail);
       };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const cribConnection = clientFactory.crib(connection, {
@@ -252,11 +264,11 @@ export default function App() {
               return { ...f, fromServer: true };
             })
           );
-          const matchDetails = matches.map(match => {
+          const matchDetails = matches.map((match) => {
             return {
-              localMatch:ensureLocalMatch(match),
-              match
-            }
+              localMatch: ensureLocalMatch(match),
+              match,
+            };
           });
           setMatchDetailsAndRef(matchDetails);
           setFetchedInitialData(true);
@@ -264,7 +276,7 @@ export default function App() {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(playerId, myMatch) {
-          gameAction("discard",myMatch,[playerId,myMatch]);
+          gameAction("discard", myMatch, [playerId, myMatch]);
           /* const matchDetails = matchDetailsRef.current;
           const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
           if(matchDetail === undefined){
@@ -321,7 +333,7 @@ export default function App() {
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         peg(playerId, peggedCard, myMatch) {
-          gameAction("peg",myMatch,[playerId,peggedCard,myMatch]);
+          gameAction("peg", myMatch, [playerId, peggedCard, myMatch]);
           /* const matchWithChange = matches.find((m) => m.id === matchId);
           if(matchWithChange){
             if(selectedMenuItem !== "Matches"){
@@ -367,7 +379,14 @@ export default function App() {
     if (isAuthenticated && !connected) {
       signalRConnect();
     }
-  }, [isAuthenticated, connected, getIdTokenClaims, enqueueMatchesSnackbar, updateLocalMatch, playMatchContext]);
+  }, [
+    isAuthenticated,
+    connected,
+    getIdTokenClaims,
+    enqueueMatchesSnackbar,
+    updateLocalMatch,
+    playMatchContext,
+  ]);
   useEffect(() => {
     if (!hasRenderAMatch.current && canPlayMatch) {
       hasRenderAMatch.current = true;
@@ -383,15 +402,10 @@ export default function App() {
         );
       },
       peg(peggedCard) {
-        (cribHubRef.current as CribHub).peg(
-          playMatchId as string,
-          peggedCard
-        );
+        (cribHubRef.current as CribHub).peg(playMatchId as string, peggedCard);
       },
       ready() {
-        (cribHubRef.current as CribHub).ready(
-          playMatchId as string
-        );
+        (cribHubRef.current as CribHub).ready(playMatchId as string);
       },
     }),
     [playMatchId]
@@ -412,7 +426,8 @@ export default function App() {
     return <div>Loading</div>;
   }
 
-  const showMenuComponents = fetchedAndAuthenticated && playMatchId === undefined;
+  const showMenuComponents =
+    fetchedAndAuthenticated && playMatchId === undefined;
   const friendshipsIcon = fetchedAndAuthenticated ? (
     <Badge badgeContent={friendships.length}>
       <PeopleIcon fontSize="large" />
@@ -426,7 +441,9 @@ export default function App() {
   ) : (
     CardsIcon
   );
-  const playMatch = matchDetails.find((matchDetail) => { return matchDetail.match.id === playMatchId; });
+  const playMatch = matchDetails.find((matchDetail) => {
+    return matchDetail.match.id === playMatchId;
+  });
   return (
     <div>
       {woodImageLoaded && <WoodWhenPlaying playing={!!playMatchId} />}
@@ -467,10 +484,7 @@ export default function App() {
         />
       )}
       {showMenuComponents && selectedMenuItem === "Matches" && (
-        <Matches
-          matchDetails={matchDetails}
-          playMatch={doPlayMatch}
-        />
+        <Matches matchDetails={matchDetails} playMatch={doPlayMatch} />
       )}
       {canPlayMatch && (
         <PlayMatch

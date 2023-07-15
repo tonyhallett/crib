@@ -105,7 +105,7 @@ export function AnimatedCribBoard({
   // could even determine distance and keep constant
   moveDuration = 2,
   onComplete,
-  style
+  style,
 }: {
   cribBoardUrl: string;
   pegHoleRadius: number;
@@ -120,7 +120,7 @@ export function AnimatedCribBoard({
   at?: number;
   moveDuration?: number;
   onComplete?: () => void;
-  style?:CSSProperties
+  style?: CSSProperties;
 }) {
   const [scope, animate] = useAnimateSegments();
   const rendered = useRef(false);
@@ -554,6 +554,7 @@ export function AnimatedCribBoard({
     pegTrackBoxPaddingPercentage,
     scope,
     strokeWidth,
+    style,
     width,
   ]);
 

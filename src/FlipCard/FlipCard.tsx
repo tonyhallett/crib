@@ -1,14 +1,26 @@
 import { PlayingCard } from "../generatedTypes";
-import { DOMKeyframesDefinition, StyleKeyframesDefinition, motion } from "framer-motion";
-import { Point, Size } from "../PlayMatch/matchLayoutManager";
-import { DOMSegment, DOMSegmentWithTransition, DynamicAnimationOptions, SequenceLabel, SequenceLabelWithTime, SequenceTime } from "./motion-types";
-import { ElementOrSelector } from "framer-motion";
 import {
-  CardFlip,
-  Card,
-  CardProps,
-} from "./Card";
-import { SegmentAnimationOptionsWithTransitionEnd, SegmentAnimationOptionsWithTransitionEndAndAt, SmartAnimationSequence, SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegments";
+  DOMKeyframesDefinition,
+  StyleKeyframesDefinition,
+  motion,
+} from "framer-motion";
+import { Point, Size } from "../PlayMatch/matchLayoutManager";
+import {
+  DOMSegment,
+  DOMSegmentWithTransition,
+  DynamicAnimationOptions,
+  SequenceLabel,
+  SequenceLabelWithTime,
+  SequenceTime,
+} from "./motion-types";
+import { ElementOrSelector } from "framer-motion";
+import { CardFlip, Card, CardProps } from "./Card";
+import {
+  SegmentAnimationOptionsWithTransitionEnd,
+  SegmentAnimationOptionsWithTransitionEndAndAt,
+  SmartAnimationSequence,
+  SmartSegment,
+} from "../fixAnimationSequence/createAnimationsFromSegments";
 import { At } from "../fixAnimationSequence/motion-types";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
@@ -49,6 +61,8 @@ export interface FlipCardProps {
   animationSequence?: FlipCardAnimationSequence;
   isHorizontal: boolean;
   zIndex?: number;
+  applyClass?: boolean;
+  applyDropShadow?: boolean;
 }
 
 const belowCardClassName = "belowFlipCard";
@@ -75,7 +89,8 @@ function getFlipCardSegment(
     at,
     onComplete,
   };
-  const className = cardFlip === CardFlip.AboveCard ? aboveCardClassName : belowCardClassName;
+  const className =
+    cardFlip === CardFlip.AboveCard ? aboveCardClassName : belowCardClassName;
   return [`.${className}`, defn, options];
 }
 
@@ -87,7 +102,10 @@ function isFlipAnimation(
 
 type CommonCardProps = Pick<CardProps, "isHorizontal" | "size">;
 
-function addScopeIfNoSelector(scope: unknown, cardSegment: CardSegment):SmartSegment {
+function addScopeIfNoSelector(
+  scope: unknown,
+  cardSegment: CardSegment
+): SmartSegment {
   if (Array.isArray(cardSegment)) {
     if (cardSegment[0] === undefined) {
       if (cardSegment.length === 2) {
@@ -104,10 +122,10 @@ function addScopeIfNoSelector(scope: unknown, cardSegment: CardSegment):SmartSeg
 }
 
 function addFlipSegments(
-  flipAnimation:FlipAnimation,
-  smartAnimationSequence:SmartAnimationSequence,
-  flipped:MutableRefObject<boolean>
-){
+  flipAnimation: FlipAnimation,
+  smartAnimationSequence: SmartAnimationSequence,
+  flipped: MutableRefObject<boolean>
+) {
   const isFlipped = !flipped.current;
   flipped.current = isFlipped;
 
@@ -123,11 +141,11 @@ function addFlipSegments(
     CardFlip.AboveCard,
     flipAnimation.duration,
     flipAnimation.at
-  )
-  if(flipAnimation.at){
+  );
+  if (flipAnimation.at) {
     smartAnimationSequence.push(belowCardSegment);
     smartAnimationSequence.push(aboveCardSegment);
-  }else{
+  } else {
     smartAnimationSequence.push(belowCardSegment);
     const aboveOptions = aboveCardSegment[2];
     aboveOptions.at = "<"; // or use a marker
@@ -136,28 +154,34 @@ function addFlipSegments(
 }
 
 function populateSequence(
-  scope:unknown,
-  flipCardAnimationSequence:FlipCardAnimationSequence,
-  flipped:MutableRefObject<boolean>
-) : SmartAnimationSequence{
-  const animationSequence : SmartAnimationSequence = [];
+  scope: unknown,
+  flipCardAnimationSequence: FlipCardAnimationSequence,
+  flipped: MutableRefObject<boolean>
+): SmartAnimationSequence {
+  const animationSequence: SmartAnimationSequence = [];
   for (let i = 0; i < flipCardAnimationSequence.length; i++) {
     const segment = flipCardAnimationSequence[i];
     if (isFlipAnimation(segment)) {
-      addFlipSegments(segment, animationSequence,flipped);
+      addFlipSegments(segment, animationSequence, flipped);
     } else {
-      animationSequence.push(addScopeIfNoSelector(scope,segment));
+      animationSequence.push(addScopeIfNoSelector(scope, segment));
     }
   }
   return animationSequence;
 }
 
+export function classNameFromPlayingCard(playingCard: PlayingCard | undefined) {
+  return playingCard
+    ? `${playingCard.suit}${playingCard.pips}`
+    : "noPlayingCard";
+}
 
+// eslint-disable-next-line complexity
 function FlipCardInner(props: FlipCardProps) {
   const [scope, animate] = useAnimateSegments();
   const flipped = useRef(false);
   useEffect(() => {
-    if(props.animationSequence){
+    if (props.animationSequence) {
       const animationSequence = populateSequence(
         scope.current,
         props.animationSequence,
@@ -173,25 +197,27 @@ function FlipCardInner(props: FlipCardProps) {
   };
 
   const rotation = props.isHorizontal ? 90 : 0;
-
-  const flipCardId = props.playingCard
-    ? `flipCard_${props.playingCard.pips}_${props.playingCard.suit}`
-    : "flipCard";
+  const applyClass = props.applyClass ?? true;
+  const applyDropShadow = props.applyDropShadow ?? true;
+  const className = applyClass
+    ? classNameFromPlayingCard(props.playingCard)
+    : undefined;
   return (
-    <motion.div ref={scope} id={flipCardId} style={
-      {
-        zIndex:props.zIndex,
-        width:props.size.width,
-        height:props.size.height,
-        filter: "drop-shadow(-2px 2px 5px #000)"
-        
-      }
-    } initial={{
-      x: props.position.x,
-      y: props.position.y,
-      position: "absolute",
-      rotate: `${rotation}deg`,
-    }}
+    <motion.div
+      ref={scope}
+      className={className}
+      style={{
+        zIndex: props.zIndex,
+        width: props.size.width,
+        height: props.size.height,
+        filter: applyDropShadow ? "drop-shadow(-2px 2px 5px #000)" : undefined,
+      }}
+      initial={{
+        x: props.position.x,
+        y: props.position.y,
+        position: "absolute",
+        rotate: `${rotation}deg`,
+      }}
     >
       <Card
         {...common}

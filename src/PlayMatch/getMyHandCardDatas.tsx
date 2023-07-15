@@ -8,13 +8,11 @@ export function getMyHandCardDatas(
 ): FlipCardData[] {
   return myCards.map((myCard, index) => {
     const handCardData: FlipCardData = {
-      //owner: myId,
-      //cardNumber: index,
       startFaceUp: true,
       playingCard: myCard,
       position: discardPositions.positions[index],
       isHorizontal: false,
-      state: FlipCardState.Hand,
+      state: FlipCardState.MyHand,
     };
     return handCardData;
   });

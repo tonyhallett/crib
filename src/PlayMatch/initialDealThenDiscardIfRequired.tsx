@@ -97,10 +97,12 @@ function getDealtPlayerCard(
       {
         at: moveRotateAt + dealDuration,
         onComplete: isMyCard ? undefined : onComplete,
-      },
-    )
+      }
+    ),
   ];
+  let state: FlipCardState = FlipCardState.Todo;
   if (isMyCard) {
+    state = FlipCardState.MyHand;
     const flipAnimation: FlipAnimation = {
       duration: flipDuration,
       flip: true,
@@ -114,7 +116,7 @@ function getDealtPlayerCard(
     position: deck.position,
     zIndex: deckZIndex,
     animationSequence,
-    state: FlipCardState.Todo,
+    state,
   };
 }
 
@@ -226,7 +228,7 @@ function addDiscardAnimation(
 function isOtherPlayerDiscarded(
   match: MyMatch,
   otherPlayerPosition: number,
-  isMe:boolean
+  isMe: boolean
 ) {
   return isMe ? false : match.otherPlayers[otherPlayerPosition].discarded;
 }
@@ -241,7 +243,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
   otherPlayersCards: FlipCardData[][],
   updateLocalMatch: UpdateLocalMatch,
   animationCompleteCallback: () => void
-): void  {
+): void {
   const numPlayers = otherPlayersCards.length + 1;
   const dealDiscardNumbers = getPlayerCardDealDiscardNumbers(numPlayers);
 
@@ -270,7 +272,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
     );
 
     const cards = isMe ? myCards : otherPlayersCards[otherPlayerPosition];
-    
+
     for (let i = 0; i < dealDiscardNumbers.deal; i++) {
       /*
         D1 first dealt etc
@@ -278,7 +280,7 @@ function doDealPlayerCardsAndPossiblyDiscard(
         [D1_1, D2_1, D3_1, D4_1, D1_2, D2_2 etc ] 
       */
       const dealNumber = dealPositionIndex + i * numPlayers;
-      
+
       const dealtCard = getDealtPlayerCard(
         dealPosition.playerPositions.discard,
         i,
@@ -288,7 +290,12 @@ function doDealPlayerCardsAndPossiblyDiscard(
         playerDealAnimationParameters.flipDuration,
         playerDealPositions.deck,
         dealDiscardNumbers.deal * numPlayers,
-        isLastDealtCard(dealPositionIndex,numPlayers,i,dealDiscardNumbers.deal)
+        isLastDealtCard(
+          dealPositionIndex,
+          numPlayers,
+          i,
+          dealDiscardNumbers.deal
+        )
           ? completionCallbacks.lastDealtCompleteCallback
           : undefined
       );
@@ -296,18 +303,19 @@ function doDealPlayerCardsAndPossiblyDiscard(
       if (isMe) {
         dealtCard.playingCard = match.myCards[i];
       } else if (otherPlayerDiscarded && i < dealDiscardNumbers.discard) {
-          addDiscardAnimation(
-            dealtCard,
-            playerDealPositions.boxPosition,
-            playerDealAnimationParameters.discardDuration,
-            playerDealAnimationParameters.discardDelay +
-              discardCount * playerDealAnimationParameters.discardDuration,
-            discardCount,
-            discardCount === numberOfDiscards - 1 ?
-             completionCallbacks.lastDiscardCompleteCallback : undefined
-          );
+        addDiscardAnimation(
+          dealtCard,
+          playerDealPositions.boxPosition,
+          playerDealAnimationParameters.discardDuration,
+          playerDealAnimationParameters.discardDelay +
+            discardCount * playerDealAnimationParameters.discardDuration,
+          discardCount,
+          discardCount === numberOfDiscards - 1
+            ? completionCallbacks.lastDiscardCompleteCallback
+            : undefined
+        );
 
-          discardCount++;
+        discardCount++;
       }
       cards.push(dealtCard);
     }
@@ -315,13 +323,15 @@ function doDealPlayerCardsAndPossiblyDiscard(
 }
 
 function isLastDealtCard(
-  dealPositionIndex:number,
-  numPlayers:number,
-  playerDealtCardNumber:number,
-  numCardsToDeal:number
-){
-  return dealPositionIndex === numPlayers - 1 &&
-        playerDealtCardNumber === numCardsToDeal - 1;
+  dealPositionIndex: number,
+  numPlayers: number,
+  playerDealtCardNumber: number,
+  numCardsToDeal: number
+) {
+  return (
+    dealPositionIndex === numPlayers - 1 &&
+    playerDealtCardNumber === numCardsToDeal - 1
+  );
 }
 
 function dealPlayerCardsAndPossiblyDiscard(

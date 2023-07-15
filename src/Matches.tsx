@@ -208,7 +208,7 @@ function getMatchWinDeterminantDisplay(matchWinDeterminant: string) {
 
 export function Matches(props: {
   matchDetails: MatchDetail[];
-  playMatch: (matchId:string) => void;
+  playMatch: (matchId: string) => void;
 }) {
   const rows: TableRowData<MatchesData>[] = props.matchDetails.map(
     (matchDetail) => {

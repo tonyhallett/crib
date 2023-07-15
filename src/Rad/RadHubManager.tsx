@@ -479,12 +479,12 @@ const matches: ActionMyMatch[] = [
     ],
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
-  
+
   {
-    actions:[
+    actions: [
       {
         methodName: "peg",
-        args:[
+        args: [
           "Player2",
           {
             pips: Pips.Ace,
@@ -511,20 +511,20 @@ const matches: ActionMyMatch[] = [
               // temp two in a row
               inPlayCards: [
                 {
-                  owner:"Player2",
-                  playingCard:{
+                  owner: "Player2",
+                  playingCard: {
                     pips: Pips.Ace,
                     suit: Suit.Hearts,
                   },
-                  peggingScore:{
-                    score:0,
-                    is31:false,
-                    is15:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:0
-                  }
-                }
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
               ],
               goHistory: [],
               nextPlayer: "Me",
@@ -548,12 +548,12 @@ const matches: ActionMyMatch[] = [
               },
             ],
             showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-          } as MyMatch
-        ]
+          } as MyMatch,
+        ],
       },
       {
         methodName: "peg",
-        args:[
+        args: [
           "Me",
           JackSpades,
           {
@@ -577,32 +577,32 @@ const matches: ActionMyMatch[] = [
               // temp two in a row
               inPlayCards: [
                 {
-                  owner:"Player2",
-                  playingCard:{
+                  owner: "Player2",
+                  playingCard: {
                     pips: Pips.Ace,
                     suit: Suit.Hearts,
                   },
-                  peggingScore:{
-                    score:0,
-                    is31:false,
-                    is15:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:0
-                  }
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
                 },
                 {
-                  owner:"Me",
-                  playingCard:JackSpades,
-                  peggingScore:{
-                    score:0,
-                    is31:false,
-                    is15:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:0
-                  }
-                }
+                  owner: "Me",
+                  playingCard: JackSpades,
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
               ],
               goHistory: [],
               nextPlayer: "Player2",
@@ -626,11 +626,11 @@ const matches: ActionMyMatch[] = [
               },
             ],
             showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-          } as MyMatch
-            ]
-      }  
+          } as MyMatch,
+        ],
+      },
     ],
-    currentAction:0,
+    currentAction: 0,
     id: "2 player pegging - none pegged ( no score )",
     changeHistory: {
       lastChangeDate: new Date("19 May 2023 09:00"),
