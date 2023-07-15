@@ -1,8 +1,4 @@
-import {
-  AnimationPlaybackControls,
-  AnimationScope,
-  useUnmountEffect,
-} from "framer-motion";
+import { AnimationPlaybackControls, useUnmountEffect } from "framer-motion";
 import { useRef } from "react";
 import { createScopedAnimateSegments } from "./createScopedAnimateSegments";
 

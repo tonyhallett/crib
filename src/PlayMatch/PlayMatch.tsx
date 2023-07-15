@@ -41,8 +41,9 @@ import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
-import { useMyDiscard } from "./useMyDiscard";
+import { useMyControl } from "./useMyControl";
 import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
+import { getCardValue } from "./getCardValue";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
@@ -133,6 +134,18 @@ interface CribBoardState {
   onComplete?: OnComplete;
 }
 
+const getPeggingCount = (myMatch: MyMatch): number => {
+  if (myMatch.gameState === CribGameState.Pegging) {
+    const inPlayCards = myMatch.pegging.inPlayCards;
+    let sum = 0;
+    inPlayCards.forEach((inPlayCard) => {
+      sum += getCardValue(inPlayCard.playingCard.pips);
+    });
+    return sum;
+  }
+  return 0;
+};
+
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -149,6 +162,9 @@ function PlayMatchInner({
   // todo - used for my discard behaviour - will need to fully consider setGameState
   const [gameState, setGameState] = useState<CribGameState>(
     matchDetail.match.gameState
+  );
+  const [nextPlayer, setNextPlayer] = useState<string | undefined>(
+    matchDetail.match.pegging.nextPlayer
   );
   const [cribBoardState, setCribBoardState] = useState<CribBoardState>({
     colouredScores: getColouredScores(myMatch.scores),
@@ -219,7 +235,7 @@ function PlayMatchInner({
     gameState,
   });
 
-  const [myDiscardOverlay, removeMyDiscardSelection] = useMyDiscard(
+  const [myDiscardOverlay, removeMyDiscardSelection] = useMyControl(
     <div
       {...bind()}
       style={{
@@ -233,7 +249,10 @@ function PlayMatchInner({
     getNumDiscards(myMatch),
     playMatchCribHub.discard,
     mappedFlipCardDatas,
-    gameState
+    playMatchCribHub.peg,
+    getPeggingCount(myMatch),
+    gameState,
+    nextPlayer === myMatch.myId
   );
 
   useOverflowHidden();
@@ -425,6 +444,7 @@ function PlayMatchInner({
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       peg(playerId, peggedCard, myMatch) {
+        setNextPlayer(myMatch.pegging.nextPlayer); //????????????????????????????????????
         const numCardsInState = (
           flipCards: FlipCardData[],
           state: FlipCardState

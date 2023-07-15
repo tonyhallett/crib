@@ -890,6 +890,12 @@ function useForceRender() {
   const [dummyForceRender, setDummyForceRender] = useState(0);
   return () => setDummyForceRender(dummyForceRender + 1);
 }
+
+const cardMatch = (card1: PlayingCard, card2: PlayingCard | undefined) => {
+  if (card2 === undefined) return false;
+  return card1.suit === card2.suit && card1.pips === card2.pips;
+};
+
 // eslint-disable-next-line complexity
 export function RadHubManager() {
   const subscribedRef = useRef(false);
@@ -921,13 +927,6 @@ export function RadHubManager() {
           const discard2 = args[2] as PlayingCard;
           const match = (playMatchRef.current as MatchDetail).match;
 
-          const cardMatch = (
-            card1: PlayingCard,
-            card2: PlayingCard | undefined
-          ) => {
-            if (card2 === undefined) return false;
-            return card1.suit === card2.suit && card1.pips === card2.pips;
-          };
           const newMyCards = match.myCards.filter(
             (card) => !(cardMatch(card, discard1) || cardMatch(card, discard2))
           );
@@ -950,6 +949,49 @@ export function RadHubManager() {
           RadHubConnectionInstance.fromTheServer(
             "discard",
             match.myId,
+            changedMatch
+          );
+        } else if (methodName === "Peg") {
+          const pegged = args[1] as PlayingCard;
+
+          const match = (playMatchRef.current as MatchDetail).match;
+
+          const newMyCards = match.myCards.filter(
+            (card) => !cardMatch(card, pegged)
+          );
+          const changedMatch: MyMatch = {
+            ...match,
+            myCards: newMyCards,
+            changeHistory: {
+              ...match.changeHistory,
+              lastChangeDate: new Date(),
+              numberOfActions: match.changeHistory.numberOfActions + 1,
+            },
+            pegging: {
+              ...match.pegging,
+              nextPlayer: match.otherPlayers[0].id,
+              inPlayCards: [
+                ...match.pegging.inPlayCards,
+                {
+                  owner: match.myId,
+                  playingCard: pegged,
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
+              ],
+            },
+          };
+
+          RadHubConnectionInstance.fromTheServer(
+            "peg",
+            match.myId,
+            pegged,
             changedMatch
           );
         }

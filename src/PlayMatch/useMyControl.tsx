@@ -9,11 +9,16 @@ import { CribGameState, Pips, PlayingCard, Suit } from "../generatedTypes";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { SequenceTime } from "../FlipCard/motion-types";
-import { SmartSegment } from "../fixAnimationSequence/createAnimationsFromSegments";
+import {
+  SegmentsAnimationOptions,
+  SmartAnimationSequence,
+  SmartSegment,
+} from "../fixAnimationSequence/createAnimationsFromSegments";
 import { FlipCardData, FlipCardState } from "./PlayMatch";
 import { inBounds } from "./inBounds";
 import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
 import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
+import { getCardValue } from "./getCardValue";
 
 export const myDiscardFlipCardSelector = "[id^=flipCard_]";
 export function findMyDiscardFlipCards(scope: HTMLDivElement) {
@@ -228,17 +233,21 @@ function getMyDiscardSelectionAnimationSegmentByClassName(
   const className = classNameFromPlayingCard(flipCardData.playingCard);
   return [`.${className}`, { opacity: selected ? 0.5 : 1 }, { at: at }];
 }
-export function useMyDiscard(
-  children: ReactNode,
+
+type Animate = (
+  sequence: SmartAnimationSequence,
+  options?: SegmentsAnimationOptions
+) => void;
+
+const useMyDiscard = (
+  animate: Animate,
   numDiscards: number,
+  flipCardDatas: FlipCardData[],
   discard: (
     playingCard1: PlayingCard,
     playingCard2: PlayingCard | undefined
-  ) => unknown,
-  flipCardDatas: FlipCardData[],
-  gameState: CribGameState
-): [JSX.Element, () => void] {
-  const [scope, animate] = useAnimateSegments();
+  ) => unknown
+): [JSX.Element, MouseEventHandler, () => void] => {
   const [showDialog, setShowDialog] = useState(false);
   const [discarded, setDiscarded] = useState(false);
   const handleClose = useCallback(() => {
@@ -330,40 +339,105 @@ export function useMyDiscard(
     [discarded, flipCardDatas, handle]
   );
 
-  const clickHandler =
-    gameState === CribGameState.Discard
-      ? discardStateClickHandler
-      : () => {
-          // do nothing
-        };
+  return [
+    // eslint-disable-next-line react/jsx-key
+    <Dialog open={showDialog} onClose={handleClose}>
+      <DialogTitle>{getDiscardDialogTitle(numDiscards)}</DialogTitle>
+      <DialogActions>
+        <Button onClick={handleClose}>Disagree</Button>
+        <Button
+          onClick={() => {
+            setDiscarded(true);
+            const playingCard1 = selectedFlipCardsRef.current[0]
+              .playingCard as PlayingCard;
+            const selected2 = selectedFlipCardsRef.current[1];
+            const playingCard2 =
+              selected2 !== undefined
+                ? (selected2.playingCard as PlayingCard)
+                : undefined;
+            discard(playingCard1, playingCard2);
+            handleClose();
+            // might animate further to show sending to the server
+          }}
+          autoFocus
+        >
+          Agree
+        </Button>
+      </DialogActions>
+    </Dialog>,
+    discardStateClickHandler,
+    removeMyDiscardSelection,
+  ];
+};
+
+const useMyPegging = (
+  flipCardDatas: FlipCardData[],
+  peg: (playingCard: PlayingCard) => unknown,
+  pegCount: number
+) => {
+  const pegClickHandler = useCallback<MouseEventHandler>(
+    (event) => {
+      const myHandCards = getCardsUnderPointWithState(
+        flipCardDatas,
+        event.clientX,
+        event.clientY,
+        FlipCardState.MyHand
+      );
+      if (myHandCards.length === 1) {
+        const playingCard = myHandCards[0].playingCard as PlayingCard;
+        const cardValue = getCardValue(playingCard.pips);
+        if (pegCount + cardValue <= 31) {
+          peg(playingCard);
+        }
+      }
+    },
+    [flipCardDatas, peg, pegCount]
+  );
+  return pegClickHandler;
+};
+
+export function useMyControl(
+  children: ReactNode,
+  numDiscards: number,
+  discard: (
+    playingCard1: PlayingCard,
+    playingCard2: PlayingCard | undefined
+  ) => unknown,
+  flipCardDatas: FlipCardData[],
+  peg: (playingCard: PlayingCard) => unknown,
+  pegCount: number,
+  gameState: CribGameState,
+  meNext: boolean
+): [JSX.Element, () => void] {
+  const [scope, animate] = useAnimateSegments();
+  const [dialog, discardClickHandler, removeMyDiscardSelection] = useMyDiscard(
+    animate,
+    numDiscards,
+    flipCardDatas,
+    discard
+  );
+  const pegClickHandler = useMyPegging(flipCardDatas, peg, pegCount);
+
+  let clickHandler: MouseEventHandler = () => {
+    //
+  };
+  let element: JSX.Element | undefined;
+  switch (gameState) {
+    case CribGameState.Discard:
+      clickHandler = discardClickHandler;
+      element = dialog;
+      break;
+    case CribGameState.Pegging:
+      if (meNext) {
+        clickHandler = pegClickHandler;
+      }
+      break;
+  }
 
   return [
     // eslint-disable-next-line react/jsx-key
     <div ref={scope} onClick={clickHandler}>
-      <Dialog open={showDialog} onClose={handleClose}>
-        <DialogTitle>{getDiscardDialogTitle(numDiscards)}</DialogTitle>
-        <DialogActions>
-          <Button onClick={handleClose}>Disagree</Button>
-          <Button
-            onClick={() => {
-              setDiscarded(true);
-              const playingCard1 = selectedFlipCardsRef.current[0]
-                .playingCard as PlayingCard;
-              const selected2 = selectedFlipCardsRef.current[1];
-              const playingCard2 =
-                selected2 !== undefined
-                  ? (selected2.playingCard as PlayingCard)
-                  : undefined;
-              discard(playingCard1, playingCard2);
-              handleClose();
-              // might animate further to show sending to the server
-            }}
-            autoFocus
-          >
-            Agree
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {element}
       {children}
     </div>,
     removeMyDiscardSelection,
