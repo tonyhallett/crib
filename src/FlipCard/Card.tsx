@@ -58,7 +58,7 @@ export function Card(props: CardProps) {
         style={{
           width: props.size.width,
           height: props.size.height,
-          mixBlendMode: "multiply",
+          mixBlendMode: "multiply", // facilitates ( with ascendant background-color inherit) backgroundColor animation
         }}
       />
     </motion.div>

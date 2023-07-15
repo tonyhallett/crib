@@ -210,7 +210,6 @@ function FlipCardInner(props: FlipCardProps) {
         zIndex: props.zIndex,
         width: props.size.width,
         height: props.size.height,
-        
       }}
       initial={{
         x: props.position.x,

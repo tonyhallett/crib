@@ -357,8 +357,7 @@ const useMyDiscard = (
   );
 
   return [
-    // eslint-disable-next-line react/jsx-key
-    <Dialog open={showDialog} onClose={handleClose}>
+    <Dialog key="discardDialog" open={showDialog} onClose={handleClose}>
       <DialogTitle>{getDiscardDialogTitle(numDiscards)}</DialogTitle>
       <DialogActions>
         <Button onClick={handleClose}>Disagree</Button>
@@ -387,6 +386,19 @@ const useMyDiscard = (
   ];
 };
 
+const getBlurMyCardSegment = (playingCard:PlayingCard,amount:number,duration:number) => {
+  return getAnimatePlayingCardSegment(
+    playingCard,
+    {filter:`blur(${amount}px)`},
+    {
+      duration,
+      transitionEnd:{
+        filter:"none"
+      },
+    }
+  )
+}
+
 const useMyPegging = (
   animate: Animate,
   flipCardDatas: FlipCardData[],
@@ -410,63 +422,22 @@ const useMyPegging = (
       if (myHandCards.length === 1) {
         const playingCard = myHandCards[0].playingCard as PlayingCard;
         const cardValue = getCardValue(playingCard.pips);
-        //if (pegCount + cardValue <= 31) {
-        if (false) {
+        if (pegCount + cardValue <= 31) {
           selectedPlayingCard.current = playingCard;
           setShowDialog(true);
         }else{
-          enqueueSnackbar(`Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`, { variant: "error",
-        });
-          animate([
-            getAnimatePlayingCardSegment(
-              playingCard,
-              {filter:"blur(1px)"},
-              {
-                duration:2,
-                transitionEnd:{
-                  filter:"none"
-                },
-              }
-            )
-          ]);
-
-          // works except no longer have rounded corners
-          /* animate([
-            getAnimatePlayingCardSegment(
-              playingCard,
-              
-              {backgroundColor:"#cc0000"},
-              {
-                duration:2,
-                transitionEnd:{
-                  backgroundColor:"rgba(255, 255, 255, 0) "
-                },
-              }
-            )
-          ]); */
-          /* animate([
-            getAnimatePlayingCardSegment(
-              playingCard,
-              {
-                webkitMaskImage:"radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 100%)",
-                // repeating does not appear to work https://developer.mozilla.org/en-US/docs/Web/CSS/gradient
-              },
-              {
-                duration:2,
-                transitionEnd:{
-                  webkitMaskImage:"none"
-                } as any,
-              }
-            )
-          ]); */
+          enqueueSnackbar(
+            `Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`, 
+            { variant: "error"}
+          );
+          animate([getBlurMyCardSegment(playingCard,1,2 )]);
         }
       }
     },
-    [animate, flipCardDatas, pegCount]
+    [animate, enqueueSnackbar, flipCardDatas, pegCount]
   );
   return [
-    // eslint-disable-next-line react/jsx-key
-    <Dialog open={showDialog} onClose={handleClose}>
+    <Dialog key="peggingDialog" open={showDialog} onClose={handleClose}>
       <DialogTitle>Peg ?</DialogTitle>
       <DialogActions>
         <Button onClick={handleClose}>Disagree</Button>
