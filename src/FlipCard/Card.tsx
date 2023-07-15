@@ -25,7 +25,7 @@ function getAnimateCardStyle(props: CardProps) {
 
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
-
+    backgroundColor:"inherit",
     scale,
   };
   return style;
@@ -58,6 +58,7 @@ export function Card(props: CardProps) {
         style={{
           width: props.size.width,
           height: props.size.height,
+          mixBlendMode: "multiply",
         }}
       />
     </motion.div>

@@ -10,8 +10,10 @@ import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { SequenceTime } from "../FlipCard/motion-types";
 import {
+  SegmentAnimationOptionsWithTransitionEndAndAt,
   SegmentsAnimationOptions,
   SmartAnimationSequence,
+  SmartDomSegmentWithTransition,
   SmartSegment,
 } from "../fixAnimationSequence/createAnimationsFromSegments";
 import { FlipCardData, FlipCardState } from "./PlayMatch";
@@ -19,6 +21,8 @@ import { inBounds } from "./inBounds";
 import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
 import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
 import { getCardValue } from "./getCardValue";
+import { DOMKeyframesDefinition } from "framer-motion";
+import { useSnackbar } from "notistack";
 
 export const myDiscardFlipCardSelector = "[id^=flipCard_]";
 export function findMyDiscardFlipCards(scope: HTMLDivElement) {
@@ -225,13 +229,26 @@ export function useMyDiscardElements(
   ];
 }
 
+function getAnimatePlayingCardSegment(
+  playingCard:PlayingCard, 
+  domKeyFramesDefinition: DOMKeyframesDefinition, 
+  options:SegmentAnimationOptionsWithTransitionEndAndAt
+):SmartDomSegmentWithTransition{
+  const className = classNameFromPlayingCard(playingCard);
+  return [`.${className}`,domKeyFramesDefinition,options];
+}
+
 function getMyDiscardSelectionAnimationSegmentByClassName(
   flipCardData: FlipCardData,
   selected: boolean,
   at: SequenceTime = 0
 ): SmartSegment {
-  const className = classNameFromPlayingCard(flipCardData.playingCard);
-  return [`.${className}`, { opacity: selected ? 0.5 : 1 }, { at: at }];
+  return getAnimatePlayingCardSegment(
+    flipCardData.playingCard as PlayingCard,
+    { opacity: selected ? 0.5 : 1 }, 
+    { at: at }
+  );
+  
 }
 
 type Animate = (
@@ -371,10 +388,17 @@ const useMyDiscard = (
 };
 
 const useMyPegging = (
+  animate: Animate,
   flipCardDatas: FlipCardData[],
   peg: (playingCard: PlayingCard) => unknown,
   pegCount: number
-) => {
+): [JSX.Element, MouseEventHandler ] => {
+  const selectedPlayingCard = useRef<PlayingCard | undefined>(undefined);
+  const [showDialog, setShowDialog] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const handleClose = useCallback(() => {
+    setShowDialog(false);
+  },[]);
   const pegClickHandler = useCallback<MouseEventHandler>(
     (event) => {
       const myHandCards = getCardsUnderPointWithState(
@@ -386,14 +410,78 @@ const useMyPegging = (
       if (myHandCards.length === 1) {
         const playingCard = myHandCards[0].playingCard as PlayingCard;
         const cardValue = getCardValue(playingCard.pips);
-        if (pegCount + cardValue <= 31) {
-          peg(playingCard);
+        //if (pegCount + cardValue <= 31) {
+        if (false) {
+          selectedPlayingCard.current = playingCard;
+          setShowDialog(true);
+        }else{
+          enqueueSnackbar(`Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`, { variant: "error",
+        });
+          animate([
+            getAnimatePlayingCardSegment(
+              playingCard,
+              {filter:"blur(1px)"},
+              {
+                duration:2,
+                transitionEnd:{
+                  filter:"none"
+                },
+              }
+            )
+          ]);
+
+          // works except no longer have rounded corners
+          /* animate([
+            getAnimatePlayingCardSegment(
+              playingCard,
+              
+              {backgroundColor:"#cc0000"},
+              {
+                duration:2,
+                transitionEnd:{
+                  backgroundColor:"rgba(255, 255, 255, 0) "
+                },
+              }
+            )
+          ]); */
+          /* animate([
+            getAnimatePlayingCardSegment(
+              playingCard,
+              {
+                webkitMaskImage:"radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,1) 100%)",
+                // repeating does not appear to work https://developer.mozilla.org/en-US/docs/Web/CSS/gradient
+              },
+              {
+                duration:2,
+                transitionEnd:{
+                  webkitMaskImage:"none"
+                } as any,
+              }
+            )
+          ]); */
         }
       }
     },
-    [flipCardDatas, peg, pegCount]
+    [animate, flipCardDatas, pegCount]
   );
-  return pegClickHandler;
+  return [
+    // eslint-disable-next-line react/jsx-key
+    <Dialog open={showDialog} onClose={handleClose}>
+      <DialogTitle>Peg ?</DialogTitle>
+      <DialogActions>
+        <Button onClick={handleClose}>Disagree</Button>
+        <Button
+          onClick={() => {
+            peg(selectedPlayingCard.current as PlayingCard);
+          }}
+          autoFocus
+        >
+          Agree
+        </Button>
+      </DialogActions>
+    </Dialog>,
+    pegClickHandler
+  ];
 };
 
 export function useMyControl(
@@ -410,13 +498,13 @@ export function useMyControl(
   meNext: boolean
 ): [JSX.Element, () => void] {
   const [scope, animate] = useAnimateSegments();
-  const [dialog, discardClickHandler, removeMyDiscardSelection] = useMyDiscard(
+  const [discardDialog, discardClickHandler, removeMyDiscardSelection] = useMyDiscard(
     animate,
     numDiscards,
     flipCardDatas,
     discard
   );
-  const pegClickHandler = useMyPegging(flipCardDatas, peg, pegCount);
+  const [peggingDialog,pegClickHandler] = useMyPegging(animate,flipCardDatas, peg, pegCount);
 
   let clickHandler: MouseEventHandler = () => {
     //
@@ -425,11 +513,12 @@ export function useMyControl(
   switch (gameState) {
     case CribGameState.Discard:
       clickHandler = discardClickHandler;
-      element = dialog;
+      element = discardDialog;
       break;
     case CribGameState.Pegging:
       if (meNext) {
         clickHandler = pegClickHandler;
+        element = peggingDialog;
       }
       break;
   }

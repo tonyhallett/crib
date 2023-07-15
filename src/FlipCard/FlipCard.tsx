@@ -210,7 +210,7 @@ function FlipCardInner(props: FlipCardProps) {
         zIndex: props.zIndex,
         width: props.size.width,
         height: props.size.height,
-        filter: applyDropShadow ? "drop-shadow(-2px 2px 5px #000)" : undefined,
+        
       }}
       initial={{
         x: props.position.x,
@@ -219,22 +219,24 @@ function FlipCardInner(props: FlipCardProps) {
         rotate: `${rotation}deg`,
       }}
     >
-      <Card
-        {...common}
-        cardFlip={CardFlip.BelowCard}
-        faceDown={props.startFaceUp}
-        playingCard={props.startFaceUp ? undefined : props.playingCard}
-        size={props.size}
-        className={belowCardClassName}
-      />
-      <Card
-        {...common}
-        cardFlip={CardFlip.AboveCard}
-        faceDown={!props.startFaceUp}
-        playingCard={props.startFaceUp ? props.playingCard : undefined}
-        size={props.size}
-        className={aboveCardClassName}
-      />
+      <div style={{backgroundColor:"inherit",filter: applyDropShadow ? "drop-shadow(-2px 2px 5px #000)" : undefined}}>
+        <Card
+          {...common}
+          cardFlip={CardFlip.BelowCard}
+          faceDown={props.startFaceUp}
+          playingCard={props.startFaceUp ? undefined : props.playingCard}
+          size={props.size}
+          className={belowCardClassName}
+        />
+        <Card
+          {...common}
+          cardFlip={CardFlip.AboveCard}
+          faceDown={!props.startFaceUp}
+          playingCard={props.startFaceUp ? props.playingCard : undefined}
+          size={props.size}
+          className={aboveCardClassName}
+        />
+      </div>
     </motion.div>
   );
 }
