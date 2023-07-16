@@ -108,14 +108,13 @@ function getMyPeggingCardDatas(
 ): FlipCardData[] {
   const cardDatas = getMyHandCardDatas(discardPositions, match.myCards);
 
-  // ging to have to think about card order....
   if (match.myCards.length < 4) {
     match.pegging.inPlayCards.forEach((inPlayCard, i) => {
       if (inPlayCard.owner === match.myId) {
         const inPlayCardData: FlipCardData = {
           startFaceUp: true,
           playingCard: inPlayCard.playingCard,
-          position: peggingPositions.inPlay[i], // going to need zIndex ?!
+          position: peggingPositions.inPlay[i],
           isHorizontal: false,
           zIndex: i,
           state: FlipCardState.PeggingInPlay,
