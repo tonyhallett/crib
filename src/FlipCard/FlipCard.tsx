@@ -202,6 +202,7 @@ function FlipCardInner(props: FlipCardProps) {
   const className = applyClass
     ? classNameFromPlayingCard(props.playingCard)
     : undefined;
+  
   return (
     <motion.div
       ref={scope}

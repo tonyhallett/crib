@@ -16,19 +16,20 @@ import { motion } from "framer-motion";
 import { cribStorage } from "./getRad";
 import { LocalMatch } from "../LocalMatch";
 import {
+  AceHearts,
   AceSpades,
-  EightSpades,
-  FiveSpades,
-  FourSpades,
+  TwoDiamonds,
+  AceClubs,
   JackSpades,
   KingSpades,
-  NineSpades,
-  QueenSpades,
-  SevenSpades,
-  SixSpades,
-  TenSpades,
   ThreeSpades,
+  QueenSpades,
+  TwoHearts,
+  TwoClubs,
+  ThreeDiamonds,
+  AceDiamonds,
   TwoSpades,
+  ThreeHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -39,6 +40,7 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
+import { useForceRender } from "../hooks/useForceRender";
 
 interface MyMatchAction {
   methodName: string;
@@ -72,8 +74,8 @@ const matches: ActionMyMatch[] = [
               QueenSpades,
               KingSpades,
               JackSpades,
-              FourSpades,
-              ThreeSpades,
+              AceClubs,
+              AceDiamonds,
             ],
             cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
             scores: [
@@ -125,8 +127,8 @@ const matches: ActionMyMatch[] = [
       QueenSpades,
       KingSpades,
       JackSpades,
-      FourSpades,
-      ThreeSpades,
+      AceClubs,
+      AceDiamonds,
     ],
     cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
     scores: [
@@ -722,9 +724,130 @@ const matches: ActionMyMatch[] = [
     ],
   }, */
   {
-    actions: [],
+    actions: [
+      {
+        methodName:"peg",
+        args: [
+          "Player2",
+          ThreeHearts,
+          {
+            id: "3 player pegging",
+            changeHistory: {
+              lastChangeDate: new Date("19 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 15,
+            },
+            title: "3 player pegging",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              //{ games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 18, backPeg: 12 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [
+                {
+                  owner: "Me",
+                  playingCard: AceSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: AceDiamonds,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: AceClubs,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: TwoClubs,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: TwoHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoDiamonds,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: ThreeSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: ThreeDiamonds,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: ThreeHearts,
+                  peggingScore: {
+                    score:6,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 3,
+                  }
+                },
+              ],
+              goHistory: [],
+              nextPlayer: "Me",
+              cannotGoes: [false, false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          }
+        ]
+      }
+    ],
     currentAction: 0,
-    id: "5",
+    id: "3 player pegging",
     changeHistory: {
       lastChangeDate: new Date("19 May 2023 09:00"),
       matchCreationDate: new Date("20 December 2022 14:48"),
@@ -750,7 +873,37 @@ const matches: ActionMyMatch[] = [
         },
         {
           owner: "Player2",
+          playingCard: AceHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: AceDiamonds,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: AceClubs,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
           playingCard: TwoSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: TwoClubs,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: TwoHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: TwoDiamonds,
           peggingScore: null as unknown as PegScoring,
         },
         {
@@ -760,45 +913,9 @@ const matches: ActionMyMatch[] = [
         },
         {
           owner: "Me",
-          playingCard: FourSpades,
+          playingCard: ThreeDiamonds,
           peggingScore: null as unknown as PegScoring,
         },
-        {
-          owner: "Player2",
-          playingCard: FiveSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Player3",
-          playingCard: SixSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Me",
-          playingCard: SevenSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Player2",
-          playingCard: EightSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Player3",
-          playingCard: NineSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Me",
-          playingCard: TenSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        {
-          owner: "Player2",
-          playingCard: JackSpades,
-          peggingScore: null as unknown as PegScoring,
-        },
-        //{ owner: "Player3", playingCard: JackSpades },
       ],
       goHistory: [],
       nextPlayer: "Player2",
@@ -885,11 +1002,6 @@ const matches: ActionMyMatch[] = [
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   }, */
 ];
-
-function useForceRender() {
-  const [dummyForceRender, setDummyForceRender] = useState(0);
-  return () => setDummyForceRender(dummyForceRender + 1);
-}
 
 const cardMatch = (card1: PlayingCard, card2: PlayingCard | undefined) => {
   if (card2 === undefined) return false;
@@ -987,7 +1099,6 @@ export function RadHubManager() {
               ],
             },
           };
-
           RadHubConnectionInstance.fromTheServer(
             "peg",
             match.myId,

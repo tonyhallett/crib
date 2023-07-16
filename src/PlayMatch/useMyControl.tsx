@@ -16,13 +16,14 @@ import {
   SmartDomSegmentWithTransition,
   SmartSegment,
 } from "../fixAnimationSequence/createAnimationsFromSegments";
-import { FlipCardData, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
 import { inBounds } from "./inBounds";
-import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
+import { getCardsUnderPoint, getCardsUnderPointWithState } from "./getCardsUnderPoint";
 import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
 import { getCardValue } from "./getCardValue";
 import { DOMKeyframesDefinition } from "framer-motion";
 import { useSnackbar } from "notistack";
+import { noop } from "./noop";
 
 export const myDiscardFlipCardSelector = "[id^=flipCard_]";
 export function findMyDiscardFlipCards(scope: HTMLDivElement) {
@@ -259,7 +260,7 @@ type Animate = (
 const useMyDiscard = (
   animate: Animate,
   numDiscards: number,
-  flipCardDatas: FlipCardData[],
+  flipCardDatas: FlipCardDatas | undefined,
   discard: (
     playingCard1: PlayingCard,
     playingCard2: PlayingCard | undefined
@@ -293,13 +294,13 @@ const useMyDiscard = (
   };
 
   const selectedFlipCardsRef = useRef<FlipCardData[]>([]);
-  const removeMyDiscardSelection = () => {
+  const removeMyDiscardSelection = useCallback(() => {
     selectedFlipCardsRef.current.forEach((flipCardData) => {
       animate([
         getMyDiscardSelectionAnimationSegmentByClassName(flipCardData, false),
       ]);
     });
-  };
+  },[animate]);
 
   const doSelectDeselect = useCallback(
     (flipCardData: FlipCardData) => {
@@ -341,21 +342,23 @@ const useMyDiscard = (
 
   const discardStateClickHandler = useCallback<MouseEventHandler>(
     (event) => {
-      if (!discarded) {
-        const myHandCards = getCardsUnderPointWithState(
-          flipCardDatas,
+      const myCards = (flipCardDatas as FlipCardDatas).myCards;
+      const myHandCards = myCards.filter((flipCardData) => flipCardData.state === FlipCardState.MyHand);
+      const alreadyDiscarded = myHandCards.length <= 4;
+      if (!discarded && !alreadyDiscarded) {
+        const cardsUnderPoint = getCardsUnderPoint(
+          myHandCards,
           event.clientX,
           event.clientY,
-          FlipCardState.MyHand
         );
-        if (myHandCards.length === 1) {
-          handle(myHandCards[0]);
+        if (cardsUnderPoint.length === 1) {
+          handle(cardsUnderPoint[0]);
         }
       }
     },
     [discarded, flipCardDatas, handle]
   );
-
+  
   return [
     <Dialog key="discardDialog" open={showDialog} onClose={handleClose}>
       <DialogTitle>{getDiscardDialogTitle(numDiscards)}</DialogTitle>
@@ -381,7 +384,7 @@ const useMyDiscard = (
         </Button>
       </DialogActions>
     </Dialog>,
-    discardStateClickHandler,
+    flipCardDatas === undefined ? noop : discardStateClickHandler,
     removeMyDiscardSelection,
   ];
 };
@@ -401,11 +404,14 @@ const getBlurMyCardSegment = (playingCard:PlayingCard,amount:number,duration:num
 
 const useMyPegging = (
   animate: Animate,
-  flipCardDatas: FlipCardData[],
+  flipCardDatas: FlipCardDatas| undefined,
   peg: (playingCard: PlayingCard) => unknown,
   pegCount: number
-): [JSX.Element, MouseEventHandler ] => {
+): [JSX.Element, MouseEventHandler,() => void ] => {
   const selectedPlayingCard = useRef<PlayingCard | undefined>(undefined);
+  const allowPegging = useCallback(() => {
+    selectedPlayingCard.current = undefined;
+  },[]);
   const [showDialog, setShowDialog] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const handleClose = useCallback(() => {
@@ -413,24 +419,26 @@ const useMyPegging = (
   },[]);
   const pegClickHandler = useCallback<MouseEventHandler>(
     (event) => {
-      const myHandCards = getCardsUnderPointWithState(
-        flipCardDatas,
-        event.clientX,
-        event.clientY,
-        FlipCardState.MyHand
-      );
-      if (myHandCards.length === 1) {
-        const playingCard = myHandCards[0].playingCard as PlayingCard;
-        const cardValue = getCardValue(playingCard.pips);
-        if (pegCount + cardValue <= 31) {
-          selectedPlayingCard.current = playingCard;
-          setShowDialog(true);
-        }else{
-          enqueueSnackbar(
-            `Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`, 
-            { variant: "error"}
-          );
-          animate([getBlurMyCardSegment(playingCard,1,2 )]);
+      if(selectedPlayingCard.current === undefined){
+        const myHandCards = getCardsUnderPointWithState(
+          (flipCardDatas as FlipCardDatas).myCards,
+          event.clientX,
+          event.clientY,
+          FlipCardState.MyHand
+        );
+        if (myHandCards.length === 1) {
+          const playingCard = myHandCards[0].playingCard as PlayingCard;
+          const cardValue = getCardValue(playingCard.pips);
+          if (pegCount + cardValue <= 31) {
+            selectedPlayingCard.current = playingCard;
+            setShowDialog(true);
+          }else{
+            enqueueSnackbar(
+              `Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`, 
+              { variant: "error"}
+            );
+            animate([getBlurMyCardSegment(playingCard,1,2 )]);
+          }
         }
       }
     },
@@ -440,10 +448,14 @@ const useMyPegging = (
     <Dialog key="peggingDialog" open={showDialog} onClose={handleClose}>
       <DialogTitle>Peg ?</DialogTitle>
       <DialogActions>
-        <Button onClick={handleClose}>Disagree</Button>
+        <Button onClick={() => {
+          selectedPlayingCard.current = undefined;
+          handleClose();
+        }}>Disagree</Button>
         <Button
           onClick={() => {
             peg(selectedPlayingCard.current as PlayingCard);
+            handleClose();
           }}
           autoFocus
         >
@@ -451,7 +463,8 @@ const useMyPegging = (
         </Button>
       </DialogActions>
     </Dialog>,
-    pegClickHandler
+    flipCardDatas === undefined ? noop : pegClickHandler,
+    allowPegging
   ];
 };
 
@@ -462,12 +475,12 @@ export function useMyControl(
     playingCard1: PlayingCard,
     playingCard2: PlayingCard | undefined
   ) => unknown,
-  flipCardDatas: FlipCardData[],
+  flipCardDatas: FlipCardDatas | undefined,
   peg: (playingCard: PlayingCard) => unknown,
   pegCount: number,
   gameState: CribGameState,
   meNext: boolean
-): [JSX.Element, () => void] {
+): [JSX.Element, () => void,() => void] {
   const [scope, animate] = useAnimateSegments();
   const [discardDialog, discardClickHandler, removeMyDiscardSelection] = useMyDiscard(
     animate,
@@ -475,7 +488,7 @@ export function useMyControl(
     flipCardDatas,
     discard
   );
-  const [peggingDialog,pegClickHandler] = useMyPegging(animate,flipCardDatas, peg, pegCount);
+  const [peggingDialog,pegClickHandler,allowPegging] = useMyPegging(animate,flipCardDatas, peg, pegCount);
 
   let clickHandler: MouseEventHandler = () => {
     //
@@ -501,5 +514,6 @@ export function useMyControl(
       {children}
     </div>,
     removeMyDiscardSelection,
+    allowPegging
   ];
 }

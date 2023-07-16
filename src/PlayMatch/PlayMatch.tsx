@@ -12,6 +12,8 @@ import {
   CribGameState,
   CribHub,
   MyMatch,
+  PegScoring,
+  PeggedCard,
   Pips,
   PlayingCard,
   Score,
@@ -44,6 +46,7 @@ import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyControl } from "./useMyControl";
 import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
 import { getCardValue } from "./getCardValue";
+import { useSnackbar } from "notistack";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
@@ -146,6 +149,59 @@ const getPeggingCount = (myMatch: MyMatch): number => {
   return 0;
 };
 
+const getAppendMessage = () => {
+  let message = "";
+  const apppendMessage = (messageToAppend: string) => {
+    if(message.length > 0){
+      //lowercase the first letter
+      messageToAppend = messageToAppend[0].toLowerCase() + messageToAppend.slice(1);
+      messageToAppend = `, ${messageToAppend}`;
+    }
+    message += messageToAppend;
+  }
+  return [apppendMessage,() => message] as const;
+}
+
+const getOfAKindScore = (numOfAKind:number) => {
+  let ofAKindScore = 0
+  switch(numOfAKind){
+    case 2:
+      ofAKindScore = 2;
+      break;
+    case 3:
+      ofAKindScore = 6;
+      break;
+    case 4:
+      ofAKindScore = 12;
+      break;
+  }
+  return ofAKindScore;
+}
+
+const append15Or31 = (pegScoring: PegScoring,appendMessage:(messageToAppend:string) => void) => {
+  if(pegScoring.is15){
+    appendMessage("15 for 2");
+  } else  if(pegScoring.is31){
+    appendMessage("31 for 2");
+  }
+}
+
+const getPeggedScoreMessage = (pegScoring: PegScoring,pips:Pips): string => {
+  const [appendMessage, getMessage] = getAppendMessage();
+  append15Or31(pegScoring,appendMessage)
+  if(pegScoring.numOfAKind >= 2){
+    const ofAKindScore = getOfAKindScore(pegScoring.numOfAKind)
+    appendMessage(`${pegScoring.numOfAKind}x${pips} for ${ofAKindScore}`);
+  } else if(pegScoring.numCardsInRun >= 3){
+    // could generate Ace, Two, Three....
+    appendMessage(`Run of ${pegScoring.numCardsInRun} for ${pegScoring.numCardsInRun}`);
+  }
+  if(pegScoring.isLastGo){
+    appendMessage("One for Go");
+  }
+  return getMessage();
+}
+
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -155,6 +211,7 @@ function PlayMatchInner({
   hasRenderedAMatch,
 }: PlayMatchProps) {
   const myMatch = matchDetail.match;
+  const { enqueueSnackbar } = useSnackbar();
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
@@ -235,7 +292,7 @@ function PlayMatchInner({
     gameState,
   });
 
-  const [myDiscardOverlay, removeMyDiscardSelection] = useMyControl(
+  const [myDiscardOverlay, removeMyDiscardSelection, allowPegging] = useMyControl(
     <div
       {...bind()}
       style={{
@@ -248,7 +305,7 @@ function PlayMatchInner({
     </div>,
     getNumDiscards(myMatch),
     playMatchCribHub.discard,
-    mappedFlipCardDatas,
+    cardDatas,
     playMatchCribHub.peg,
     getPeggingCount(myMatch),
     gameState,
@@ -443,7 +500,8 @@ function PlayMatchInner({
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      peg(playerId, peggedCard, myMatch) {
+      peg(playerId, peggedPlayingCard, myMatch) {
+        allowPegging();
         setNextPlayer(myMatch.pegging.nextPlayer); //????????????????????????????????????
         const numCardsInState = (
           flipCards: FlipCardData[],
@@ -456,7 +514,7 @@ function PlayMatchInner({
           return numCardsInState(flipCards, FlipCardState.PeggingInPlay);
         };
 
-        const getPeggedCardPosition = (
+        const getPeggedCardPositionIndex = (
           prevFlipCardDatas: FlipCardDatas
         ): number => {
           return (
@@ -464,13 +522,19 @@ function PlayMatchInner({
             numPeggingInPlayCards(prevFlipCardDatas.otherPlayersCards.flat())
           );
         };
+        let peggedCard:PeggedCard;
+        if(myMatch.pegging.inPlayCards.length === 0){
+          peggedCard = myMatch.pegging.turnedOverCards[myMatch.pegging.turnedOverCards.length - 1]
+        }else{
+          peggedCard = myMatch.pegging.inPlayCards[myMatch.pegging.inPlayCards.length - 1]
+        }
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
             prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
 
             const isMe = myMatch.myId === playerId;
             const newFlipCardDatas = { ...prevFlipCardDatas };
-            const peggedCardPosition = getPeggedCardPosition(prevFlipCardDatas);
+            const peggedCardPosition = getPeggedCardPositionIndex(prevFlipCardDatas);
             const peggingPosition =
               positions.peggingPositions.inPlay[peggedCardPosition];
 
@@ -485,6 +549,24 @@ function PlayMatchInner({
                     undefined,
                     undefined,
                     () => {
+                      const peggingScore = peggedCard.peggingScore;
+                      if (peggingScore.score > 0) {
+                        enqueueSnackbar(getPeggedScoreMessage(peggingScore,peggedCard.playingCard.pips), {
+                          variant: "success",
+                        });
+                        if(myMatch.gameState === CribGameState.GameWon || myMatch.gameState === CribGameState.MatchWon){
+                            // todo - pegs are reset so need to determine score
+                        }else {
+                          /*
+                            
+                          */
+                          setCribBoardState(
+                            {
+                              colouredScores: getColouredScores(myMatch.scores),
+                            }
+                          );
+                        }
+                      }
                       // todo updating local state and refactor
                       animationCompleteCallback();
                     }
@@ -499,8 +581,8 @@ function PlayMatchInner({
                   const playingCard = prevCardData.playingCard as PlayingCard;
                   if (
                     playingCard &&
-                    playingCard.pips === peggedCard.pips &&
-                    playingCard.suit === peggedCard.suit
+                    playingCard.pips === peggedPlayingCard.pips &&
+                    playingCard.suit === peggedPlayingCard.suit
                   ) {
                     const newCardData = {
                       ...prevCardData,
@@ -532,7 +614,7 @@ function PlayMatchInner({
                     done = true;
                     const newCardData = { ...prevCardData };
                     newCardData.state = FlipCardState.PeggingInPlay;
-                    newCardData.playingCard = peggedCard;
+                    newCardData.playingCard = peggedPlayingCard;
                     const animationSequence =
                       getMoveToPeggingPositionAnimationSequence();
                     animationSequence.unshift({
@@ -568,13 +650,7 @@ function PlayMatchInner({
         //
       },
     });
-  }, [
-    signalRRegistration,
-    matchDetail,
-    positions,
-    updateLocalMatch,
-    removeMyDiscardSelection,
-  ]);
+  }, [signalRRegistration, matchDetail, positions, updateLocalMatch, removeMyDiscardSelection, enqueueSnackbar, allowPegging]);
 
   /* eslint-disable complexity */
   useEffect(() => {
