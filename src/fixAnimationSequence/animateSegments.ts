@@ -42,7 +42,7 @@ export function animateSegments(
       } else {
         // ************************ error in their code
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const animation = animateElements(subject as any, def.keyframes, {
+        const animation = animateElements(subject as Element, def.keyframes, {
           ...def.transition,
           transitionEnd: def.transitionEnd,
         });

@@ -62,6 +62,7 @@ import { keyframesAsList } from "./keyframesAsList";
 import { secondsToMilliseconds } from "./secondsToMilliseconds";
 import { isNumberKeyframesArray } from "./isNumberKeyframesArray";
 import { SegmentScope, SegmentScopeInternal } from "./useAnimateSegments";
+import { logAnimationSegmentInfo } from "./logAnimationSegmentInfo";
 
 export type SegmentTransitionWithTransitionEnd = SegmentTransition & {
   transitionEnd?: Target | DynamicOption<Target>;
@@ -145,7 +146,7 @@ export interface AnimationSegmentInfo {
   elementValueInfoMap: Map<Element, ElementValueInfo>;
   keys: string[];
   keyframes: DOMKeyframesDefinition;
-  dependency?: AnimationSegmentInfo;
+  dependency?: AnimationSegmentInfo; // solely used to not start an animation if is dependent upon a dependency 
   dependent?: AnimationSegmentInfo;
   elementKeyTotalTime: { element: Element; key: string };
   motionValue?: {
@@ -190,8 +191,24 @@ export type NewResolvedAnimationDefinitions = Map<
   NewResolvedAnimationDefinition[]
 >;
 
+function ensureMapEntry<TKey,TValue>(map:Map<TKey,TValue>,key:TKey,initialValue:TValue):TValue{
+  let value: TValue;
+  if (map.has(key)) {
+    value = map.get(
+      key
+    ) as TValue;
+  } else {
+    value = initialValue;
+    map.set(
+      key,
+      value
+    );
+  }
+  return value;
+}
+
 // eslint-disable-next-line complexity
-function getAnimationSegments(
+export function getAnimationSegments(
   sequence: SmartAnimationSequence,
   scope: SegmentScope | undefined,
   defaultDuration: number,
@@ -268,7 +285,7 @@ function getAnimationSegments(
       let transitionEnd = valueTransition.transitionEnd;
       let { duration } = valueTransition;
       if (key === "zIndex") {
-        duration = 0;
+        //duration = 0;
       }
       /**
        * Resolve stagger() if defined.
@@ -308,13 +325,14 @@ function getAnimationSegments(
       }
       duration ??= defaultDuration;
 
-      const startTime = currentTime + calculatedDelay;
-      const targetTime = startTime + duration;
-
+      const prevMaxDuration = maxDuration;
       maxDuration = Math.max(calculatedDelay + duration, maxDuration);
+
       if (element) {
-        let elementValueInfo: ElementValueInfo;
-        if (animationSegmentInfo.elementValueInfoMap.has(element)) {
+        const elementValueInfo: ElementValueInfo = ensureMapEntry(animationSegmentInfo.elementValueInfoMap,element,{
+          values: {},
+        })
+        /* if (animationSegmentInfo.elementValueInfoMap.has(element)) {
           elementValueInfo = animationSegmentInfo.elementValueInfoMap.get(
             element
           ) as ElementValueInfo;
@@ -326,7 +344,7 @@ function getAnimationSegments(
             element,
             elementValueInfo
           );
-        }
+        } */
         elementValueInfo.values[key] = {
           duration,
           delay: calculatedDelay,
@@ -361,9 +379,10 @@ function getAnimationSegments(
         };
       }
 
-      const prevTotalDuration = totalDuration;
+      const targetTime = currentTime + calculatedDelay + duration;
       totalDuration = Math.max(targetTime, totalDuration);
-      if (prevTotalDuration !== totalDuration && element) {
+
+      if (element && prevMaxDuration !== maxDuration) {
         elementKeyTotalTime = { element, key };
       }
     }
@@ -451,7 +470,7 @@ export function createAnimationsFromSegments(
     defaultTransition.duration || 0.3,
     defaultTransition.ease || "easeOut"
   );
-
+  animationSegmentInfos.forEach(asi => logAnimationSegmentInfo(asi));
   determineDependencies(animationSegmentInfos);
   adjustForSequenceDuration(
     animationSegmentInfos,

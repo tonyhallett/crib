@@ -6,6 +6,7 @@ export type ZIndexAnimationOptions = Omit<
   SegmentAnimationOptionsWithTransitionEndAndAt,
   "duration"
 >;
+export const zIndexAnimationDuration = 0.00001;
 export function createZIndexAnimationSegment(
   zIndex: number,
   options: ZIndexAnimationOptions

@@ -9,6 +9,7 @@ import { startDependentAnimationsOnUpdate } from "./startDependentAnimationsOnUp
 import { getKeyFramesAndTransition } from "./getKeyFramesAndTransition";
 import { AnimationPlaybackControls } from "framer-motion";
 
+
 export function resolveDependencies(
   animationSegmentInfos: AnimationSegmentInfo[],
   totalTime: number,

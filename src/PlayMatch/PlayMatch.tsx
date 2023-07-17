@@ -44,7 +44,7 @@ import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyControl } from "./useMyControl";
-import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
+import { createZIndexAnimationSegment, zIndexAnimationDuration } from "./createZIndexAnimationSegment";
 import { getCardValue } from "./getCardValue";
 import { useSnackbar } from "notistack";
 
@@ -211,12 +211,14 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   flipCardData:FlipCardData,
   turnedOverCardIndex:number,
   numTurnedOverCardsFromBefore:number,
+  numCardsTurningOver:number,
   delay:number,
   turnedOverPosition:Point
 ):void => {
   // greater turnedOverCardIndex lower the zIndex animation
   const newZIndex = 50 + numTurnedOverCardsFromBefore - turnedOverCardIndex;
-  const at = delay + turnedOverCardIndex * discardDuration;
+  // move higher index first
+  const at = delay + ((numCardsTurningOver - turnedOverCardIndex - 1) * ( discardDuration + flipDuration + zIndexAnimationDuration));
   const flipAnimation:FlipAnimation = {
     flip:true,
     duration:flipDuration,
@@ -566,6 +568,7 @@ function PlayMatchInner({
             const peggingPosition =
               positions.peggingPositions.inPlay[peggedCardPosition];
 
+            let delay = discardDuration + zIndexAnimationDuration;
             const getMoveToPeggingPositionAnimationSequence =
               (): FlipCardAnimationSequence => {
                 return [
@@ -604,6 +607,8 @@ function PlayMatchInner({
                   ),
                 ];
               };
+
+            
 
             if (isMe) {
               // if selection adds an animation will need to remove
@@ -651,6 +656,7 @@ function PlayMatchInner({
                       flip: true,
                       duration: flipDuration,
                     } as FlipAnimation);
+                    delay += flipDuration;
                     newCardData.animationSequence = animationSequence;
                     return newCardData;
                   }
@@ -674,20 +680,21 @@ function PlayMatchInner({
               const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards.concat(prevFlipCardDatas.otherPlayersCards.flat()).filter((cardData) => {
                 return cardData.state === FlipCardState.PeggingTurnedOver;
               }).length;
-              const delay = discardDuration;
+              
 
               const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards = (newFlipCardDatas:FlipCardData[]) => {
                 newFlipCardDatas.forEach(
                   (newFlipCardData) => {
                     if(newFlipCardData.state === FlipCardState.PeggingInPlay){
-                      const turnedOverCardIndex = myMatch.pegging.turnedOverCards.findIndex((inPlayCard) => {
-                        return cardMatch(inPlayCard.playingCard,newFlipCardData.playingCard as PlayingCard)
+                      const turnedOverCardIndex = myMatch.pegging.turnedOverCards.findIndex((turnedOverCard) => {
+                        return cardMatch(turnedOverCard.playingCard,newFlipCardData.playingCard as PlayingCard)
                       });
                       if(turnedOverCardIndex !== -1){
                         addFlipMoveToTurnedOverPositionAnimationSequence(
                           newFlipCardData,
                           turnedOverCardIndex,
                           numTurnedOverCardsFromBefore,
+                          myMatch.pegging.turnedOverCards.length - numTurnedOverCardsFromBefore,
                           delay,
                           positions.peggingPositions.turnedOver
                           );
