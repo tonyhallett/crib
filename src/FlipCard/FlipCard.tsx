@@ -125,8 +125,8 @@ function addScopeIfNoSelector(
 export function addFlipSegments(
   flipAnimation: FlipAnimation,
   smartAnimationSequence: SmartAnimationSequence,
-  isFlipped:boolean
-){
+  isFlipped: boolean
+) {
   const belowCardSegment = getFlipCardSegment(
     isFlipped,
     CardFlip.BelowCard,
@@ -159,7 +159,7 @@ function addFlipSegmentsFromRef(
   const isFlipped = !flipped.current;
   flipped.current = isFlipped;
 
-  addFlipSegments(flipAnimation, smartAnimationSequence,isFlipped);
+  addFlipSegments(flipAnimation, smartAnimationSequence, isFlipped);
 }
 
 function populateSequence(
@@ -212,7 +212,7 @@ function FlipCardInner(props: FlipCardProps) {
   const className = applyClass
     ? classNameFromPlayingCard(props.playingCard)
     : undefined;
-  
+
   return (
     <motion.div
       ref={scope}
@@ -229,7 +229,14 @@ function FlipCardInner(props: FlipCardProps) {
         rotate: `${rotation}deg`,
       }}
     >
-      <div style={{backgroundColor:"inherit",filter: applyDropShadow ? "drop-shadow(-2px 2px 5px #000)" : undefined}}>
+      <div
+        style={{
+          backgroundColor: "inherit",
+          filter: applyDropShadow
+            ? "drop-shadow(-2px 2px 5px #000)"
+            : undefined,
+        }}
+      >
         <Card
           {...common}
           cardFlip={CardFlip.BelowCard}

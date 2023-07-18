@@ -25,7 +25,7 @@ function getAnimateCardStyle(props: CardProps) {
 
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
-    backgroundColor:"inherit",
+    backgroundColor: "inherit",
     scale,
   };
   return style;

@@ -727,7 +727,7 @@ const matches: ActionMyMatch[] = [
   {
     actions: [
       {
-        methodName:"peg",
+        methodName: "peg",
         args: [
           "Player2",
           ThreeHearts,
@@ -805,13 +805,13 @@ const matches: ActionMyMatch[] = [
                   owner: "Player2",
                   playingCard: ThreeHearts,
                   peggingScore: {
-                    score:6,
+                    score: 6,
                     is31: false,
                     is15: false,
                     isLastGo: false,
                     numCardsInRun: 0,
                     numOfAKind: 3,
-                  }
+                  },
                 },
               ],
               goHistory: [],
@@ -842,9 +842,9 @@ const matches: ActionMyMatch[] = [
               },
             ],
             showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-          }
-        ]
-      }
+          },
+        ],
+      },
     ],
     currentAction: 0,
     id: "3 player pegging",
@@ -949,7 +949,7 @@ const matches: ActionMyMatch[] = [
   {
     actions: [
       {
-        methodName:"peg",
+        methodName: "peg",
         args: [
           "Player2",
           AceDiamonds,
@@ -963,7 +963,7 @@ const matches: ActionMyMatch[] = [
             title: "Peg 31 action ( no turned over )",
             gameState: CribGameState.Pegging,
             box: [],
-            myCards: [AceHearts,ThreeHearts],
+            myCards: [AceHearts, ThreeHearts],
             cutCard: TwoSpades,
             scores: [
               { games: 1, frontPeg: 22, backPeg: 9 },
@@ -996,17 +996,16 @@ const matches: ActionMyMatch[] = [
                   owner: "Player2",
                   playingCard: AceDiamonds,
                   peggingScore: {
-                    score:2,
+                    score: 2,
                     is31: true,
                     is15: false,
                     isLastGo: false,
                     numCardsInRun: 0,
                     numOfAKind: 0,
-                  }
+                  },
                 },
               ],
-              inPlayCards: [
-              ],
+              inPlayCards: [],
               goHistory: [],
               nextPlayer: "Player3",
               cannotGoes: [false, false],
@@ -1035,9 +1034,9 @@ const matches: ActionMyMatch[] = [
               },
             ],
             showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
-          }
-        ]
-      }
+          },
+        ],
+      },
     ],
     currentAction: 0,
     id: "Peg 31 action ( no turned over )",
@@ -1049,7 +1048,7 @@ const matches: ActionMyMatch[] = [
     title: "Peg 31 action ( no turned over )",
     gameState: CribGameState.Pegging,
     box: [],
-    myCards: [AceHearts,ThreeHearts],
+    myCards: [AceHearts, ThreeHearts],
     cutCard: TwoSpades,
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
@@ -1079,7 +1078,6 @@ const matches: ActionMyMatch[] = [
           playingCard: TwoHearts,
           peggingScore: null as unknown as PegScoring,
         },
-        
       ],
       goHistory: [],
       nextPlayer: "Player2",

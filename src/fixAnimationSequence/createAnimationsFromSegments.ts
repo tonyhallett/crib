@@ -27,6 +27,7 @@ import {
   SequenceLabelWithTime,
   SequenceTime,
 } from "./motion-types";
+
 import { getValueTransition } from "./getValueTransition";
 const fm: {
   resolveElements(
@@ -54,15 +55,14 @@ const fm7: {
   };
 } = require("..\\..\\node_modules\\framer-motion\\dist\\es\\easing\\utils\\create-generator-easing.mjs");
 
-import { determineDependencies } from "./determineDependencies";
-import { resolveDependencies } from "./resolveDependencies";
 import { adjustForSequenceDuration } from "./adjustForSequenceDuration";
 import { OnComplete, OnUpdate } from "./common-motion-types";
 import { keyframesAsList } from "./keyframesAsList";
 import { secondsToMilliseconds } from "./secondsToMilliseconds";
 import { isNumberKeyframesArray } from "./isNumberKeyframesArray";
 import { SegmentScope, SegmentScopeInternal } from "./useAnimateSegments";
-import { logAnimationSegmentInfo } from "./logAnimationSegmentInfo";
+import { createDefinitions } from "./resolveDependencies";
+import { determineElementDependencies } from "./determineElementDependencies";
 
 export type SegmentTransitionWithTransitionEnd = SegmentTransition & {
   transitionEnd?: Target | DynamicOption<Target>;
@@ -87,6 +87,7 @@ type SegmentAnimationSVGTransitions = {
 type SegmentAnimationVariableTransitions = {
   [K in keyof VariableTransitions]?: SegmentTransition;
 };
+
 interface SegmentPlaybackLifecycles<V> {
   onUpdate?: (latest: V, element: Element) => void;
   onPlay?: () => void;
@@ -94,6 +95,7 @@ interface SegmentPlaybackLifecycles<V> {
   onRepeat?: () => void;
   onStop?: () => void;
 }
+
 type SegmentAnimationOptions = SegmentAnimationStyleTransitions &
   SegmentAnimationSVGPathTransitions &
   SegmentAnimationSVGTransitions &
@@ -113,11 +115,13 @@ export type SegmentAnimationOptionsWithTransitionEnd =
   };
 export type SegmentAnimationOptionsWithTransitionEndAndAt =
   SegmentAnimationOptionsWithTransitionEnd & At;
+
 export type SmartDomSegmentWithTransition = [
   ElementOrSelector,
   DOMKeyframesDefinition,
   SegmentAnimationOptionsWithTransitionEndAndAt
 ];
+
 export type SmartSegment =
   | MotionValueSegment
   | MotionValueSegmentWithTransition
@@ -125,6 +129,7 @@ export type SmartSegment =
   | SmartDomSegmentWithTransition
   | SequenceLabel
   | SequenceLabelWithTime;
+
 export type SmartAnimationSequence = SmartSegment[];
 
 export type ElementValueInfo = {
@@ -140,22 +145,29 @@ export type ElementValueInfo = {
   };
 };
 
+export interface ElementKeyTotalTime {
+  element: Element;
+  key: string;
+}
+
+export interface AnimationSegmentMotionValue {
+  duration: number;
+  delay: number;
+  ease: Easing | Easing[];
+  motionValue: MotionValue;
+  keyframes: ValueKeyframesDefinition;
+}
+
 export interface AnimationSegmentInfo {
   startTime: number;
   totalDuration: number;
   elementValueInfoMap: Map<Element, ElementValueInfo>;
   keys: string[];
   keyframes: DOMKeyframesDefinition;
-  dependency?: AnimationSegmentInfo; // solely used to not start an animation if is dependent upon a dependency 
+  dependency?: AnimationSegmentInfo;
   dependent?: AnimationSegmentInfo;
-  elementKeyTotalTime: { element: Element; key: string };
-  motionValue?: {
-    duration: number;
-    delay: number;
-    ease: Easing | Easing[];
-    motionValue: MotionValue;
-    keyframes: ValueKeyframesDefinition;
-  };
+  elementKeyTotalTime: ElementKeyTotalTime | undefined;
+  motionValue?: AnimationSegmentMotionValue;
 }
 
 export type IntermediateAnimationSegmentInfo = Omit<
@@ -191,24 +203,23 @@ export type NewResolvedAnimationDefinitions = Map<
   NewResolvedAnimationDefinition[]
 >;
 
-function ensureMapEntry<TKey,TValue>(map:Map<TKey,TValue>,key:TKey,initialValue:TValue):TValue{
+function ensureMapEntry<TKey, TValue>(
+  map: Map<TKey, TValue>,
+  key: TKey,
+  initialValue: TValue
+): TValue {
   let value: TValue;
   if (map.has(key)) {
-    value = map.get(
-      key
-    ) as TValue;
+    value = map.get(key) as TValue;
   } else {
     value = initialValue;
-    map.set(
-      key,
-      value
-    );
+    map.set(key, value);
   }
   return value;
 }
 
 // eslint-disable-next-line complexity
-export function getAnimationSegments(
+function getAnimationSegments(
   sequence: SmartAnimationSequence,
   scope: SegmentScope | undefined,
   defaultDuration: number,
@@ -329,22 +340,13 @@ export function getAnimationSegments(
       maxDuration = Math.max(calculatedDelay + duration, maxDuration);
 
       if (element) {
-        const elementValueInfo: ElementValueInfo = ensureMapEntry(animationSegmentInfo.elementValueInfoMap,element,{
-          values: {},
-        })
-        /* if (animationSegmentInfo.elementValueInfoMap.has(element)) {
-          elementValueInfo = animationSegmentInfo.elementValueInfoMap.get(
-            element
-          ) as ElementValueInfo;
-        } else {
-          elementValueInfo = {
+        const elementValueInfo: ElementValueInfo = ensureMapEntry(
+          animationSegmentInfo.elementValueInfoMap,
+          element,
+          {
             values: {},
-          };
-          animationSegmentInfo.elementValueInfoMap.set(
-            element,
-            elementValueInfo
-          );
-        } */
+          }
+        );
         elementValueInfo.values[key] = {
           duration,
           delay: calculatedDelay,
@@ -435,10 +437,7 @@ export function getAnimationSegments(
     animationSegmentInfos.push({
       ...animationSegmentInfo,
       totalDuration: maxDuration,
-      elementKeyTotalTime: elementKeyTotalTime as {
-        element: Element;
-        key: string;
-      }, // todo: fix this
+      elementKeyTotalTime,
     });
   }
 
@@ -456,6 +455,7 @@ export type SegmentsAnimationOptions = {
     ease?: Easing | Easing[];
   };
 };
+
 export function createAnimationsFromSegments(
   sequence: SmartAnimationSequence,
   {
@@ -470,15 +470,18 @@ export function createAnimationsFromSegments(
     defaultTransition.duration || 0.3,
     defaultTransition.ease || "easeOut"
   );
-  animationSegmentInfos.forEach(asi => logAnimationSegmentInfo(asi));
-  determineDependencies(animationSegmentInfos);
+
   adjustForSequenceDuration(
     animationSegmentInfos,
     sequenceTransition.duration,
     totalDuration
   );
-  return resolveDependencies(
-    animationSegmentInfos,
+
+  const resolvedDependencies = determineElementDependencies(
+    animationSegmentInfos
+  );
+  return createDefinitions(
+    resolvedDependencies,
     totalDuration,
     sequenceTransition.duration,
     sequenceTransition.delay,

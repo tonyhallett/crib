@@ -21,7 +21,12 @@ import {
 import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
-import { Box, Point, Positions, matchLayoutManager } from "./matchLayoutManager";
+import {
+  Box,
+  Point,
+  Positions,
+  matchLayoutManager,
+} from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
 import {
   FlipAnimation,
@@ -44,7 +49,10 @@ import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyControl } from "./useMyControl";
-import { createZIndexAnimationSegment, zIndexAnimationDuration } from "./createZIndexAnimationSegment";
+import {
+  createZIndexAnimationSegment,
+  zIndexAnimationDuration,
+} from "./createZIndexAnimationSegment";
 import { getCardValue } from "./getCardValue";
 import { useSnackbar } from "notistack";
 
@@ -72,10 +80,12 @@ export type PlayMatchCribHub = {
     : never;
 };
 
-const cardMatch = (playingCard1:PlayingCard, playingCard2:PlayingCard) => {
-  return playingCard1.suit === playingCard2.suit &&
-  playingCard1.pips === playingCard2.pips
-}
+const cardMatch = (playingCard1: PlayingCard, playingCard2: PlayingCard) => {
+  return (
+    playingCard1.suit === playingCard2.suit &&
+    playingCard1.pips === playingCard2.pips
+  );
+};
 
 function getBoxPosition(myMatch: MyMatch, positions: Positions) {
   const dealerPositions = getDealerPositions(
@@ -157,19 +167,20 @@ const getPeggingCount = (myMatch: MyMatch): number => {
 const getAppendMessage = () => {
   let message = "";
   const apppendMessage = (messageToAppend: string) => {
-    if(message.length > 0){
+    if (message.length > 0) {
       //lowercase the first letter
-      messageToAppend = messageToAppend[0].toLowerCase() + messageToAppend.slice(1);
+      messageToAppend =
+        messageToAppend[0].toLowerCase() + messageToAppend.slice(1);
       messageToAppend = `, ${messageToAppend}`;
     }
     message += messageToAppend;
-  }
-  return [apppendMessage,() => message] as const;
-}
+  };
+  return [apppendMessage, () => message] as const;
+};
 
-const getOfAKindScore = (numOfAKind:number) => {
-  let ofAKindScore = 0
-  switch(numOfAKind){
+const getOfAKindScore = (numOfAKind: number) => {
+  let ofAKindScore = 0;
+  switch (numOfAKind) {
     case 2:
       ofAKindScore = 2;
       break;
@@ -181,59 +192,67 @@ const getOfAKindScore = (numOfAKind:number) => {
       break;
   }
   return ofAKindScore;
-}
+};
 
-const append15Or31 = (pegScoring: PegScoring,appendMessage:(messageToAppend:string) => void) => {
-  if(pegScoring.is15){
+const append15Or31 = (
+  pegScoring: PegScoring,
+  appendMessage: (messageToAppend: string) => void
+) => {
+  if (pegScoring.is15) {
     appendMessage("15 for 2");
-  } else  if(pegScoring.is31){
+  } else if (pegScoring.is31) {
     appendMessage("31 for 2");
   }
-}
+};
 
-const getPeggedScoreMessage = (pegScoring: PegScoring,pips:Pips): string => {
+const getPeggedScoreMessage = (pegScoring: PegScoring, pips: Pips): string => {
   const [appendMessage, getMessage] = getAppendMessage();
-  append15Or31(pegScoring,appendMessage)
-  if(pegScoring.numOfAKind >= 2){
-    const ofAKindScore = getOfAKindScore(pegScoring.numOfAKind)
+  append15Or31(pegScoring, appendMessage);
+  if (pegScoring.numOfAKind >= 2) {
+    const ofAKindScore = getOfAKindScore(pegScoring.numOfAKind);
     appendMessage(`${pegScoring.numOfAKind}x${pips} for ${ofAKindScore}`);
-  } else if(pegScoring.numCardsInRun >= 3){
+  } else if (pegScoring.numCardsInRun >= 3) {
     // could generate Ace, Two, Three....
-    appendMessage(`Run of ${pegScoring.numCardsInRun} for ${pegScoring.numCardsInRun}`);
+    appendMessage(
+      `Run of ${pegScoring.numCardsInRun} for ${pegScoring.numCardsInRun}`
+    );
   }
-  if(pegScoring.isLastGo){
+  if (pegScoring.isLastGo) {
     appendMessage("One for Go");
   }
   return getMessage();
-}
+};
 
 const addFlipMoveToTurnedOverPositionAnimationSequence = (
-  flipCardData:FlipCardData,
-  turnedOverCardIndex:number,
-  numTurnedOverCardsFromBefore:number,
-  numCardsTurningOver:number,
-  delay:number,
-  turnedOverPosition:Point
-):void => {
+  flipCardData: FlipCardData,
+  turnedOverCardIndex: number,
+  numTurnedOverCardsFromBefore: number,
+  numCardsTurningOver: number,
+  delay: number,
+  turnedOverPosition: Point
+): void => {
   // greater turnedOverCardIndex lower the zIndex animation
   const newZIndex = 50 + numTurnedOverCardsFromBefore - turnedOverCardIndex;
   // move higher index first
-  const at = delay + ((numCardsTurningOver - turnedOverCardIndex - 1) * ( discardDuration + flipDuration + zIndexAnimationDuration));
-  const flipAnimation:FlipAnimation = {
-    flip:true,
-    duration:flipDuration,
-  }
-  const segments =  [
-    createZIndexAnimationSegment(newZIndex,{at}),
+  const at =
+    delay +
+    (numCardsTurningOver - turnedOverCardIndex - 1) *
+      (discardDuration + flipDuration + zIndexAnimationDuration);
+  const flipAnimation: FlipAnimation = {
+    flip: true,
+    duration: flipDuration,
+  };
+  const segments = [
+    createZIndexAnimationSegment(newZIndex, { at }),
     flipAnimation,
-    getMoveRotateSegment(false,turnedOverPosition,discardDuration)
-  ]
-  if(flipCardData.animationSequence){
+    getMoveRotateSegment(false, turnedOverPosition, discardDuration),
+  ];
+  if (flipCardData.animationSequence) {
     flipCardData.animationSequence.push(...segments);
-  }else{
+  } else {
     flipCardData.animationSequence = segments;
   }
-}
+};
 
 function PlayMatchInner({
   matchDetail,
@@ -325,25 +344,26 @@ function PlayMatchInner({
     gameState,
   });
 
-  const [myDiscardOverlay, removeMyDiscardSelection, allowPegging] = useMyControl(
-    <div
-      {...bind()}
-      style={{
-        perspective: 5000,
-        ...styles.cardsShiftStyle,
-        touchAction: "none",
-      }}
-    >
-      {flipCards}
-    </div>,
-    getNumDiscards(myMatch),
-    playMatchCribHub.discard,
-    cardDatas,
-    playMatchCribHub.peg,
-    getPeggingCount(myMatch),
-    gameState,
-    nextPlayer === myMatch.myId
-  );
+  const [myDiscardOverlay, removeMyDiscardSelection, allowPegging] =
+    useMyControl(
+      <div
+        {...bind()}
+        style={{
+          perspective: 5000,
+          ...styles.cardsShiftStyle,
+          touchAction: "none",
+        }}
+      >
+        {flipCards}
+      </div>,
+      getNumDiscards(myMatch),
+      playMatchCribHub.discard,
+      cardDatas,
+      playMatchCribHub.peg,
+      getPeggingCount(myMatch),
+      gameState,
+      nextPlayer === myMatch.myId
+    );
 
   useOverflowHidden();
   useEffect(() => {
@@ -436,7 +456,7 @@ function PlayMatchInner({
           };
 
           let newFlipCardDatas: FlipCardDatas;
-          
+
           if (iDiscarded) {
             removeMyDiscardSelection();
             newFlipCardDatas = {
@@ -552,11 +572,15 @@ function PlayMatchInner({
             numPeggingInPlayCards(prevFlipCardDatas.otherPlayersCards.flat())
           );
         };
-        let peggedCard:PeggedCard;
-        if(myMatch.pegging.inPlayCards.length === 0){
-          peggedCard = myMatch.pegging.turnedOverCards[myMatch.pegging.turnedOverCards.length - 1]
-        }else{
-          peggedCard = myMatch.pegging.inPlayCards[myMatch.pegging.inPlayCards.length - 1]
+        let peggedCard: PeggedCard;
+        if (myMatch.pegging.inPlayCards.length === 0) {
+          peggedCard =
+            myMatch.pegging.turnedOverCards[
+              myMatch.pegging.turnedOverCards.length - 1
+            ];
+        } else {
+          peggedCard =
+            myMatch.pegging.inPlayCards[myMatch.pegging.inPlayCards.length - 1];
         }
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
@@ -564,7 +588,8 @@ function PlayMatchInner({
 
             const isMe = myMatch.myId === playerId;
             const newFlipCardDatas = { ...prevFlipCardDatas };
-            const peggedCardPosition = getPeggedCardPositionIndex(prevFlipCardDatas);
+            const peggedCardPosition =
+              getPeggedCardPositionIndex(prevFlipCardDatas);
             const peggingPosition =
               positions.peggingPositions.inPlay[peggedCardPosition];
 
@@ -583,10 +608,16 @@ function PlayMatchInner({
                     () => {
                       const peggingScore = peggedCard.peggingScore;
                       if (peggingScore.score > 0) {
-                        enqueueSnackbar(getPeggedScoreMessage(peggingScore,peggedCard.playingCard.pips), {
-                          variant: "success",
-                        });
-                        switch(myMatch.gameState){
+                        enqueueSnackbar(
+                          getPeggedScoreMessage(
+                            peggingScore,
+                            peggedCard.playingCard.pips
+                          ),
+                          {
+                            variant: "success",
+                          }
+                        );
+                        switch (myMatch.gameState) {
                           case CribGameState.GameWon:
                           case CribGameState.MatchWon:
                             // todo - pegs are reset so need to determine score
@@ -599,7 +630,6 @@ function PlayMatchInner({
                               colouredScores: getColouredScores(myMatch.scores),
                             });
                         }
-                        
                       }
                       // todo updating local state and refactor
                       animationCompleteCallback();
@@ -607,8 +637,6 @@ function PlayMatchInner({
                   ),
                 ];
               };
-
-            
 
             if (isMe) {
               // if selection adds an animation will need to remove
@@ -676,36 +704,51 @@ function PlayMatchInner({
               newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
             }
             // todo above - state has been set to PeggingInPlay when should be PeggingTurnedOver when turn over
-            if(myMatch.gameState === CribGameState.Pegging && peggedCard.peggingScore.is31){
-              const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards.concat(prevFlipCardDatas.otherPlayersCards.flat()).filter((cardData) => {
-                return cardData.state === FlipCardState.PeggingTurnedOver;
-              }).length;
-              
+            if (
+              myMatch.gameState === CribGameState.Pegging &&
+              peggedCard.peggingScore.is31
+            ) {
+              const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
+                .concat(prevFlipCardDatas.otherPlayersCards.flat())
+                .filter((cardData) => {
+                  return cardData.state === FlipCardState.PeggingTurnedOver;
+                }).length;
 
-              const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards = (newFlipCardDatas:FlipCardData[]) => {
-                newFlipCardDatas.forEach(
-                  (newFlipCardData) => {
-                    if(newFlipCardData.state === FlipCardState.PeggingInPlay){
-                      const turnedOverCardIndex = myMatch.pegging.turnedOverCards.findIndex((turnedOverCard) => {
-                        return cardMatch(turnedOverCard.playingCard,newFlipCardData.playingCard as PlayingCard)
-                      });
-                      if(turnedOverCardIndex !== -1){
+              const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards =
+                (newFlipCardDatas: FlipCardData[]) => {
+                  newFlipCardDatas.forEach((newFlipCardData) => {
+                    if (newFlipCardData.state === FlipCardState.PeggingInPlay) {
+                      const turnedOverCardIndex =
+                        myMatch.pegging.turnedOverCards.findIndex(
+                          (turnedOverCard) => {
+                            return cardMatch(
+                              turnedOverCard.playingCard,
+                              newFlipCardData.playingCard as PlayingCard
+                            );
+                          }
+                        );
+                      if (turnedOverCardIndex !== -1) {
                         addFlipMoveToTurnedOverPositionAnimationSequence(
                           newFlipCardData,
                           turnedOverCardIndex,
                           numTurnedOverCardsFromBefore,
-                          myMatch.pegging.turnedOverCards.length - numTurnedOverCardsFromBefore,
+                          myMatch.pegging.turnedOverCards.length -
+                            numTurnedOverCardsFromBefore,
                           delay,
                           positions.peggingPositions.turnedOver
-                          );
+                        );
                       }
                     }
                   });
-              }
-              
-              addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(newFlipCardDatas.myCards);
+                };
+
+              addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
+                newFlipCardDatas.myCards
+              );
               newFlipCardDatas.otherPlayersCards.forEach((otherPlayerCards) => {
-                 addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(otherPlayerCards);
+                addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
+                  otherPlayerCards
+                );
               });
             }
             return newFlipCardDatas;
@@ -717,7 +760,15 @@ function PlayMatchInner({
         //
       },
     });
-  }, [signalRRegistration, matchDetail, positions, updateLocalMatch, removeMyDiscardSelection, enqueueSnackbar, allowPegging]);
+  }, [
+    signalRRegistration,
+    matchDetail,
+    positions,
+    updateLocalMatch,
+    removeMyDiscardSelection,
+    enqueueSnackbar,
+    allowPegging,
+  ]);
 
   /* eslint-disable complexity */
   useEffect(() => {
