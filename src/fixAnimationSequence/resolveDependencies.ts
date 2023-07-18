@@ -51,10 +51,8 @@ function startDependentAnimationsOnUpdate(
   );
 
   endingTransition.onComplete = () => {
-    //console.log(`key ${keyToOnUpdate} on ${animationSegmentInfo.elementKeyTotalTime!.element.className} onComplete`)
     currentOnComplete?.();
     resolvedDependencies.forEach((def) => {
-      //console.log(`animateElements ${(key as Element).className}`)
       def = def as ElementAnimationDefinition;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const animation = animateElements(element, def.keyframes, {

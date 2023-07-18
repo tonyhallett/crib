@@ -251,7 +251,7 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   // move higher index first
   const at =
     delay +
-    (numCardsTurningOver - turnedOverCardIndex - 1) *
+    (numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1) *
       (discardDuration + flipDuration + zIndexAnimationDuration);
   const flipAnimation: FlipAnimation = {
     flip: true,

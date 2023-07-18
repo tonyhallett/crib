@@ -31,6 +31,9 @@ import {
   TwoSpades,
   ThreeHearts,
   EightSpades,
+  KingHearts,
+  QueenHearts,
+  EightHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -1057,6 +1060,201 @@ const matches: ActionMyMatch[] = [
     ],
     pegging: {
       turnedOverCards: [],
+      inPlayCards: [
+        {
+          owner: "Me",
+          playingCard: KingSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: QueenSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: EightSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: TwoHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+      ],
+      goHistory: [],
+      nextPlayer: "Player2",
+      cannotGoes: [false, false],
+      myCannotGo: false,
+    },
+    myId: "Me",
+    dealerDetails: {
+      first: "Me",
+      current: "Me",
+    },
+    myReady: false,
+    matchWinDeterminant: "BestOf_3",
+    myScoringHistory: null as unknown as PlayerScoringHistory,
+    otherPlayers: [
+      {
+        id: "Player2",
+        discarded: true,
+        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        ready: false,
+      },
+      {
+        id: "Player3",
+        discarded: true,
+        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        ready: false,
+      },
+    ],
+    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+  },
+  {
+    actions: [
+      {
+        methodName: "peg",
+        args: [
+          "Player2",
+          AceDiamonds,
+          {
+            id: "Peg 31 action ( turned over )",
+            changeHistory: {
+              lastChangeDate: new Date("19 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 15,
+            },
+            title: "Peg 31 action ( turned over )",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [AceHearts],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 14, backPeg: 6 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [
+                {
+                  owner: "Me",
+                  playingCard: KingHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: QueenHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: EightHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+
+                
+                {
+                  owner: "Me",
+                  playingCard: KingSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: QueenSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: EightSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: TwoHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceDiamonds,
+                  peggingScore: {
+                    score: 2,
+                    is31: true,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
+              ],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player3",
+              cannotGoes: [false, false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          },
+        ],
+      },
+    ],
+    currentAction: 0,
+    id: "Peg 31 action ( turned over )",
+    changeHistory: {
+      lastChangeDate: new Date("19 May 2023 09:00"),
+      matchCreationDate: new Date("20 December 2022 14:48"),
+      numberOfActions: 14,
+    },
+    title: "Peg 31 action ( turned over )",
+    gameState: CribGameState.Pegging,
+    box: [],
+    myCards: [AceHearts],
+    cutCard: TwoSpades,
+    scores: [
+      { games: 1, frontPeg: 22, backPeg: 9 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+    ],
+    pegging: {
+      turnedOverCards: [
+        {
+          owner: "Me",
+          playingCard: KingHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: QueenHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: EightHearts,
+          peggingScore: null as unknown as PegScoring,
+        }
+      ],
       inPlayCards: [
         {
           owner: "Me",
