@@ -570,7 +570,7 @@ export function AnimatedCribBoard({
       segments.push([
         `#${getPegIdentifier(pegger, isFrontPeg)}`,
         { x, y },
-        { duration: moveDuration, at, x: { onComplete } },
+        { duration: moveDuration, at, y: { onComplete } },
       ]);
     },
     [at, memoed, moveDuration]
@@ -645,8 +645,9 @@ export function AnimatedCribBoard({
 
       const animations = lastPegInfos.reduce<SmartSegment[]>(
         (segments, lastPegInfo, player) => {
-          const movedCompleted =
+          const newGameMovedCompleted =
             player === lastPegInfos.length - 1 ? onComplete : undefined;
+
           const newPegInfo = newPegInfos[player];
           if (isNewGame) {
             animateNewGamePegs(
@@ -654,16 +655,10 @@ export function AnimatedCribBoard({
               player,
               newPegInfo,
               lastPegInfo,
-              movedCompleted
+              newGameMovedCompleted
             );
           } else if (newPegInfo.frontPeg !== lastPegInfo.frontPeg) {
-            animatePeg(
-              segments,
-              newPegInfo,
-              lastPegInfo,
-              player,
-              movedCompleted
-            );
+            animatePeg(segments, newPegInfo, lastPegInfo, player, onComplete);
           }
 
           return segments;

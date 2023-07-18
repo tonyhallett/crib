@@ -42,7 +42,6 @@ const fm5: {
   GroupPlaybackControls: any;
 } = require("..\\..\\node_modules\\framer-motion\\dist\\es\\animation\\GroupPlaybackControls.mjs");
 
-// eslint-disable-next-line complexity
 export function animateElements(
   elementOrSelector: ElementOrSelector,
   keyframes: DOMKeyframesDefinition,

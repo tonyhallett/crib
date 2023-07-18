@@ -11,3 +11,7 @@ export function fill<T>(length: number, itemCreator: (i: number) => T) {
     return itemCreator(i);
   });
 }
+
+export const arrayLast = <T>(array: T[]): T => {
+  return array[array.length - 1];
+};

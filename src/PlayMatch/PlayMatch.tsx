@@ -55,6 +55,7 @@ import {
 } from "./createZIndexAnimationSegment";
 import { getCardValue } from "./getCardValue";
 import { useSnackbar } from "notistack";
+import { getLastPeggedCard, getPeggedCardPositionIndex } from "./signalRPeg";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
@@ -95,6 +96,19 @@ function getBoxPosition(myMatch: MyMatch, positions: Positions) {
     myMatch.otherPlayers.map((op) => op.id)
   );
   return dealerPositions.box;
+}
+
+function shouldDeal(matchDetail: MatchDetail) {
+  return (
+    matchDetail.localMatch.changeHistory.numberOfActions === dealActionIndicator
+  );
+}
+
+function noNewActions(matchDetail: MatchDetail) {
+  return (
+    matchDetail.localMatch.changeHistory.numberOfActions ===
+    matchDetail.match.changeHistory.numberOfActions
+  );
 }
 
 export type UpdateLocalMatch = (localMatch: LocalMatch) => void;
@@ -229,7 +243,8 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   numTurnedOverCardsFromBefore: number,
   numCardsTurningOver: number,
   delay: number,
-  turnedOverPosition: Point
+  turnedOverPosition: Point,
+  onComplete: OnComplete
 ): void => {
   // greater turnedOverCardIndex lower the zIndex animation
   const newZIndex = 50 + numTurnedOverCardsFromBefore - turnedOverCardIndex;
@@ -245,7 +260,14 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   const segments = [
     createZIndexAnimationSegment(newZIndex, { at }),
     flipAnimation,
-    getMoveRotateSegment(false, turnedOverPosition, discardDuration),
+    getMoveRotateSegment(
+      false,
+      turnedOverPosition,
+      discardDuration,
+      undefined,
+      undefined,
+      onComplete
+    ),
   ];
   if (flipCardData.animationSequence) {
     flipCardData.animationSequence.push(...segments);
@@ -551,205 +573,281 @@ function PlayMatchInner({
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       peg(playerId, peggedPlayingCard, myMatch) {
-        allowPegging();
-        setNextPlayer(myMatch.pegging.nextPlayer); //????????????????????????????????????
-        const numCardsInState = (
-          flipCards: FlipCardData[],
-          state: FlipCardState
+        const peggingScored = (
+          peggedCard: PeggedCard,
+          cribBoardAnimationOnComplete?: () => void
         ) => {
-          return flipCards.filter((cardData) => cardData.state === state)
-            .length;
-        };
-        const numPeggingInPlayCards = (flipCards: FlipCardData[]) => {
-          return numCardsInState(flipCards, FlipCardState.PeggingInPlay);
+          enqueueSnackbar(
+            getPeggedScoreMessage(
+              peggedCard.peggingScore,
+              peggedCard.playingCard.pips
+            ),
+            {
+              variant: "success",
+            }
+          );
+          switch (myMatch.gameState) {
+            case CribGameState.GameWon:
+            case CribGameState.MatchWon:
+              // todo - pegs are reset so need to determine score
+              break;
+            case CribGameState.Show:
+              // todo
+              break;
+            case CribGameState.Pegging:
+              setCribBoardState({
+                colouredScores: getColouredScores(myMatch.scores),
+                onComplete: cribBoardAnimationOnComplete,
+              });
+          }
         };
 
-        const getPeggedCardPositionIndex = (
-          prevFlipCardDatas: FlipCardDatas
-        ): number => {
-          return (
-            numPeggingInPlayCards(prevFlipCardDatas.myCards) +
-            numPeggingInPlayCards(prevFlipCardDatas.otherPlayersCards.flat())
+        const getMoveToPeggingPositionAnimationSequence = (
+          peggedCard: PeggedCard,
+          peggedCardPosition: number,
+          duration: number,
+          animationCompleteCallback: () => void
+        ): FlipCardAnimationSequence => {
+          return [
+            createZIndexAnimationSegment(5 + peggedCardPosition, {}),
+            getMoveRotateSegment(
+              false,
+              positions.peggingPositions.inPlay[peggedCardPosition],
+              duration,
+              undefined,
+              undefined,
+              () => {
+                const peggingScore = peggedCard.peggingScore;
+                if (peggingScore.score > 0) {
+                  peggingScored(peggedCard, animationCompleteCallback);
+                } else {
+                  animationCompleteCallback();
+                }
+              }
+            ),
+          ];
+        };
+
+        const ensurePeggingState = (cardData: FlipCardData) => {
+          if (cardData.state !== FlipCardState.PeggingTurnedOver) {
+            cardData.state = FlipCardState.PeggingInPlay;
+          }
+        };
+
+        const iPegged = (
+          newFlipCardDatas: FlipCardDatas,
+          moveToPeggingPositionAnimationSequence: FlipCardAnimationSequence
+        ) => {
+          // if my pegging selection adds an animation will need to remove
+          const newMyFlipCardDatas = newFlipCardDatas.myCards.map(
+            (cardData) => {
+              const playingCard = cardData.playingCard as PlayingCard;
+              if (playingCard && cardMatch(playingCard, peggedPlayingCard)) {
+                const newCardData = { ...cardData };
+                ensurePeggingState(newCardData);
+                newCardData.animationSequence =
+                  moveToPeggingPositionAnimationSequence;
+                return newCardData;
+              } else {
+                return cardData;
+              }
+            }
+          );
+          newFlipCardDatas.myCards = newMyFlipCardDatas;
+        };
+
+        const otherPlayerPegged = (
+          prevFlipCardDatas: FlipCardDatas,
+          newFlipCardDatas: FlipCardDatas,
+          flipDuration: number,
+          moveToPeggingPositionAnimationSequence: FlipCardAnimationSequence
+        ) => {
+          const peggerIndex = myMatch.otherPlayers.findIndex(
+            (otherPlayer) => otherPlayer.id === playerId
+          );
+          const prevOtherPlayerCardDatas =
+            prevFlipCardDatas.otherPlayersCards[peggerIndex];
+
+          let newOtherPlayerCardDatas =
+            newFlipCardDatas.otherPlayersCards[peggerIndex];
+
+          let done = false;
+          newOtherPlayerCardDatas = newOtherPlayerCardDatas.map(
+            (cardData, i) => {
+              if (
+                !done &&
+                prevOtherPlayerCardDatas[i].state ===
+                  FlipCardState.OtherPlayersHand
+              ) {
+                done = true;
+                const newCardData = { ...cardData };
+                ensurePeggingState(newCardData);
+                newCardData.playingCard = peggedPlayingCard;
+
+                moveToPeggingPositionAnimationSequence.unshift({
+                  flip: true,
+                  duration: flipDuration,
+                } as FlipAnimation);
+
+                newCardData.animationSequence =
+                  moveToPeggingPositionAnimationSequence;
+                return newCardData;
+              }
+              return cardData;
+            }
+          );
+
+          const newOtherPlayersCards = newFlipCardDatas.otherPlayersCards.map(
+            (otherPlayerCards, i) => {
+              if (i === peggerIndex) {
+                return newOtherPlayerCardDatas;
+              }
+              return otherPlayerCards;
+            }
+          );
+          newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
+        };
+
+        const addTurnOverOneAtATimeAnimation = (
+          prevFlipCardDatas: FlipCardDatas,
+          newFlipCardDatas: FlipCardDatas,
+          delay: number,
+          onComplete: () => void
+        ) => {
+          const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
+            .concat(prevFlipCardDatas.otherPlayersCards.flat())
+            .filter((cardData) => {
+              return cardData.state === FlipCardState.PeggingTurnedOver;
+            }).length;
+
+          const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards =
+            (newFlipCardDatas: FlipCardData[]) => {
+              newFlipCardDatas.forEach((newFlipCardData) => {
+                if (newFlipCardData.playingCard !== undefined) {
+                  const turnedOverCardIndex =
+                    myMatch.pegging.turnedOverCards.findIndex(
+                      (turnedOverCard) => {
+                        return cardMatch(
+                          turnedOverCard.playingCard,
+                          newFlipCardData.playingCard as PlayingCard
+                        );
+                      }
+                    );
+                  if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
+                    const lastToMove =
+                      turnedOverCardIndex === numTurnedOverCardsFromBefore;
+                    addFlipMoveToTurnedOverPositionAnimationSequence(
+                      newFlipCardData,
+                      turnedOverCardIndex,
+                      numTurnedOverCardsFromBefore,
+                      myMatch.pegging.turnedOverCards.length -
+                        numTurnedOverCardsFromBefore,
+                      delay,
+                      positions.peggingPositions.turnedOver,
+                      lastToMove ? onComplete : undefined
+                    );
+                  }
+                }
+              });
+            };
+
+          addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
+            newFlipCardDatas.otherPlayersCards
+              .flat()
+              .concat(newFlipCardDatas.myCards)
           );
         };
-        let peggedCard: PeggedCard;
-        if (myMatch.pegging.inPlayCards.length === 0) {
-          peggedCard =
-            myMatch.pegging.turnedOverCards[
-              myMatch.pegging.turnedOverCards.length - 1
-            ];
-        } else {
-          peggedCard =
-            myMatch.pegging.inPlayCards[myMatch.pegging.inPlayCards.length - 1];
-        }
+
+        const createOnComplete = (
+          addTurnOverAnimation: boolean,
+          animationCompleteCallback: () => void
+        ) => {
+          const numCompletesToComplete = addTurnOverAnimation ? 2 : 1;
+          let numCompleted = 0;
+          return () => {
+            numCompleted++;
+            if (numCompleted === numCompletesToComplete) {
+              animationCompleteCallback();
+            }
+          };
+        };
+
+        const setTurnedOver = (flipCardDatas: FlipCardDatas): FlipCardDatas => {
+          const newFlipCardDatas = { ...flipCardDatas };
+          newFlipCardDatas.myCards = newFlipCardDatas.myCards.map(
+            (cardData) => {
+              return {
+                ...cardData,
+                state: FlipCardState.PeggingTurnedOver,
+              };
+            }
+          );
+          newFlipCardDatas.otherPlayersCards =
+            newFlipCardDatas.otherPlayersCards.map((otherPlayerCards) => {
+              return otherPlayerCards.map((otherPlayerCard) => {
+                return {
+                  ...otherPlayerCard,
+                  state: FlipCardState.PeggingTurnedOver,
+                };
+              });
+            });
+          return newFlipCardDatas;
+        };
+
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
+            allowPegging();
+            setNextPlayer(myMatch.pegging.nextPlayer);
+
+            const peggedCard = getLastPeggedCard(myMatch.pegging);
             prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
 
             const isMe = myMatch.myId === playerId;
-            const newFlipCardDatas = { ...prevFlipCardDatas };
+
+            const turnedOver =
+              myMatch.gameState === CribGameState.Pegging &&
+              peggedCard.peggingScore.is31;
+            const newFlipCardDatas = turnedOver
+              ? setTurnedOver(prevFlipCardDatas)
+              : { ...prevFlipCardDatas };
+
             const peggedCardPosition =
               getPeggedCardPositionIndex(prevFlipCardDatas);
-            const peggingPosition =
-              positions.peggingPositions.inPlay[peggedCardPosition];
 
-            let delay = discardDuration + zIndexAnimationDuration;
-            const getMoveToPeggingPositionAnimationSequence =
-              (): FlipCardAnimationSequence => {
-                return [
-                  createZIndexAnimationSegment(5 + peggedCardPosition, {}),
-                  getMoveRotateSegment(
-                    false,
-                    peggingPosition,
-                    discardDuration,
-                    undefined,
-                    undefined,
-                    // eslint-disable-next-line complexity
-                    () => {
-                      const peggingScore = peggedCard.peggingScore;
-                      if (peggingScore.score > 0) {
-                        enqueueSnackbar(
-                          getPeggedScoreMessage(
-                            peggingScore,
-                            peggedCard.playingCard.pips
-                          ),
-                          {
-                            variant: "success",
-                          }
-                        );
-                        switch (myMatch.gameState) {
-                          case CribGameState.GameWon:
-                          case CribGameState.MatchWon:
-                            // todo - pegs are reset so need to determine score
-                            break;
-                          case CribGameState.Show:
-                            // todo
-                            break;
-                          case CribGameState.Pegging:
-                            setCribBoardState({
-                              colouredScores: getColouredScores(myMatch.scores),
-                            });
-                        }
-                      }
-                      // todo updating local state and refactor
-                      animationCompleteCallback();
-                    }
-                  ),
-                ];
-              };
+            let turnOverCardsDelay = discardDuration;
+
+            const onComplete = createOnComplete(
+              turnedOver,
+              animationCompleteCallback
+            );
+
+            const moveToPeggingPositionAnimationSequence =
+              getMoveToPeggingPositionAnimationSequence(
+                peggedCard,
+                peggedCardPosition,
+                discardDuration,
+                onComplete
+              );
 
             if (isMe) {
-              // if selection adds an animation will need to remove
-              const newMyFlipCardDatas = prevFlipCardDatas.myCards.map(
-                (prevCardData) => {
-                  const playingCard = prevCardData.playingCard as PlayingCard;
-                  if (
-                    playingCard &&
-                    cardMatch(playingCard, peggedPlayingCard)
-                  ) {
-                    const newCardData = {
-                      ...prevCardData,
-                    };
-                    newCardData.state = FlipCardState.PeggingInPlay;
-                    newCardData.animationSequence =
-                      getMoveToPeggingPositionAnimationSequence();
-                    return newCardData;
-                  } else {
-                    return prevCardData;
-                  }
-                }
-              );
-              newFlipCardDatas.myCards = newMyFlipCardDatas;
+              iPegged(newFlipCardDatas, moveToPeggingPositionAnimationSequence);
             } else {
-              const peggerIndex = myMatch.otherPlayers.findIndex(
-                (otherPlayer) => otherPlayer.id === playerId
+              turnOverCardsDelay += flipDuration;
+              otherPlayerPegged(
+                prevFlipCardDatas,
+                newFlipCardDatas,
+                flipDuration,
+                moveToPeggingPositionAnimationSequence
               );
-              const prevOtherPlayerCardDatas =
-                prevFlipCardDatas.otherPlayersCards[peggerIndex];
-
-              let done = false;
-              const newOtherPlayerCardDatas = prevOtherPlayerCardDatas.map(
-                (prevCardData) => {
-                  if (
-                    !done &&
-                    prevCardData.state === FlipCardState.OtherPlayersHand
-                  ) {
-                    done = true;
-                    const newCardData = { ...prevCardData };
-                    newCardData.state = FlipCardState.PeggingInPlay;
-                    newCardData.playingCard = peggedPlayingCard;
-                    const animationSequence =
-                      getMoveToPeggingPositionAnimationSequence();
-                    animationSequence.unshift({
-                      flip: true,
-                      duration: flipDuration,
-                    } as FlipAnimation);
-                    delay += flipDuration;
-                    newCardData.animationSequence = animationSequence;
-                    return newCardData;
-                  }
-                  return prevCardData;
-                }
-              );
-
-              const newOtherPlayersCards =
-                prevFlipCardDatas.otherPlayersCards.map(
-                  (otherPlayerCards, i) => {
-                    if (i === peggerIndex) {
-                      return newOtherPlayerCardDatas;
-                    }
-                    return otherPlayerCards;
-                  }
-                );
-              newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
             }
-            // todo above - state has been set to PeggingInPlay when should be PeggingTurnedOver when turn over
-            if (
-              myMatch.gameState === CribGameState.Pegging &&
-              peggedCard.peggingScore.is31
-            ) {
-              const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
-                .concat(prevFlipCardDatas.otherPlayersCards.flat())
-                .filter((cardData) => {
-                  return cardData.state === FlipCardState.PeggingTurnedOver;
-                }).length;
-
-              const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards =
-                (newFlipCardDatas: FlipCardData[]) => {
-                  newFlipCardDatas.forEach((newFlipCardData) => {
-                    if (newFlipCardData.state === FlipCardState.PeggingInPlay) {
-                      const turnedOverCardIndex =
-                        myMatch.pegging.turnedOverCards.findIndex(
-                          (turnedOverCard) => {
-                            return cardMatch(
-                              turnedOverCard.playingCard,
-                              newFlipCardData.playingCard as PlayingCard
-                            );
-                          }
-                        );
-                      if (turnedOverCardIndex !== -1) {
-                        addFlipMoveToTurnedOverPositionAnimationSequence(
-                          newFlipCardData,
-                          turnedOverCardIndex,
-                          numTurnedOverCardsFromBefore,
-                          myMatch.pegging.turnedOverCards.length -
-                            numTurnedOverCardsFromBefore,
-                          delay,
-                          positions.peggingPositions.turnedOver
-                        );
-                      }
-                    }
-                  });
-                };
-
-              addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
-                newFlipCardDatas.myCards
+            
+            if (turnedOver) {
+              addTurnOverOneAtATimeAnimation(
+                prevFlipCardDatas,
+                newFlipCardDatas,
+                turnOverCardsDelay,
+                onComplete
               );
-              newFlipCardDatas.otherPlayersCards.forEach((otherPlayerCards) => {
-                addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
-                  otherPlayerCards
-                );
-              });
             }
             return newFlipCardDatas;
           }
@@ -770,16 +868,25 @@ function PlayMatchInner({
     allowPegging,
   ]);
 
-  /* eslint-disable complexity */
-  useEffect(() => {
-    const localMatch = matchDetail.localMatch;
+  const staticRender = useCallback(() => {
     const myMatch = matchDetail.match;
+    // no animations required
+    switch (myMatch.gameState) {
+      case CribGameState.Discard:
+        setCardDatasAndRef(getDiscardCardDatas(myMatch, positions));
+        break;
+      case CribGameState.Pegging:
+        setCardDatasAndRef(getPeggingCardDatas(myMatch, positions));
+        break;
+      default:
+        throw new Error("Not implemented !");
+    }
+  }, [matchDetail, positions, setCardDatasAndRef]);
+
+  useEffect(() => {
     // need to prevent re-renders from setting state in here causing a loop
     if (!initiallyRendered.current) {
-      if (
-        matchDetail.localMatch.changeHistory.numberOfActions ===
-        dealActionIndicator
-      ) {
+      if (shouldDeal(matchDetail)) {
         window.setTimeout(
           () => {
             animationManager.current.animate((animationCompleteCallback) => {
@@ -794,21 +901,8 @@ function PlayMatchInner({
           },
           hasRenderedAMatch ? 0 : 2000
         );
-      } else if (
-        localMatch.changeHistory.numberOfActions ===
-        myMatch.changeHistory.numberOfActions
-      ) {
-        // no animations required
-        switch (myMatch.gameState) {
-          case CribGameState.Discard:
-            setCardDatasAndRef(getDiscardCardDatas(myMatch, positions));
-            break;
-          case CribGameState.Pegging:
-            setCardDatasAndRef(getPeggingCardDatas(myMatch, positions));
-            break;
-          default:
-            throw new Error("Not implemented !");
-        }
+      } else if (noNewActions(matchDetail)) {
+        staticRender();
       } else {
         const breakHere = true;
       }
@@ -820,6 +914,7 @@ function PlayMatchInner({
     setCardDatasAndRef,
     updateLocalMatch,
     hasRenderedAMatch,
+    staticRender,
   ]);
 
   return (
