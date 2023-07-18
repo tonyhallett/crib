@@ -758,6 +758,46 @@ function PlayMatchInner({
           );
         };
 
+        const addTurnOverTogetherAnimation = (
+          prevFlipCardDatas: FlipCardDatas,
+          newFlipCardDatas: FlipCardDatas,
+          delay: number,
+          onComplete: () => void
+        ) => {
+          const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
+            .concat(prevFlipCardDatas.otherPlayersCards.flat())
+            .filter((cardData) => {
+              return cardData.state === FlipCardState.PeggingTurnedOver;
+            }).length;
+
+          const addAnimationToTurnedOverCards = (
+            newFlipCardDatas: FlipCardData[]
+          ) => {
+            newFlipCardDatas.forEach((newFlipCardData) => {
+              if (newFlipCardData.playingCard !== undefined) {
+                const turnedOverCardIndex =
+                  myMatch.pegging.turnedOverCards.findIndex(
+                    (turnedOverCard) => {
+                      return cardMatch(
+                        turnedOverCard.playingCard,
+                        newFlipCardData.playingCard as PlayingCard
+                      );
+                    }
+                  );
+                if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
+                  //todo
+                }
+              }
+            });
+          };
+
+          addAnimationToTurnedOverCards(
+            newFlipCardDatas.otherPlayersCards
+              .flat()
+              .concat(newFlipCardDatas.myCards)
+          );
+        };
+
         const createOnComplete = (
           addTurnOverAnimation: boolean,
           animationCompleteCallback: () => void
@@ -840,7 +880,7 @@ function PlayMatchInner({
                 moveToPeggingPositionAnimationSequence
               );
             }
-            
+
             if (turnedOver) {
               addTurnOverOneAtATimeAnimation(
                 prevFlipCardDatas,
