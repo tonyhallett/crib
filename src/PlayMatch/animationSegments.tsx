@@ -1,6 +1,7 @@
 import { Box, Point } from "./matchLayoutManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/FlipCard";
+import { DynamicOption, Target } from "framer-motion";
 
 export function getDiscardToBoxSegment(
   boxPosition: Box,
@@ -25,7 +26,8 @@ export function getMoveRotateSegment(
   duration: number,
   delay?: number,
   at?: number,
-  onComplete?: OnComplete | undefined
+  onComplete?: OnComplete | undefined,
+  transitionEnd?: Target | DynamicOption<Target>
 ): DomSegmentOptionalElementOrSelectorWithOptions {
   const rotation = isHorizontal ? 90 : 0;
   return [
@@ -36,6 +38,7 @@ export function getMoveRotateSegment(
       rotate: `${rotation}deg`,
     },
     {
+      transitionEnd,
       duration: duration,
       delay,
       at,

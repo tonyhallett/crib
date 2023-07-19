@@ -246,19 +246,17 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   turnedOverPosition: Point,
   onComplete: OnComplete
 ): void => {
-  // greater turnedOverCardIndex lower the zIndex animation
-  const newZIndex = 50 + numTurnedOverCardsFromBefore - turnedOverCardIndex;
-  // move higher index first
-  const at =
-    delay +
-    (numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1) *
-      (discardDuration + flipDuration + zIndexAnimationDuration);
+  const positionFromTop = numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1;
+  // later pegged lower the zindex
+  const turnedOverZIndex = 50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
+  // move later pegged first
+  const at = delay + positionFromTop * (discardDuration + flipDuration + zIndexAnimationDuration);
   const flipAnimation: FlipAnimation = {
     flip: true,
     duration: flipDuration,
   };
   const segments = [
-    createZIndexAnimationSegment(newZIndex, { at }),
+    createZIndexAnimationSegment(turnedOverZIndex, { at }),
     flipAnimation,
     getMoveRotateSegment(
       false,
@@ -708,6 +706,7 @@ function PlayMatchInner({
           newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const addTurnOverOneAtATimeAnimation = (
           prevFlipCardDatas: FlipCardDatas,
           newFlipCardDatas: FlipCardDatas,
@@ -758,6 +757,61 @@ function PlayMatchInner({
           );
         };
 
+        const applyTurnOverTogetherAnimation = (
+          flipCardData: FlipCardData,
+          turnedOverCardIndex: number,
+          numTurnedOverCardsFromBefore: number,
+          numCardsTurningOver: number,
+          delay: number,
+          turnedOverPosition: Point,
+          firstPeggedPosition:Point,
+          overlayDuration:number,
+          turnOverDuration:number,
+          flipDuration:number,
+          onComplete: OnComplete
+        ): void => {
+          const positionFromTop = numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1;
+          // later pegged lower the zindex
+          const turnedOverZIndex = 50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
+          const isTop = positionFromTop === 0;
+          
+          /* const overlayTransitionEnd: Target | undefined = isTop ? undefined : {
+            opacity: 0,
+            x:firstPeggedPosition.x - motion issue !
+          } */
+          // 0.0001 is a hack to prevent overlapping segments error which will need to look at
+          delay = delay +0.0001;
+          const segments:FlipCardAnimationSequence = [
+            getMoveRotateSegment(false,firstPeggedPosition,overlayDuration,undefined, delay,undefined),
+          ];
+          if(!isTop){
+            const instantFlipAnimation: FlipAnimation = {
+              flip: true,
+              duration:0.000001
+            }
+            segments.push(instantFlipAnimation,[undefined,{opacity:0},{duration:0.0001}])
+          }else{
+            const flipAnimation: FlipAnimation = {
+              flip: true,
+              duration:flipDuration
+            };
+            segments.push(flipAnimation);
+          }
+          segments.push(
+            createZIndexAnimationSegment(turnedOverZIndex, { at: delay + overlayDuration + flipDuration }),
+            getMoveRotateSegment(false,turnedOverPosition,turnOverDuration),
+            [undefined,{opacity:1},{duration:0.0001,onComplete: isTop ? onComplete : undefined}]
+          );
+
+          if (flipCardData.animationSequence) {
+            flipCardData.animationSequence.push(...segments);
+          } else {
+            flipCardData.animationSequence = segments;
+          }
+
+        }
+
+
         const addTurnOverTogetherAnimation = (
           prevFlipCardDatas: FlipCardDatas,
           newFlipCardDatas: FlipCardDatas,
@@ -785,7 +839,20 @@ function PlayMatchInner({
                     }
                   );
                 if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
-                  //todo
+                  applyTurnOverTogetherAnimation(
+                    newFlipCardData,
+                    turnedOverCardIndex,
+                    numTurnedOverCardsFromBefore,
+                    myMatch.pegging.turnedOverCards.length -
+                      numTurnedOverCardsFromBefore,
+                    delay,
+                    positions.peggingPositions.turnedOver,
+                    positions.peggingPositions.inPlay[0],
+                    discardDuration,
+                    discardDuration,
+                    flipDuration,
+                    onComplete
+                  );
                 }
               }
             });
@@ -806,6 +873,7 @@ function PlayMatchInner({
           let numCompleted = 0;
           return () => {
             numCompleted++;
+            console.log(`numCompleted ${numCompleted} of ${numCompletesToComplete}`)
             if (numCompleted === numCompletesToComplete) {
               animationCompleteCallback();
             }
@@ -882,12 +950,12 @@ function PlayMatchInner({
             }
 
             if (turnedOver) {
-              addTurnOverOneAtATimeAnimation(
+              addTurnOverTogetherAnimation(
                 prevFlipCardDatas,
                 newFlipCardDatas,
                 turnOverCardsDelay,
                 onComplete
-              );
+              )
             }
             return newFlipCardDatas;
           }

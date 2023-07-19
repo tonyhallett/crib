@@ -1,4 +1,4 @@
-import { Pips, PlayingCard } from "../generatedTypes";
+import { PlayingCard } from "../generatedTypes";
 import {
   DOMKeyframesDefinition,
   StyleKeyframesDefinition,
@@ -19,7 +19,6 @@ import {
   SegmentAnimationOptionsWithTransitionEnd,
   SegmentAnimationOptionsWithTransitionEndAndAt,
   SmartAnimationSequence,
-  SmartDomSegmentWithTransition,
   SmartSegment,
 } from "../fixAnimationSequence/createAnimationsFromSegments";
 import { At } from "../fixAnimationSequence/motion-types";
