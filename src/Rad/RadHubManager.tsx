@@ -1153,7 +1153,6 @@ const matches: ActionMyMatch[] = [
                   peggingScore: null as unknown as PegScoring,
                 },
 
-                
                 {
                   owner: "Me",
                   playingCard: KingSpades,
@@ -1253,7 +1252,7 @@ const matches: ActionMyMatch[] = [
           owner: "Player3",
           playingCard: EightHearts,
           peggingScore: null as unknown as PegScoring,
-        }
+        },
       ],
       inPlayCards: [
         {

@@ -246,11 +246,19 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   turnedOverPosition: Point,
   onComplete: OnComplete
 ): void => {
-  const positionFromTop = numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1;
+  const positionFromTop =
+    numTurnedOverCardsFromBefore +
+    numCardsTurningOver -
+    turnedOverCardIndex -
+    1;
   // later pegged lower the zindex
-  const turnedOverZIndex = 50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
+  const turnedOverZIndex =
+    50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
   // move later pegged first
-  const at = delay + positionFromTop * (discardDuration + flipDuration + zIndexAnimationDuration);
+  const at =
+    delay +
+    positionFromTop *
+      (discardDuration + flipDuration + zIndexAnimationDuration);
   const flipAnimation: FlipAnimation = {
     flip: true,
     duration: flipDuration,
@@ -764,43 +772,65 @@ function PlayMatchInner({
           numCardsTurningOver: number,
           delay: number,
           turnedOverPosition: Point,
-          firstPeggedPosition:Point,
-          overlayDuration:number,
-          turnOverDuration:number,
-          flipDuration:number,
+          firstPeggedPosition: Point,
+          overlayDuration: number,
+          turnOverDuration: number,
+          flipDuration: number,
           onComplete: OnComplete
         ): void => {
-          const positionFromTop = numTurnedOverCardsFromBefore + numCardsTurningOver - turnedOverCardIndex -  1;
+          const positionFromTop =
+            numTurnedOverCardsFromBefore +
+            numCardsTurningOver -
+            turnedOverCardIndex -
+            1;
           // later pegged lower the zindex
-          const turnedOverZIndex = 50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
+          const turnedOverZIndex =
+            50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
           const isTop = positionFromTop === 0;
-          
+
           /* const overlayTransitionEnd: Target | undefined = isTop ? undefined : {
             opacity: 0,
             x:firstPeggedPosition.x - motion issue !
           } */
           // 0.0001 is a hack to prevent overlapping segments error which will need to look at
-          delay = delay +0.0001;
-          const segments:FlipCardAnimationSequence = [
-            getMoveRotateSegment(false,firstPeggedPosition,overlayDuration,undefined, delay,undefined),
+          delay = delay + 0.0001;
+          const segments: FlipCardAnimationSequence = [
+            getMoveRotateSegment(
+              false,
+              firstPeggedPosition,
+              overlayDuration,
+              undefined,
+              delay,
+              undefined
+            ),
           ];
-          if(!isTop){
+          if (!isTop) {
             const instantFlipAnimation: FlipAnimation = {
               flip: true,
-              duration:0.000001
-            }
-            segments.push(instantFlipAnimation,[undefined,{opacity:0},{duration:0.0001}])
-          }else{
+              duration: 0.000001,
+            };
+            segments.push(instantFlipAnimation, [
+              undefined,
+              { opacity: 0 },
+              { duration: 0.0001 },
+            ]);
+          } else {
             const flipAnimation: FlipAnimation = {
               flip: true,
-              duration:flipDuration
+              duration: flipDuration,
             };
             segments.push(flipAnimation);
           }
           segments.push(
-            createZIndexAnimationSegment(turnedOverZIndex, { at: delay + overlayDuration + flipDuration }),
-            getMoveRotateSegment(false,turnedOverPosition,turnOverDuration),
-            [undefined,{opacity:1},{duration:0.0001,onComplete: isTop ? onComplete : undefined}]
+            createZIndexAnimationSegment(turnedOverZIndex, {
+              at: delay + overlayDuration + flipDuration,
+            }),
+            getMoveRotateSegment(false, turnedOverPosition, turnOverDuration),
+            [
+              undefined,
+              { opacity: 1 },
+              { duration: 0.0001, onComplete: isTop ? onComplete : undefined },
+            ]
           );
 
           if (flipCardData.animationSequence) {
@@ -808,9 +838,7 @@ function PlayMatchInner({
           } else {
             flipCardData.animationSequence = segments;
           }
-
-        }
-
+        };
 
         const addTurnOverTogetherAnimation = (
           prevFlipCardDatas: FlipCardDatas,
@@ -954,8 +982,9 @@ function PlayMatchInner({
                 newFlipCardDatas,
                 turnOverCardsDelay,
                 onComplete
-              )
+              );
             }
+
             return newFlipCardDatas;
           }
         );
