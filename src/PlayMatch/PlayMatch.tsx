@@ -873,7 +873,6 @@ function PlayMatchInner({
           let numCompleted = 0;
           return () => {
             numCompleted++;
-            console.log(`numCompleted ${numCompleted} of ${numCompletesToComplete}`)
             if (numCompleted === numCompletesToComplete) {
               animationCompleteCallback();
             }
