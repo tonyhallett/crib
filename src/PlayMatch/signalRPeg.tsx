@@ -1,13 +1,13 @@
-import { MyPegging, PlayingCard } from "../generatedTypes";
+import { MyPegging, PeggedCard, PlayingCard } from "../generatedTypes";
 import { arrayLast } from "../utilities/arrayHelpers";
 import { FlipCardDatas } from "./PlayMatch";
 import { numPeggingInPlayCards } from "./flipCardDataHelpers";
 import { getCardValue } from "./getCardValue";
 
 // bottom first
-export function getTurnOverOrder(turnedOverCards: PlayingCard[]) {
-  const turnOverOrder: PlayingCard[] = [];
-  let peggedCards: PlayingCard[] = [];
+export function getTurnOverOrder(turnedOverCards: PeggedCard[]) {
+  const turnOverOrder: PeggedCard[] = [];
+  let peggedCards: PeggedCard[] = [];
   let currentScore = 0;
   const turnOverTheCards = () => {
     peggedCards.reverse();
@@ -16,7 +16,7 @@ export function getTurnOverOrder(turnedOverCards: PlayingCard[]) {
   };
   for (let i = 0; i < turnedOverCards.length; i++) {
     const peggedCard = turnedOverCards[i];
-    const cardValue = getCardValue(peggedCard.pips);
+    const cardValue = getCardValue(peggedCard.playingCard.pips);
     const newCurrentScore = currentScore + cardValue;
     if (newCurrentScore === 31) {
       currentScore = 0;

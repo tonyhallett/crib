@@ -11,6 +11,8 @@ import {
   PegScoring,
   Pips,
   Suit,
+  FourOfAKind,
+  ThreeOfAKind,
 } from "../generatedTypes";
 import { motion } from "framer-motion";
 import { cribStorage } from "./getRad";
@@ -34,6 +36,7 @@ import {
   KingHearts,
   QueenHearts,
   EightHearts,
+  NineHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -1360,6 +1363,309 @@ const matches: ActionMyMatch[] = [
     ],
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   }, */
+
+  {
+    actions: [
+      {
+        methodName: "peg",
+        args: [
+          "Player2",
+          {
+            pips: Pips.Ace,
+            suit: Suit.Hearts,
+          } as PlayingCard,
+          {
+            id: "2 player pegging turnedover - peg completes",
+            changeHistory: {
+              lastChangeDate: new Date("21 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 8,
+            },
+            title: "2 player pegging turnedover - peg completes",
+            gameState: CribGameState.Show,
+            box: [],
+            myCards: [],
+            cutCard: TwoDiamonds,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 13, backPeg: 12 },
+            ],
+            pegging: {
+              turnedOverCards: [
+                {
+                  owner: "Me",
+                  playingCard: KingSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: QueenSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: JackSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+              ],
+              inPlayCards: [
+                {
+                  owner: "Me",
+                  playingCard: TwoSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: ThreeSpades,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: NineHearts,
+                  peggingScore: null as unknown as PegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceHearts,
+                  peggingScore: {
+                    score:1,
+                    is31: false,
+                    is15: false,
+                    isLastGo: true,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
+              ],
+              goHistory: [],
+              nextPlayer: "Me",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: {
+              boxScore:{
+                fifteenTwos:[],
+                runs:[],
+                pairs:[],
+                flush:[],
+                fourOfAKind:undefined as unknown as FourOfAKind,
+                threeOfAKind:undefined as unknown as ThreeOfAKind,
+                oneForHisKnob:undefined as unknown as PlayingCard,
+                score:0
+              },
+              playerShowScores:[
+                {
+                  playerId:"Me",
+                  showScore:{
+                    fifteenTwos:[],
+                    runs:[],
+                    pairs:[],
+                    flush:[],
+                    fourOfAKind:undefined as unknown as FourOfAKind,
+                    threeOfAKind:undefined as unknown as ThreeOfAKind,
+                    oneForHisKnob:undefined as unknown as PlayingCard,
+                    score:0
+                  }
+                  
+                },
+                {
+                  playerId:"Player2",
+                  showScore:{
+                    fifteenTwos:[],
+                    runs:[],
+                    pairs:[],
+                    flush:[],
+                    fourOfAKind:undefined as unknown as FourOfAKind,
+                    threeOfAKind:undefined as unknown as ThreeOfAKind,
+                    oneForHisKnob:undefined as unknown as PlayingCard,
+                    score:0
+                  }
+                  
+                }
+              ]
+            }
+          } as MyMatch,
+        ],
+      },
+      {
+        methodName: "peg",
+        args: [
+          "Me",
+          JackSpades,
+          {
+            id: "2 player pegging - none pegged ( no score )",
+            changeHistory: {
+              lastChangeDate: new Date("21 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 9,
+            },
+            title: "2 player pegging - none pegged ( no score )",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [AceSpades, KingSpades, QueenSpades],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              // temp two in a row
+              inPlayCards: [
+                {
+                  owner: "Player2",
+                  playingCard: {
+                    pips: Pips.Ace,
+                    suit: Suit.Hearts,
+                  },
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
+                {
+                  owner: "Me",
+                  playingCard: JackSpades,
+                  peggingScore: {
+                    score: 0,
+                    is31: false,
+                    is15: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                  },
+                },
+              ],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: null as unknown as PlayerScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                ready: false,
+              },
+            ],
+            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+          } as MyMatch,
+        ],
+      },
+    ],
+    currentAction: 0,
+    id: "2 player pegging turnedover - peg completes",
+    changeHistory: {
+      lastChangeDate: new Date("19 May 2023 09:00"),
+      matchCreationDate: new Date("20 December 2022 14:48"),
+      numberOfActions: 7,
+    },
+    title: "2 player pegging turnedover - peg completes",
+    gameState: CribGameState.Pegging,
+    box: [],
+    myCards: [],
+    cutCard: TwoDiamonds,
+    scores: [
+      { games: 1, frontPeg: 22, backPeg: 9 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+    ],
+    pegging: {
+      turnedOverCards: [
+        {
+          owner: "Me",
+          playingCard: KingSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: QueenSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: JackSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: AceSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+      ],
+      inPlayCards: [
+        {
+          owner: "Me",
+          playingCard: TwoSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: ThreeSpades,
+          peggingScore: null as unknown as PegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: NineHearts,
+          peggingScore: null as unknown as PegScoring,
+        },
+      ],
+      goHistory: [],
+      nextPlayer: "Player2",
+      cannotGoes: [false],
+      myCannotGo: false,
+    },
+    myId: "Me",
+    dealerDetails: {
+      first: "Me",
+      current: "Me",
+    },
+    myReady: false,
+    matchWinDeterminant: "BestOf_3",
+    myScoringHistory: null as unknown as PlayerScoringHistory,
+    otherPlayers: [
+      {
+        id: "Player2",
+        discarded: true,
+        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        ready: false,
+      },
+    ],
+    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+  },
 ];
 
 const cardMatch = (card1: PlayingCard, card2: PlayingCard | undefined) => {
