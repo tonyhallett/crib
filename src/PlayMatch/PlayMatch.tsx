@@ -372,6 +372,13 @@ function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
   }
 }
 
+function getPlayingCardString(playingCard: PlayingCard|undefined){
+  if(playingCard){
+    return `${playingCard.pips} of ${playingCard.suit}`;
+  }
+  return "";
+} 
+
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -1026,6 +1033,7 @@ function PlayMatchInner({
           }
         }
 
+        const returnedZIndex = -1;
         const returnTurnedOverCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
           at: number,
@@ -1084,7 +1092,7 @@ function PlayMatchInner({
                 const positionIndex = ownerCardsWithTurnOverOrderIndex.findIndex(
                   (ownerCardWithTurnOverOrderIndex) => ownerCardWithTurnOverOrderIndex.index === index
                 );
-
+                
                 segments.push(
                   getMoveRotateSegment(
                     handPositions.isHorizontal,
@@ -1093,15 +1101,16 @@ function PlayMatchInner({
                     index * returnDuration
                   )
                 );
-
+                segments.push(createZIndexAnimationSegment(returnedZIndex,{}));
                 setOrAddToAnimationSequence(flipCardData, segments);
               }
             });
           });
           
-          return myMatch.pegging.turnedOverCards.length * returnDuration;
+          const duration =  myMatch.pegging.turnedOverCards.length * returnDuration + flipDuration;
+          return duration;
         };
-
+        
         // will need the delay for turned over
         const returnInPlayCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
@@ -1137,21 +1146,24 @@ function PlayMatchInner({
                 
                 
                 const ownerIndex = ownerCards.indexOf(inPlayCards[peggedCardIndex]);
+                // greater the index lower the position index
                 const inPlayIndex = ownerCards.length - ownerIndex;
 
                 const discardPositionIndex =
                   startIndex + inPlayIndex;
-                // greater the index lower the position index
+                
+                const returnIndex =  (inPlayCards.length - peggedCardIndex - 1);
                 const segments: FlipCardAnimationSequence = [
                   getMoveRotateSegment(
                     handPosition.isHorizontal,
                     handPosition.positions[discardPositionIndex],
                     returnDuration,
                     undefined,
-                    at + returnDuration * (inPlayCards.length - peggedCardIndex)
+                    at + returnDuration * returnIndex
                   ),
+                  createZIndexAnimationSegment(returnedZIndex,{})
                 ];
-
+                
                 setOrAddToAnimationSequence(flipCardData, segments);
               }
             });
@@ -1181,10 +1193,9 @@ function PlayMatchInner({
           newFlipCardDatas: FlipCardDatas,
           at: number,
           flipDuration: number,
+          returnDuration:number,
           onComplete: () => void
         ) => {
-          const returnDuration = 0.5;
-          
           const cardsAndOwners = getCardsWithOwners(newFlipCardDatas);
 
           let returnInPlayAt = at + 0.0001;
@@ -1269,6 +1280,7 @@ function PlayMatchInner({
                 newFlipCardDatas,
                 pegDelay,
                 flipDuration,
+                discardDuration,
                 onComplete
               );
             }
