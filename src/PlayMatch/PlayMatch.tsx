@@ -372,13 +372,6 @@ function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
   }
 }
 
-function getPlayingCardString(playingCard: PlayingCard|undefined){
-  if(playingCard){
-    return `${playingCard.pips} of ${playingCard.suit}`;
-  }
-  return "";
-} 
-
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
