@@ -1,10 +1,6 @@
 import { FlipCardDatas } from "./PlayMatch";
 
 export type AnimationCompletionRegistration = (callback: () => void) => void;
-/* export type FlipCardDatasWithCompletionRegistration = [
-  FlipCardDatas,
-  AnimationCompletionRegistration
-]; */
 
 type AnimationProvider = (
   animationCompletedCallback: () => void,

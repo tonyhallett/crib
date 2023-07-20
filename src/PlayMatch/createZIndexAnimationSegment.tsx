@@ -6,7 +6,7 @@ export type ZIndexAnimationOptions = Omit<
   SegmentAnimationOptionsWithTransitionEndAndAt,
   "duration"
 >;
-export const zIndexAnimationDuration = 0.00001;
+export const instantAnimationDuration = 0.00001;
 export function createZIndexAnimationSegment(
   zIndex: number,
   options: ZIndexAnimationOptions
@@ -18,7 +18,7 @@ export function createZIndexAnimationSegment(
     } as DOMKeyframesDefinition,
     {
       ...options,
-      duration: 0.00001,
+      duration: instantAnimationDuration,
     },
   ];
 }

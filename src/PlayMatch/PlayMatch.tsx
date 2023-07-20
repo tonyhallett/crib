@@ -31,6 +31,7 @@ import {
 } from "./matchLayoutManager";
 import { getDealerPositions } from "./getDealerPositions";
 import {
+  DomSegmentOptionalElementOrSelectorWithOptions,
   FlipAnimation,
   FlipCard,
   FlipCardAnimationSequence,
@@ -53,7 +54,7 @@ import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyControl } from "./useMyControl";
 import {
   createZIndexAnimationSegment,
-  zIndexAnimationDuration,
+  instantAnimationDuration,
 } from "./createZIndexAnimationSegment";
 import { getCardValue } from "./getCardValue";
 import { useSnackbar } from "notistack";
@@ -264,7 +265,7 @@ const addFlipMoveToTurnedOverPositionAnimationSequence = (
   const at =
     delay +
     positionFromTop *
-      (discardDuration + flipDuration + zIndexAnimationDuration);
+      (discardDuration + flipDuration + instantAnimationDuration);
   const flipAnimation: FlipAnimation = {
     flip: true,
     duration: flipDuration,
@@ -702,8 +703,8 @@ function PlayMatchInner({
           peggedCardPosition: number,
           duration: number,
           animationCompleteCallback: () => void
-        ): FlipCardAnimationSequence => {
-          return [
+        ): [FlipCardAnimationSequence,number] => {
+          return [[
             createZIndexAnimationSegment(5 + peggedCardPosition, {}),
             getMoveRotateSegment(
               false,
@@ -720,7 +721,7 @@ function PlayMatchInner({
                 }
               }
             ),
-          ];
+          ],instantAnimationDuration + duration];
         };
 
         const ensurePeggingState = (cardData: FlipCardData) => {
@@ -877,12 +878,6 @@ function PlayMatchInner({
             50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
           const isTop = positionFromTop === 0;
 
-          /* const overlayTransitionEnd: Target | undefined = isTop ? undefined : {
-            opacity: 0,
-            x:firstPeggedPosition.x - motion issue !
-          } */
-          // 0.0001 is a hack to prevent overlapping segments error which will need to look at
-          delay = delay + 0.0001;
           const segments: FlipCardAnimationSequence = [
             getMoveRotateSegment(
               false,
@@ -893,15 +888,16 @@ function PlayMatchInner({
               undefined
             ),
           ];
+          
           if (!isTop) {
             const instantFlipAnimation: FlipAnimation = {
               flip: true,
-              duration: 0.000001,
+              duration: instantAnimationDuration,
             };
             segments.push(instantFlipAnimation, [
               undefined,
               { opacity: 0 },
-              { duration: 0.0001 },
+              { duration: instantAnimationDuration },
             ]);
           } else {
             const flipAnimation: FlipAnimation = {
@@ -918,15 +914,12 @@ function PlayMatchInner({
             [
               undefined,
               { opacity: 1 },
-              { duration: 0.0001, onComplete: isTop ? onComplete : undefined },
+              { duration: instantAnimationDuration, onComplete: isTop ? onComplete : undefined },
             ]
           );
 
-          if (flipCardData.animationSequence) {
-            flipCardData.animationSequence.push(...segments);
-          } else {
-            flipCardData.animationSequence = segments;
-          }
+          setOrAddToAnimationSequence(flipCardData,segments);
+        
         };
 
         const addTurnOverTogetherAnimation = (
@@ -983,13 +976,14 @@ function PlayMatchInner({
         };
 
         const createOnComplete = (
-          addTurnOverAnimation: boolean,
+          additionalAnimation: boolean,
           animationCompleteCallback: () => void
         ) => {
-          const numCompletesToComplete = addTurnOverAnimation ? 2 : 1;
+          const numCompletesToComplete = additionalAnimation ? 2 : 1;
           let numCompleted = 0;
           return () => {
             numCompleted++;
+            console.log(`numCompletesToComplete ${numCompletesToComplete} - numCompleted ${numCompleted}`);
             if (numCompleted === numCompletesToComplete) {
               animationCompleteCallback();
             }
@@ -1026,6 +1020,13 @@ function PlayMatchInner({
           }
         }
 
+        const createHideShowSegment = (hide:boolean):DomSegmentOptionalElementOrSelectorWithOptions => {
+          return [
+            undefined,
+            { opacity: hide ? 0 : 1 },
+            { duration: instantAnimationDuration },
+          ]
+        }
         const returnedZIndex = -1;
         const returnTurnedOverCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
@@ -1034,6 +1035,7 @@ function PlayMatchInner({
           returnDuration: number
         ): number => {
           const order = getTurnOverOrder(myMatch.pegging.turnedOverCards);
+          const moveDelay = 0.2;
 
           cardsAndOwners.forEach((cardsAndOwner) => {
             const owner = cardsAndOwner.owner;
@@ -1061,11 +1063,7 @@ function PlayMatchInner({
                   createZIndexAnimationSegment(50 + order.length - index, { at }),
                 ];
                 if (index !== 0) {
-                  segments.push([
-                    undefined,
-                    { opacity: 0 },
-                    { duration: 0.0001 },
-                  ]);
+                  segments.push(createHideShowSegment(true));
                 }
                 const flipAnimation: FlipAnimation = {
                   flip: true,
@@ -1074,24 +1072,28 @@ function PlayMatchInner({
                 segments.push(flipAnimation);
   
                 if (index !== 0) {
-                  segments.push([
-                    undefined,
-                    { opacity: 1 },
-                    { duration: 0.0001 },
-                  ]);
+                  segments.push(createHideShowSegment(false));
                 }
                 
                 //lower the order lower the positionIndex
                 const positionIndex = ownerCardsWithTurnOverOrderIndex.findIndex(
                   (ownerCardWithTurnOverOrderIndex) => ownerCardWithTurnOverOrderIndex.index === index
                 );
+                /*
+                  top card needs to account for ones below it have longer durations
+                  this should be the code but does not work
+                  const additionalDelayIfTop = index === 0 ? 2 * instantAnimationDuration : 0;
+
+                  0.1 does but can just have a delay that applied to all of them
+                */
+                
                 
                 segments.push(
                   getMoveRotateSegment(
                     handPositions.isHorizontal,
                     handPositions.positions[positionIndex],
                     returnDuration,
-                    index * returnDuration
+                    moveDelay + index * returnDuration
                   )
                 );
                 segments.push(createZIndexAnimationSegment(returnedZIndex,{}));
@@ -1100,7 +1102,7 @@ function PlayMatchInner({
             });
           });
           
-          const duration =  myMatch.pegging.turnedOverCards.length * returnDuration + flipDuration;
+          const duration = moveDelay +  myMatch.pegging.turnedOverCards.length * returnDuration + flipDuration;
           return duration;
         };
         
@@ -1108,7 +1110,8 @@ function PlayMatchInner({
         const returnInPlayCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
           at: number,
-          returnDuration: number
+          returnDuration: number,
+          onComplete: () => void
         ) => {
           const inPlayCards = myMatch.pegging.inPlayCards;
           cardsAndOwners.forEach((cardsAndOwner) => {
@@ -1154,7 +1157,7 @@ function PlayMatchInner({
                     undefined,
                     at + returnDuration * returnIndex
                   ),
-                  createZIndexAnimationSegment(returnedZIndex,{})
+                  createZIndexAnimationSegment(returnedZIndex,{onComplete: peggedCardIndex === 0 ? onComplete : undefined})
                 ];
                 
                 setOrAddToAnimationSequence(flipCardData, segments);
@@ -1191,7 +1194,7 @@ function PlayMatchInner({
         ) => {
           const cardsAndOwners = getCardsWithOwners(newFlipCardDatas);
 
-          let returnInPlayAt = at + 0.0001;
+          let returnInPlayAt = at;
           if (myMatch.pegging.turnedOverCards.length > 0) {
             // prev and new could be the same
             const turnedOverDuration = returnTurnedOverCardsToPlayers(
@@ -1206,7 +1209,8 @@ function PlayMatchInner({
           returnInPlayCardsToPlayers(
             cardsAndOwners,
             returnInPlayAt,
-            returnDuration
+            returnDuration,
+            onComplete
           );
         };
 
@@ -1231,21 +1235,19 @@ function PlayMatchInner({
             const peggedCardPosition =
               getPeggedCardPositionIndex(prevFlipCardDatas);
 
-            let pegDelay = discardDuration;
-
             const onComplete = createOnComplete(
-              turnedOver,
+              turnedOver || myMatch.gameState === CribGameState.Show,
               animationCompleteCallback
             );
 
-            const moveToPeggingPositionAnimationSequence =
+            const [moveToPeggingPositionAnimationSequence,pegDuration] =
               getMoveToPeggingPositionAnimationSequence(
                 peggedCard,
                 peggedCardPosition,
                 discardDuration,
                 onComplete
               );
-
+            let pegDelay = pegDuration;
             if (isMe) {
               iPegged(newFlipCardDatas, moveToPeggingPositionAnimationSequence);
             } else {
