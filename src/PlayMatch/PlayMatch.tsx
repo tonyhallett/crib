@@ -19,6 +19,8 @@ import {
   PlayerShowScore,
   PlayingCard,
   Score,
+  ShowScore,
+  ShowScoring,
 } from "../generatedTypes";
 import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
@@ -327,6 +329,7 @@ const getPlayerPositionIndex = (
     ? 0
     : otherPlayers.findIndex((otherPlayer) => otherPlayer.id === playerId) + 1;
 };
+
 function getPeggerScoreIndex(
   pegger: string,
   myId: string,
@@ -364,6 +367,7 @@ function getPeggedScoreWhenShowState(peggedCard: PeggedCard, myMatch: MyMatch) {
     return score;
   });
 }
+
 function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
   switch (myMatch.gameState) {
     case CribGameState.Show:
@@ -1165,8 +1169,8 @@ function PlayMatchInner({
             });
           });
         };
-
-        type CardsAndOwners = {cards:FlipCardData[],owner:string}[]
+        type CardsAndOwner = {cards:FlipCardData[],owner:string}
+        type CardsAndOwners = CardsAndOwner[]
         const getCardsWithOwners = (newFlipCardDatas: FlipCardDatas) => {
           const cardsAndOwners:CardsAndOwners = [
             {
@@ -1183,6 +1187,74 @@ function PlayMatchInner({
           return cardsAndOwners;
         }
 
+        interface ShowScoreParts{
+          cards:PlayingCard[], // instead of this an index into flipCardDatas or FlipCardData[]
+          score:number,
+          description:string
+        }
+
+        const getShowScoreParts = (showScore:ShowScore) : ShowScoreParts[] => {
+          // use a map of PlayingCard to FlipCardData
+          throw new Error("Not implemented");
+        }
+        // naming tbd
+        const getPlayerScorings = (
+          showScoring:ShowScoring,
+          cardsAndOwners: CardsAndOwners,
+        ) => {
+          const boxCardDatas:FlipCardData[] = [];
+          // these are in order
+          const playerScoring = showScoring.playerShowScores.map((playerShowScore) => {
+            const cardsAndOwner = cardsAndOwners.find((cardsAndOwner) => cardsAndOwner.owner === playerShowScore.playerId) as CardsAndOwner;
+            const cards = cardsAndOwner.cards;
+            const showCardDatas:FlipCardData[] = [];
+            cards.forEach(card => {
+              if (card.state === FlipCardState.PeggingInPlay|| card.state === FlipCardState.PeggingTurnedOver) {
+                showCardDatas.push(card);
+              }else{
+                boxCardDatas.push(card);
+              }
+            });
+            const showScoreParts = getShowScoreParts(playerShowScore.showScore);
+            return {
+              showCardDatas,
+              showScoreParts
+            }
+          });
+          playerScoring.push({
+            showCardDatas: boxCardDatas,
+            showScoreParts: getShowScoreParts(showScoring.boxScore)
+          });
+          return playerScoring;
+        }
+        const showAndScore = (
+          showScoring:ShowScoring,
+          cardsAndOwners: CardsAndOwners,
+          //scores:Score[],
+          box:PlayingCard[]
+        ) => {
+          
+          const playerScorings = getPlayerScorings(showScoring,cardsAndOwners);
+          playerScorings.forEach((playerScoring,i) => {
+            playerScoring.showScoreParts.forEach(showScorePart => {
+              const isBox = i === playerScorings.length - 1;
+              const cards = showScorePart.cards;
+              const showCardDatas = playerScoring.showCardDatas;
+
+              if(isBox){
+                // need to add the playing card to the flipCardData
+              }else{
+                // instead of doing this each time ......  Can I just work with parts that already have the flipCardData ?
+                cards.forEach(card => {
+                  const flipCardData = showCardDatas.find(showCardData => showCardData.playingCard === card) as FlipCardData;
+                  // do animation keeping track of at
+                });
+              }
+            });
+          });
+
+
+        }
 
         const addShowAnimation = (
           prevFlipCardDatas: FlipCardDatas,
@@ -1212,6 +1284,9 @@ function PlayMatchInner({
             returnDuration,
             onComplete
           );
+
+          // have type CardsAndOwners = {cards:FlipCardData[],owner:string}[]
+
         };
 
         animationManager.current.animate(

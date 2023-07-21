@@ -229,6 +229,7 @@ function FlipCardInner(props: FlipCardProps) {
       }}
     >
       <div
+        className="dropShadow"
         style={{
           backgroundColor: "inherit",
           filter: applyDropShadow
