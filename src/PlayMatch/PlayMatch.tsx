@@ -12,6 +12,7 @@ import {
   CribGameState,
   CribHub,
   MyMatch,
+  OtherPlayer,
   PegScoring,
   PeggedCard,
   Pips,
@@ -69,6 +70,7 @@ import {
   getTurnOverOrder,
 } from "./signalRPeg";
 import { useSnackbarWithDelay } from "../hooks/useSnackbarWithDelay";
+import { PlayingCardLookupFlipCardData } from "./PlayingCardLookupFlipCardData";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
@@ -357,6 +359,124 @@ function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
     default:
       return myMatch.scores;
   }
+}
+
+
+
+function cloneScore(score:Score):Score {
+  return {
+    ...score
+  }
+}
+function cloneScores(scores:Score[]):Score[]{
+  return scores.map(score => cloneScore(score));
+}
+
+/*
+ scores [f:100:b:50], [f:80:b:20]
+                                                     want the score to be  
+                     teampegger ( team dealer), team non dealer -           teampegger ( team dealer), team non dealer
+peg 5                5                          0                           shifted 5 from fs - 19     shifted 0 ( no change ) from fs - 6
+-- scoring
+team non dealer  2   5                          2                           no change                  shifted 2 from before
+team dealer      3   8                          2                           shifted 3 from 1st or 8        no change
+team non dealer  4   8                          6
+team dealer      5   13                         6
+-------
+team dealer box  6   19                         6    
+
+if run backwards in playerScores then take away from the last one ( first time is total ) - then can move the pegs properly.
+*/
+
+
+
+interface SplitPeggingShowScores{
+  peggingScores:Score[],
+  showScores:Score[][] // one for when scoring each player in turn order
+
+  boxScores:Score[]
+}
+
+function shiftScoreBack(score:Score, amount:number): Score {
+  return {
+    games:score.games,
+    frontPeg:score.backPeg,
+    backPeg:score.frontPeg - amount
+  }
+}
+
+function getTeamTotalScored(
+  peggedCard:PeggedCard,
+  showScoring:ShowScoring,
+  scores:Score[],
+  myId:string,
+  otherPlayers:OtherPlayer[]
+){
+  const peggingScore = peggedCard.peggingScore.score;
+
+  let teamNonBoxScores = showScoring.playerShowScores[0].showScore.score + showScoring.playerShowScores[2].showScore.score;
+  const teamNonBoxFullScore = scores[getPlayerScoreIndex(showScoring.playerShowScores[0].playerId,myId,otherPlayers, true)]
+  let teamNonBoxRunningTotal = 0
+
+  let teamBoxScores = showScoring.playerShowScores[1].showScore.score + showScoring.playerShowScores[3].showScore.score + showScoring.boxScore.score;
+  const teamBoxFullScore = scores[getPlayerScoreIndex(showScoring.playerShowScores[3].playerId,myId,otherPlayers, true)]
+  let teamBoxRunningTotal = 0;
+
+  const peggerIndex = showScoring.playerShowScores.map(psc => psc.playerId).indexOf(peggedCard.owner);
+  if(peggerIndex === 0 || peggerIndex === 2){
+    teamNonBoxScores += peggingScore;
+    teamNonBoxRunningTotal = peggingScore;
+  }else{
+    teamBoxScores += peggingScore;
+    teamBoxRunningTotal = peggingScore;
+  }
+
+  const scoresInReverse:Score[][] = [[teamBoxFullScore, teamNonBoxFullScore]]
+  showScoring.playerShowScores.reverse().forEach((playerScore, index) => {
+    const score = playerScore.showScore.score;
+
+    const lastScores = scoresInReverse[scoresInReverse.length - 1];
+    const lastTeamBoxScore = lastScores[0];
+    const lastTeamNonBoxScore = lastScores[1];
+    
+    // as reversed the team with the box is first
+    if(index === 2 || index === 0){
+      scoresInReverse.push([shiftScoreBack(lastTeamBoxScore,score),cloneScore(lastTeamNonBoxScore)])
+    }else{
+      scoresInReverse.push([cloneScore(lastTeamBoxScore),shiftScoreBack(lastTeamNonBoxScore,score)]);
+    }
+  });
+
+  
+  // do pegged last
+
+  
+}
+
+function splitPeggingShowScoresForTeams(
+  peggedCard:PeggedCard,
+  showScoring:ShowScoring,
+){
+
+}
+
+function splitPeggingShowScores(
+  peggedCard:PeggedCard,
+  showScoring:ShowScoring,
+  scores:Score[],
+  myId:string,
+  otherPlayers:OtherPlayer[],
+  isTeams:boolean
+) :SplitPeggingShowScores {
+  
+
+  // if peg can shift backwards ?
+  
+  throw new Error("Not implemented");
+  /* return {
+    boxScores:scores,    
+  } */
+ 
 }
 
 function PlayMatchInner({
@@ -654,7 +774,6 @@ function PlayMatchInner({
           }
         );
       },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       peg(playerId, peggedPlayingCard, myMatch) {
         const peggingScored = (
           peggedCard: PeggedCard,
@@ -1110,7 +1229,6 @@ function PlayMatchInner({
           return duration;
         };
 
-        // will need the delay for turned over
         const returnInPlayCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
           at: number,
@@ -1177,6 +1295,7 @@ function PlayMatchInner({
 
           return numCardsReturned * returnDuration;
         };
+        
         type CardsAndOwner = { cards: FlipCardData[]; owner: string };
         type CardsAndOwners = CardsAndOwner[];
         const getCardsWithOwners = (newFlipCardDatas: FlipCardDatas) => {
@@ -1217,6 +1336,7 @@ function PlayMatchInner({
         type GetNotScoring = (
           contributingCards: PlayingCard[]
         ) => FlipCardData[];
+
         const addFifteenTwoShowScoreParts = (
           showScoreParts: ShowScorePart[],
           contributingCards: PlayingCard[][],
@@ -1235,27 +1355,6 @@ function PlayMatchInner({
             showScoreParts.push(showScorePart);
           });
         };
-
-        interface FlipCardDataLookup {
-          [playingCard: string]: FlipCardData;
-        }
-        class PlayingCardLookupFlipCardData {
-          private lookup: FlipCardDataLookup = {};
-          constructor(handAndCutCard: FlipCardData[]) {
-            handAndCutCard.reduce<FlipCardDataLookup>((lookup, cardData) => {
-              const playingCard = cardData.playingCard as PlayingCard;
-              lookup[this.getKey(playingCard)] = cardData;
-
-              return lookup;
-            }, this.lookup);
-          }
-          private getKey(playingCard: PlayingCard) {
-            return `${playingCard.pips}${playingCard.suit}`;
-          }
-          get(playingCard: PlayingCard): FlipCardData {
-            return this.lookup[this.getKey(playingCard)];
-          }
-        }
 
         const getShowScoreParts = (
           showScore: ShowScore,
@@ -1444,7 +1543,6 @@ function PlayMatchInner({
           const showAnimator = getShowAnimator();
           // for now game not won and there is a box score
 
-          // maylands task
           const playerScorings = getPlayerScorings(
             showScoring,
             cardsAndOwners,
@@ -1585,6 +1683,7 @@ function PlayMatchInner({
             const turnedOver =
               myMatch.gameState === CribGameState.Pegging &&
               peggedCard.peggingScore.is31;
+
             const newFlipCardDatas = turnedOver
               ? setTurnedOver(prevFlipCardDatas)
               : { ...prevFlipCardDatas };
