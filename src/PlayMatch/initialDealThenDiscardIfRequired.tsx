@@ -5,7 +5,7 @@ import {
   PlayerPositions,
   Positions,
 } from "./matchLayoutManager";
-import { getDealerPositions } from "./getDealerPositions";
+import { getPlayerPositions } from "./getPlayerPositions";
 import {
   FlipCardData,
   FlipCardDatas,
@@ -403,11 +403,11 @@ export function dealThenDiscardIfRequired(
   const playerPositions = positions.playerPositions;
   const numCardsToDeal = getNumCardsToDeal(match);
   // for cut card and box
-  const dealerPositions = getDealerPositions(
+  const dealerPositions = getPlayerPositions(
     match.myId,
     match.dealerDetails.current,
     playerPositions,
-    match.otherPlayers.map((op) => op.id)
+    match.otherPlayers
   );
   const boxPosition = dealerPositions.box;
   const nonPlayerCardDatas = getNonPlayerCardDatas(

@@ -36,7 +36,9 @@ import {
   KingHearts,
   QueenHearts,
   EightHearts,
-  NineHearts,
+  TenDiamonds,
+  JackDiamonds,
+  KingClubs,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -1383,11 +1385,11 @@ const matches: ActionMyMatch[] = [
             },
             title: "2 player pegging turnedover - peg completes",
             gameState: CribGameState.Show,
-            box: [],
+            box: [AceDiamonds, TenDiamonds, JackDiamonds, KingClubs],
             myCards: [],
             cutCard: TwoDiamonds,
             scores: [
-              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 1, frontPeg: 26, backPeg: 22 },
               { games: 2, frontPeg: 15, backPeg: 12 },
             ],
             pegging: {
@@ -1426,7 +1428,7 @@ const matches: ActionMyMatch[] = [
                 },
                 {
                   owner: "Me",
-                  playingCard: NineHearts,
+                  playingCard: ThreeHearts,
                   peggingScore: null as unknown as PegScoring,
                 },
                 {
@@ -1478,7 +1480,10 @@ const matches: ActionMyMatch[] = [
                 {
                   playerId: "Me",
                   showScore: {
-                    fifteenTwos: [],
+                    fifteenTwos: [
+                      [KingSpades, TwoSpades, ThreeHearts],
+                      [JackSpades, TwoSpades, ThreeHearts],
+                    ],
                     runs: [],
                     pairs: [],
                     flush: [],
@@ -1559,7 +1564,7 @@ const matches: ActionMyMatch[] = [
         },
         {
           owner: "Me",
-          playingCard: NineHearts,
+          playingCard: ThreeHearts,
           peggingScore: null as unknown as PegScoring,
         },
       ],

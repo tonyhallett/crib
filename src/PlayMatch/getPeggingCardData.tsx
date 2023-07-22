@@ -6,7 +6,7 @@ import {
   PlayerPositions,
   Positions,
 } from "./matchLayoutManager";
-import { getDealerPositions } from "./getDealerPositions";
+import { getPlayerPositions } from "./getPlayerPositions";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
 import { getMyHandCardDatas } from "./getMyHandCardDatas";
@@ -156,11 +156,11 @@ export function getPeggingCardDatas(
   const numPlayers = match.otherPlayers.length + 1;
   const numPlayerCardsInBox = numPlayers === 3 ? 1 : 2;
 
-  const dealerPositions = getDealerPositions(
+  const dealerPositions = getPlayerPositions(
     match.myId,
     match.dealerDetails.current,
     playerPositions,
-    match.otherPlayers.map((op) => op.id)
+    match.otherPlayers
   );
 
   const nonPlayerCardDatas = getNonPlayerCardDatas(
