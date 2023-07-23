@@ -1,5 +1,5 @@
 import { PlayingCard } from "../generatedTypes";
-import { FlipCardData, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
 import { Box, Deck } from "./matchLayoutManager";
 
 export function getNonPlayerCardDatas(

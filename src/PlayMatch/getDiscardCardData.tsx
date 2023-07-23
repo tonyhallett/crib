@@ -6,7 +6,7 @@ import {
   Positions,
 } from "./matchLayoutManager";
 import { getPlayerPositions } from "./getPlayerPositions";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { getMyHandCardDatas } from "./getMyHandCardDatas";
 

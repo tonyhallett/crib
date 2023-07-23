@@ -1,5 +1,5 @@
 import { MyMatch } from "../generatedTypes";
-import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
+import { createZIndexAnimationSegment } from "./animationSegments";
 
 export function getNumCardsAlreadyDiscarded(
   myMatch: MyMatch,

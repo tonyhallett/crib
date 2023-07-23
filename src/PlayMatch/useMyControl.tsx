@@ -16,7 +16,7 @@ import {
   SmartDomSegmentWithTransition,
   SmartSegment,
 } from "../fixAnimationSequence/createAnimationsFromSegments";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
 import {
   getCardsUnderPoint,
   getCardsUnderPointWithState,

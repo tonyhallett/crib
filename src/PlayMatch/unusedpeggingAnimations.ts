@@ -5,9 +5,9 @@ import { MyMatch, PlayingCard } from "../generatedTypes";
 import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
 import { getMoveRotateSegment } from "./animationSegments";
 import {
-  instantAnimationDuration,
   createZIndexAnimationSegment,
-} from "./createZIndexAnimationSegment";
+  instantAnimationDuration,
+} from "./animationSegments";
 import { cardMatch } from "./playingCardUtilities";
 import { Positions } from "./matchLayoutManager";
 

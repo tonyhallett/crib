@@ -8,13 +8,7 @@ import {
   useContext,
 } from "react";
 import functionAppPath from "./utilities/functionAppPath";
-import {
-  clientFactory,
-  CribClient,
-  CribHub,
-  hubFactory,
-  MyMatch,
-} from "./generatedTypes";
+import { clientFactory, CribHub, hubFactory, MyMatch } from "./generatedTypes";
 import { isError } from "./utilities/typeHelpers";
 import { cribStorage, signalRX } from "./Rad/getRad";
 import { NavBar } from "./auth-components/NavBar";
@@ -33,12 +27,10 @@ import { Matches } from "./Matches";
 import { FetchingIndicator } from "./FetchingIndicator";
 import { Friends } from "./Friends";
 import {
-  PlayMatch,
   PlayMatchCribClient,
   PlayMatchCribClientMethods,
-  PlayMatchCribHub,
   PlayMatchProps,
-} from "./PlayMatch/PlayMatch";
+} from "./PlayMatch/PlayMatchTypes";
 import { closeSnackbar, useSnackbar } from "notistack";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { WoodWhenPlaying, woodUrl } from "./WoodWhenPlaying";
@@ -51,6 +43,7 @@ import { RequiresFullscreen } from "./RequiresFullscreen";
 import cribBoardWoodUrl from "./cribBoardWoodUrl";
 import { useImagePreload } from "./hooks/useImagePreload";
 import { PlayMatchContext } from "./PlayMatchContext";
+import { PlayMatch } from "./PlayMatch/PlayMatch";
 
 type MenuItem = "Friends" | "Matches";
 

@@ -1,4 +1,4 @@
-import { FlipCardDatas } from "./PlayMatch";
+import { FlipCardDatas } from "./PlayMatchTypes";
 
 export type AnimationCompletionRegistration = (callback: () => void) => void;
 

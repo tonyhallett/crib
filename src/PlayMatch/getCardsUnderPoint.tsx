@@ -1,6 +1,6 @@
 import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
 import { inBounds } from "./inBounds";
-import { FlipCardData, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
 
 export function getCardsUnderPoint(
   flipCardDatas: FlipCardData[],

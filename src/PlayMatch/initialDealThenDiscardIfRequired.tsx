@@ -11,10 +11,11 @@ import {
   FlipCardDatas,
   FlipCardState,
   UpdateLocalMatch,
-} from "./PlayMatch";
+} from "./PlayMatchTypes";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { MyMatch } from "../generatedTypes";
 import {
+  createZIndexAnimationSegment,
   getDiscardToBoxSegment,
   getMoveRotateSegment,
 } from "./animationSegments";
@@ -23,7 +24,6 @@ import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
 import { LocalMatch } from "../LocalMatch";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { MatchDetail } from "../App";
-import { createZIndexAnimationSegment } from "./createZIndexAnimationSegment";
 import { createDiscardZIndexAnimationSegment } from "./getDiscardToBoxZIndexStartSegment";
 
 interface DealPosition {

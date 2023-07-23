@@ -8,7 +8,7 @@ import {
 } from "./matchLayoutManager";
 import { getPlayerPositions } from "./getPlayerPositions";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
 import { getMyHandCardDatas } from "./getMyHandCardDatas";
 import { fill } from "../utilities/arrayHelpers";
 

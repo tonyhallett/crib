@@ -4,7 +4,7 @@ import { Size } from "./matchLayoutManager";
 import { FlipCard, classNameFromPlayingCard } from "../FlipCard/FlipCard";
 import { useDrag } from "@use-gesture/react";
 import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { FlipCardData, FlipCardState } from "./PlayMatch";
+import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
 import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
 
 const maximizePeggingOverlayCardSize = (

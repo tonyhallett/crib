@@ -1,4 +1,5 @@
-import { FlipCardAnimationSequence } from "../FlipCard/FlipCard";
+import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
+import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import {
   CribGameState,
   MyMatch,
@@ -6,6 +7,8 @@ import {
   PegScoring,
   PeggedCard,
   Pips,
+  PlayingCard,
+  Score,
 } from "../generatedTypes";
 import { arrayLast } from "../utilities/arrayHelpers";
 import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
@@ -13,14 +16,15 @@ import {
   createZIndexAnimationSegment,
   getMoveRotateSegment,
   instantAnimationDuration,
+  instantFlipAnimation,
   setOrAddToAnimationSequence,
 } from "./animationSegments";
 import {
   numPeggingInPlayCards,
   setPlayableCardsState,
 } from "./flipCardDataHelpers";
-import { DiscardPositions, Point } from "./matchLayoutManager";
-import { getCardValue } from "./playingCardUtilities";
+import { DiscardPositions, Point, Positions } from "./matchLayoutManager";
+import { cardMatch, getCardValue } from "./playingCardUtilities";
 import { getOfAKindScore } from "./scoringUtilities";
 import { getAppendMessage } from "./stringUtilities";
 
@@ -52,6 +56,34 @@ export const moveCutCardToPlayerHand = (
   setOrAddToAnimationSequence(cutCard, animation);
 };
 
+export const getMoveToPeggingPositionAnimationSequenceAndScore = (
+  peggedCardPosition: number,
+  inPlayPositions: Point[],
+  pegScores: Score[],
+  peggedCard: PeggedCard,
+  discardDuration: number,
+  peggingScored: (
+    peggedCard: PeggedCard,
+    pegScoring: Score[],
+    cribBoardAnimationOnComplete: () => void
+  ) => void,
+  animationCompleteCallback: () => void
+) => {
+  return getMoveToPeggingPositionAnimationSequence(
+    peggedCardPosition,
+    inPlayPositions,
+    discardDuration,
+    () => {
+      const peggingScore = peggedCard.peggingScore;
+      if (peggingScore.score > 0) {
+        peggingScored(peggedCard, pegScores, animationCompleteCallback);
+      } else {
+        animationCompleteCallback();
+      }
+    }
+  );
+};
+
 export const getMoveToPeggingPositionAnimationSequence = (
   peggedCardPosition: number,
   inPlay: Point[],
@@ -72,6 +104,123 @@ export const getMoveToPeggingPositionAnimationSequence = (
     ],
     instantAnimationDuration + duration,
   ];
+};
+
+const applyTurnOverTogetherAnimation = (
+  flipCardData: FlipCardData,
+  turnedOverCardIndex: number,
+  numTurnedOverCardsFromBefore: number,
+  numCardsTurningOver: number,
+  delay: number,
+  turnedOverPosition: Point,
+  firstPeggedPosition: Point,
+  overlayDuration: number,
+  turnOverDuration: number,
+  flipDuration: number,
+  onComplete: OnComplete
+): void => {
+  const positionFromTop =
+    numTurnedOverCardsFromBefore +
+    numCardsTurningOver -
+    turnedOverCardIndex -
+    1;
+  // later pegged lower the zindex
+  const turnedOverZIndex =
+    50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
+  const isTop = positionFromTop === 0;
+
+  const segments: FlipCardAnimationSequence = [
+    getMoveRotateSegment(
+      false,
+      firstPeggedPosition,
+      overlayDuration,
+      undefined,
+      delay,
+      undefined
+    ),
+  ];
+
+  if (!isTop) {
+    segments.push(instantFlipAnimation, [
+      undefined,
+      { opacity: 0 },
+      { duration: instantAnimationDuration },
+    ]);
+  } else {
+    const flipAnimation: FlipAnimation = {
+      flip: true,
+      duration: flipDuration,
+    };
+    segments.push(flipAnimation);
+  }
+  segments.push(
+    createZIndexAnimationSegment(turnedOverZIndex, {
+      at: delay + overlayDuration + flipDuration,
+    }),
+    getMoveRotateSegment(false, turnedOverPosition, turnOverDuration),
+    [
+      undefined,
+      { opacity: 1 },
+      {
+        duration: instantAnimationDuration,
+        onComplete: isTop ? onComplete : undefined,
+      },
+    ]
+  );
+
+  setOrAddToAnimationSequence(flipCardData, segments);
+};
+
+export const addTurnOverTogetherAnimation = (
+  prevFlipCardDatas: FlipCardDatas,
+  newFlipCardDatas: FlipCardDatas,
+  delay: number,
+  onComplete: () => void,
+  myMatch: MyMatch,
+  positions: Positions,
+  discardDuration: number,
+  flipDuration: number
+) => {
+  const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
+    .concat(prevFlipCardDatas.otherPlayersCards.flat())
+    .filter((cardData) => {
+      return cardData.state === FlipCardState.PeggingTurnedOver;
+    }).length;
+
+  const addAnimationToTurnedOverCards = (newFlipCardDatas: FlipCardData[]) => {
+    newFlipCardDatas.forEach((newFlipCardData) => {
+      if (newFlipCardData.playingCard !== undefined) {
+        const turnedOverCardIndex = myMatch.pegging.turnedOverCards.findIndex(
+          (turnedOverCard) => {
+            return cardMatch(
+              turnedOverCard.playingCard,
+              newFlipCardData.playingCard as PlayingCard
+            );
+          }
+        );
+        if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
+          applyTurnOverTogetherAnimation(
+            newFlipCardData,
+            turnedOverCardIndex,
+            numTurnedOverCardsFromBefore,
+            myMatch.pegging.turnedOverCards.length -
+              numTurnedOverCardsFromBefore,
+            delay,
+            positions.peggingPositions.turnedOver,
+            positions.peggingPositions.inPlay[0],
+            discardDuration,
+            discardDuration,
+            flipDuration,
+            onComplete
+          );
+        }
+      }
+    });
+  };
+
+  addAnimationToTurnedOverCards(
+    newFlipCardDatas.otherPlayersCards.flat().concat(newFlipCardDatas.myCards)
+  );
 };
 
 const append15Or31 = (
