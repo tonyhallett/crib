@@ -1490,7 +1490,7 @@ const matches: ActionMyMatch[] = [
                     fourOfAKind: undefined as unknown as FourOfAKind,
                     threeOfAKind: undefined as unknown as ThreeOfAKind,
                     oneForHisKnob: undefined as unknown as PlayingCard,
-                    score: 0,
+                    score: 4,
                   },
                 },
                 {

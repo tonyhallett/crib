@@ -361,122 +361,51 @@ function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
   }
 }
 
-
-
-function cloneScore(score:Score):Score {
+function cloneScore(score: Score): Score {
   return {
-    ...score
-  }
+    ...score,
+  };
 }
-function cloneScores(scores:Score[]):Score[]{
-  return scores.map(score => cloneScore(score));
-}
-
-/*
- scores [f:100:b:50], [f:80:b:20]
-                                                     want the score to be  
-                     teampegger ( team dealer), team non dealer -           teampegger ( team dealer), team non dealer
-peg 5                5                          0                           shifted 5 from fs - 19     shifted 0 ( no change ) from fs - 6
--- scoring
-team non dealer  2   5                          2                           no change                  shifted 2 from before
-team dealer      3   8                          2                           shifted 3 from 1st or 8        no change
-team non dealer  4   8                          6
-team dealer      5   13                         6
--------
-team dealer box  6   19                         6    
-
-if run backwards in playerScores then take away from the last one ( first time is total ) - then can move the pegs properly.
-*/
-
-
-
-interface SplitPeggingShowScores{
-  peggingScores:Score[],
-  showScores:Score[][] // one for when scoring each player in turn order
-
-  boxScores:Score[]
-}
-
-function shiftScoreBack(score:Score, amount:number): Score {
+function shiftScoreBack(score: Score, amount: number): Score {
   return {
-    games:score.games,
-    frontPeg:score.backPeg,
-    backPeg:score.frontPeg - amount
-  }
-}
-
-function getTeamTotalScored(
-  peggedCard:PeggedCard,
-  showScoring:ShowScoring,
-  scores:Score[],
-  myId:string,
-  otherPlayers:OtherPlayer[]
-){
-  const peggingScore = peggedCard.peggingScore.score;
-
-  let teamNonBoxScores = showScoring.playerShowScores[0].showScore.score + showScoring.playerShowScores[2].showScore.score;
-  const teamNonBoxFullScore = scores[getPlayerScoreIndex(showScoring.playerShowScores[0].playerId,myId,otherPlayers, true)]
-  let teamNonBoxRunningTotal = 0
-
-  let teamBoxScores = showScoring.playerShowScores[1].showScore.score + showScoring.playerShowScores[3].showScore.score + showScoring.boxScore.score;
-  const teamBoxFullScore = scores[getPlayerScoreIndex(showScoring.playerShowScores[3].playerId,myId,otherPlayers, true)]
-  let teamBoxRunningTotal = 0;
-
-  const peggerIndex = showScoring.playerShowScores.map(psc => psc.playerId).indexOf(peggedCard.owner);
-  if(peggerIndex === 0 || peggerIndex === 2){
-    teamNonBoxScores += peggingScore;
-    teamNonBoxRunningTotal = peggingScore;
-  }else{
-    teamBoxScores += peggingScore;
-    teamBoxRunningTotal = peggingScore;
-  }
-
-  const scoresInReverse:Score[][] = [[teamBoxFullScore, teamNonBoxFullScore]]
-  showScoring.playerShowScores.reverse().forEach((playerScore, index) => {
-    const score = playerScore.showScore.score;
-
-    const lastScores = scoresInReverse[scoresInReverse.length - 1];
-    const lastTeamBoxScore = lastScores[0];
-    const lastTeamNonBoxScore = lastScores[1];
-    
-    // as reversed the team with the box is first
-    if(index === 2 || index === 0){
-      scoresInReverse.push([shiftScoreBack(lastTeamBoxScore,score),cloneScore(lastTeamNonBoxScore)])
-    }else{
-      scoresInReverse.push([cloneScore(lastTeamBoxScore),shiftScoreBack(lastTeamNonBoxScore,score)]);
-    }
-  });
-
-  
-  // do pegged last
-
-  
-}
-
-function splitPeggingShowScoresForTeams(
-  peggedCard:PeggedCard,
-  showScoring:ShowScoring,
-){
-
+    games: score.games,
+    frontPeg: score.backPeg,
+    backPeg: score.frontPeg - amount,
+  };
 }
 
 function splitPeggingShowScores(
-  peggedCard:PeggedCard,
-  showScoring:ShowScoring,
-  scores:Score[],
-  myId:string,
-  otherPlayers:OtherPlayer[],
-  isTeams:boolean
-) :SplitPeggingShowScores {
-  
-
-  // if peg can shift backwards ?
-  
-  throw new Error("Not implemented");
-  /* return {
-    boxScores:scores,    
-  } */
- 
+  peggedCard: PeggedCard,
+  showScoring: ShowScoring,
+  scores: Score[],
+  myId: string,
+  otherPlayers: OtherPlayer[]
+): Score[][] {
+  const isTeams = otherPlayers.length === 3;
+  const scoresInReverse = [scores]; //box
+  const addScore = (playerId: string, score: number) => {
+    const playerScoreIndex = getPlayerScoreIndex(
+      playerId,
+      myId,
+      otherPlayers,
+      isTeams
+    );
+    const lastScores = scoresInReverse[scoresInReverse.length - 1];
+    scoresInReverse.push(
+      lastScores.map((lastScore, index) => {
+        if (index === playerScoreIndex) {
+          return shiftScoreBack(lastScore, score);
+        } else {
+          return cloneScore(lastScore); // might not need to do this
+        }
+      })
+    );
+  };
+  showScoring.playerShowScores.reverse().forEach((playerScore) => {
+    addScore(playerScore.playerId, playerScore.showScore.score);
+  });
+  addScore(peggedCard.owner, peggedCard.peggingScore.score);
+  return scoresInReverse.reverse();
 }
 
 function PlayMatchInner({
@@ -777,6 +706,7 @@ function PlayMatchInner({
       peg(playerId, peggedPlayingCard, myMatch) {
         const peggingScored = (
           peggedCard: PeggedCard,
+          pegScoring: Score[],
           cribBoardAnimationOnComplete?: () => void
         ) => {
           enqueueSnackbar(
@@ -788,7 +718,7 @@ function PlayMatchInner({
               variant: "success",
             }
           );
-          const peggedScores = getPeggedScores(peggedCard, myMatch);
+          //const peggedScores = getPeggedScores(peggedCard, myMatch);
           switch (myMatch.gameState) {
             case CribGameState.GameWon:
             case CribGameState.MatchWon:
@@ -797,7 +727,7 @@ function PlayMatchInner({
             case CribGameState.Show:
             case CribGameState.Pegging:
               setCribBoardState({
-                colouredScores: getColouredScores(peggedScores),
+                colouredScores: getColouredScores(pegScoring),
                 onComplete: cribBoardAnimationOnComplete,
               });
           }
@@ -807,7 +737,8 @@ function PlayMatchInner({
           peggedCard: PeggedCard,
           peggedCardPosition: number,
           duration: number,
-          animationCompleteCallback: () => void
+          animationCompleteCallback: () => void,
+          pegScoring: Score[]
         ): [FlipCardAnimationSequence, number] => {
           return [
             [
@@ -821,7 +752,11 @@ function PlayMatchInner({
                 () => {
                   const peggingScore = peggedCard.peggingScore;
                   if (peggingScore.score > 0) {
-                    peggingScored(peggedCard, animationCompleteCallback);
+                    peggingScored(
+                      peggedCard,
+                      pegScoring,
+                      animationCompleteCallback
+                    );
                   } else {
                     animationCompleteCallback();
                   }
@@ -1295,7 +1230,7 @@ function PlayMatchInner({
 
           return numCardsReturned * returnDuration;
         };
-        
+
         type CardsAndOwner = { cards: FlipCardData[]; owner: string };
         type CardsAndOwners = CardsAndOwner[];
         const getCardsWithOwners = (newFlipCardDatas: FlipCardDatas) => {
@@ -1532,7 +1467,7 @@ function PlayMatchInner({
           showScoring: ShowScoring,
           cardsAndOwners: CardsAndOwners,
           cutCard: FlipCardData,
-          scores: Score[],
+          pegShowScoring: Score[][],
           box: PlayingCard[],
           startAt: number,
           moveCutCardDuration: number,
@@ -1606,25 +1541,17 @@ function PlayMatchInner({
               );
               at += scoreMessageDuration;
             });
-
+            const showScoring = pegShowScoring.shift() as Score[];
             if (showScoreParts.length !== 0) {
               at += showAnimator.finalize(at, playerScoring.showCardDatas);
-              // need to use the scoreTotal to update the cribboard ? Yes because of box too
-
-              //getColouredScores(myMatch.scores) - but do not want to do other players just the current player
-              // but need to supply them all ! - keep a ref to previous scores
-
-              // will need to increase at
-              /* setCribBoardState(
-                {
-                  // need to determine which Score use 
-                  colouredScores:getColouredScores(tbd)
-                }
-              ) */
+              setTimeout(() => {
+                setCribBoardState({
+                  colouredScores: getColouredScores(showScoring),
+                });
+              }, at * 1000);
+              at += 2;
             }
-
             // playerScoringFinishedAnimation -
-            // cribboard
           });
         };
 
@@ -1634,6 +1561,7 @@ function PlayMatchInner({
           at: number,
           flipDuration: number,
           returnDuration: number,
+          pegShowScoring: Score[][],
           onComplete: () => void
         ) => {
           const cardsAndOwners = getCardsWithOwners(newFlipCardDatas);
@@ -1661,7 +1589,7 @@ function PlayMatchInner({
             myMatch.showScoring,
             cardsAndOwners,
             newFlipCardDatas.cutCard,
-            myMatch.scores,
+            pegShowScoring,
             myMatch.box,
             returnInPlayAt + returnInPlayCardsDuration,
             discardDuration,
@@ -1696,12 +1624,20 @@ function PlayMatchInner({
               animationCompleteCallback
             );
 
+            const pegShowScoring = splitPeggingShowScores(
+              peggedCard,
+              myMatch.showScoring,
+              myMatch.scores,
+              myMatch.myId,
+              myMatch.otherPlayers
+            );
             const [moveToPeggingPositionAnimationSequence, pegDuration] =
               getMoveToPeggingPositionAnimationSequence(
                 peggedCard,
                 peggedCardPosition,
                 discardDuration,
-                onComplete
+                onComplete,
+                pegShowScoring.shift() as Score[]
               );
             let pegDelay = pegDuration;
             if (isMe) {
@@ -1732,6 +1668,7 @@ function PlayMatchInner({
                 pegDelay,
                 flipDuration,
                 discardDuration,
+                pegShowScoring,
                 onComplete
               );
             }
