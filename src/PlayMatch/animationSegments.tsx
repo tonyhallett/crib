@@ -1,7 +1,13 @@
 import { Box, Point } from "./matchLayoutManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { DomSegmentOptionalElementOrSelectorWithOptions } from "../FlipCard/FlipCard";
-import { DynamicOption, Target } from "framer-motion";
+import {
+  DomSegmentOptionalElementOrSelectorWithOptions,
+  FlipAnimation,
+  FlipCardAnimationSequence,
+} from "../FlipCard/FlipCard";
+import { DOMKeyframesDefinition, DynamicOption, Target } from "framer-motion";
+import { FlipCardData } from "./PlayMatchTypes";
+import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
 
 export function getDiscardToBoxSegment(
   boxPosition: Box,
@@ -46,3 +52,50 @@ export function getMoveRotateSegment(
     },
   ];
 }
+
+export const setOrAddToAnimationSequence = (
+  flipCardData: FlipCardData,
+  segments: FlipCardAnimationSequence
+) => {
+  if (flipCardData.animationSequence === undefined) {
+    flipCardData.animationSequence = segments;
+  } else {
+    flipCardData.animationSequence.push(...segments);
+  }
+};
+
+export type ZIndexAnimationOptions = Omit<
+  SegmentAnimationOptionsWithTransitionEndAndAt,
+  "duration"
+>;
+export const instantAnimationDuration = 0.00001;
+export function createZIndexAnimationSegment(
+  zIndex: number,
+  options: ZIndexAnimationOptions
+): DomSegmentOptionalElementOrSelectorWithOptions {
+  return [
+    undefined,
+    {
+      zIndex,
+    } as DOMKeyframesDefinition,
+    {
+      ...options,
+      duration: instantAnimationDuration,
+    },
+  ];
+}
+
+export const createHideShowSegment = (
+  hide: boolean
+): DomSegmentOptionalElementOrSelectorWithOptions => {
+  return [
+    undefined,
+    { opacity: hide ? 0 : 1 },
+    { duration: instantAnimationDuration },
+  ];
+};
+
+export const instantFlipAnimation: FlipAnimation = {
+  flip: true,
+  duration: instantAnimationDuration,
+};

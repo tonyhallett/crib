@@ -22,10 +22,10 @@ import {
   getCardsUnderPointWithState,
 } from "./getCardsUnderPoint";
 import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
-import { getCardValue } from "./getCardValue";
 import { DOMKeyframesDefinition } from "framer-motion";
 import { useSnackbar } from "notistack";
 import { noop } from "./noop";
+import { getCardValue } from "./playingCardUtilities";
 
 type Animate = (
   sequence: SmartAnimationSequence,

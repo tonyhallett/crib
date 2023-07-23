@@ -8,110 +8,82 @@ import {
   useState,
 } from "react";
 import {
-  CribClient,
   CribGameState,
-  CribHub,
   MyMatch,
-  OtherPlayer,
-  PegScoring,
   PeggedCard,
   Pips,
-  PlayerShowScore,
   PlayingCard,
   Score,
-  ShowScore,
   ShowScoring,
 } from "../generatedTypes";
 import { LocalMatch, dealActionIndicator } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
-import {
-  Box,
-  DiscardPositions,
-  Point,
-  Positions,
-  matchLayoutManager,
-} from "./matchLayoutManager";
+import { Box, Point, matchLayoutManager } from "./matchLayoutManager";
 import {
   getPlayerPositionIndex,
   getPlayerPositions,
-  getPlayerScoreIndex,
 } from "./getPlayerPositions";
 import {
-  DomSegmentOptionalElementOrSelectorWithOptions,
   FlipAnimation,
   FlipCard,
   FlipCardAnimationSequence,
-  FlipCardProps,
 } from "../FlipCard/FlipCard";
 import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
 import {
+  createHideShowSegment,
+  createZIndexAnimationSegment,
   getDiscardToBoxSegment,
   getMoveRotateSegment,
+  instantAnimationDuration,
+  instantFlipAnimation,
+  setOrAddToAnimationSequence,
 } from "./animationSegments";
 import { AnimationManager } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
+import {
+  AnimatedCribBoard,
+  defaultCribBoardDuration,
+} from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../cribBoardWoodUrl";
-import { ColouredScore, ColouredScores } from "../crib-board/CribBoard";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useMyControl } from "./useMyControl";
 import {
-  createZIndexAnimationSegment,
-  instantAnimationDuration,
-} from "./createZIndexAnimationSegment";
-import { getCardValue } from "./getCardValue";
+  ensurePeggingState,
+  getPeggingCount,
+  moveCutCardToPlayerHand,
+  setTurnedOver,
+} from "./signalRPeg";
+
 import {
   getLastPeggedCard,
+  getMoveToPeggingPositionAnimationSequence,
   getPeggedCardPositionIndex,
+  getPeggedScoreMessage,
   getTurnOverOrder,
 } from "./signalRPeg";
 import { useSnackbarWithDelay } from "../hooks/useSnackbarWithDelay";
-import { PlayingCardLookupFlipCardData } from "./PlayingCardLookupFlipCardData";
-
-export type PlayMatchCribClientMethods = Pick<
-  CribClient,
-  "discard" | "ready" | "peg"
->;
-// mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
-export type PlayMatchCribClient = {
-  [K in keyof PlayMatchCribClientMethods]: PlayMatchCribClientMethods[K] extends (
-    ...args: infer P
-  ) => void
-    ? (...args: P) => void
-    : never;
-};
-
-type PlayMatchCribHubMethods = Pick<CribHub, "discard" | "peg" | "ready">;
-//mapped type to remove matchId parameter from PlayMatchCribHubMethods
-export type PlayMatchCribHub = {
-  [Property in keyof PlayMatchCribHubMethods]: PlayMatchCribHubMethods[Property] extends (
-    matchId: string,
-    ...args: infer P
-  ) => void
-    ? (...args: P) => void
-    : never;
-};
-
-const cardMatch = (playingCard1: PlayingCard, playingCard2: PlayingCard) => {
-  return (
-    playingCard1.suit === playingCard2.suit &&
-    playingCard1.pips === playingCard2.pips
-  );
-};
-
-function getBoxPosition(myMatch: MyMatch, positions: Positions) {
-  const dealerPositions = getPlayerPositions(
-    myMatch.myId,
-    myMatch.dealerDetails.current,
-    positions.playerPositions,
-    myMatch.otherPlayers
-  );
-  return dealerPositions.box;
-}
+import { VariantType } from "notistack";
+import {
+  CardsAndOwners,
+  getCardsWithOwners,
+  getPlayerScorings,
+  getShowAnimator,
+} from "./theShow";
+import { getColouredScores } from "./getColouredScores";
+import { splitPeggingShowScores } from "./splitPeggingShowScores";
+import { getBoxPosition } from "./positions";
+import { cardMatch } from "./playingCardUtilities";
+import {
+  CribBoardState,
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+  PlayMatchProps,
+} from "./PlayMatchTypes";
 
 function shouldDeal(matchDetail: MatchDetail) {
   return (
@@ -126,287 +98,8 @@ function noNewActions(matchDetail: MatchDetail) {
   );
 }
 
-export type UpdateLocalMatch = (localMatch: LocalMatch) => void;
-
-export interface PlayMatchProps {
-  matchDetail: MatchDetail;
-  playMatchCribHub: PlayMatchCribHub;
-  signalRRegistration: (playMatchCribClient: PlayMatchCribClient) => () => void;
-  updateLocalMatch: UpdateLocalMatch;
-  landscape: boolean;
-  hasRenderedAMatch: boolean;
-}
-
-export enum FlipCardState {
-  Todo,
-  MyHand,
-  OtherPlayersHand,
-  PeggingInPlay,
-  PeggingTurnedOver,
-}
-export type FlipCardData = Omit<FlipCardProps, "size"> & {
-  state: FlipCardState;
-};
-
-export interface FlipCardDatas {
-  cutCard: FlipCardData;
-  additionalBoxCard: FlipCardData | undefined;
-  bottomDeckCard: FlipCardData;
-  myCards: FlipCardData[];
-  otherPlayersCards: FlipCardData[][];
-}
-
 const discardDuration = 0.5;
 const flipDuration = 0.5;
-
-const colours: CSSProperties["color"][] = ["red", "blue", "green"];
-function getColouredScore(score: Score, index: number): ColouredScore {
-  return {
-    frontPeg: score.frontPeg,
-    backPeg: score.backPeg,
-    gameScore: score.games,
-    colour: colours[index],
-  };
-}
-function getColouredScores(scores: Score[]): ColouredScores {
-  return {
-    pegger1: getColouredScore(scores[0], 0),
-    pegger2: getColouredScore(scores[1], 1),
-    pegger3: scores.length === 3 ? getColouredScore(scores[2], 2) : undefined,
-  };
-}
-
-interface CribBoardState {
-  colouredScores: ColouredScores;
-  onComplete?: OnComplete;
-}
-
-const getPeggingCount = (myMatch: MyMatch): number => {
-  if (myMatch.gameState === CribGameState.Pegging) {
-    const inPlayCards = myMatch.pegging.inPlayCards;
-    let sum = 0;
-    inPlayCards.forEach((inPlayCard) => {
-      sum += getCardValue(inPlayCard.playingCard.pips);
-    });
-    return sum;
-  }
-  return 0;
-};
-
-const getAppendMessage = () => {
-  let message = "";
-  const apppendMessage = (messageToAppend: string) => {
-    if (message.length > 0) {
-      //lowercase the first letter
-      messageToAppend =
-        messageToAppend[0].toLowerCase() + messageToAppend.slice(1);
-      messageToAppend = `, ${messageToAppend}`;
-    }
-    message += messageToAppend;
-  };
-  return [apppendMessage, () => message] as const;
-};
-
-const getOfAKindScore = (numOfAKind: number) => {
-  let ofAKindScore = 0;
-  switch (numOfAKind) {
-    case 2:
-      ofAKindScore = 2;
-      break;
-    case 3:
-      ofAKindScore = 6;
-      break;
-    case 4:
-      ofAKindScore = 12;
-      break;
-  }
-  return ofAKindScore;
-};
-
-const append15Or31 = (
-  pegScoring: PegScoring,
-  appendMessage: (messageToAppend: string) => void
-) => {
-  if (pegScoring.is15) {
-    appendMessage("15 for 2");
-  } else if (pegScoring.is31) {
-    appendMessage("31 for 2");
-  }
-};
-
-const getPeggedScoreMessage = (pegScoring: PegScoring, pips: Pips): string => {
-  const [appendMessage, getMessage] = getAppendMessage();
-  append15Or31(pegScoring, appendMessage);
-  if (pegScoring.numOfAKind >= 2) {
-    const ofAKindScore = getOfAKindScore(pegScoring.numOfAKind);
-    appendMessage(`${pegScoring.numOfAKind}x${pips} for ${ofAKindScore}`);
-  } else if (pegScoring.numCardsInRun >= 3) {
-    // could generate Ace, Two, Three....
-    appendMessage(
-      `Run of ${pegScoring.numCardsInRun} for ${pegScoring.numCardsInRun}`
-    );
-  }
-  if (pegScoring.isLastGo) {
-    appendMessage("One for Go");
-  }
-  return getMessage();
-};
-
-const addFlipMoveToTurnedOverPositionAnimationSequence = (
-  flipCardData: FlipCardData,
-  turnedOverCardIndex: number,
-  numTurnedOverCardsFromBefore: number,
-  numCardsTurningOver: number,
-  delay: number,
-  turnedOverPosition: Point,
-  onComplete: OnComplete
-): void => {
-  const positionFromTop =
-    numTurnedOverCardsFromBefore +
-    numCardsTurningOver -
-    turnedOverCardIndex -
-    1;
-  // later pegged lower the zindex
-  const turnedOverZIndex =
-    50 + numTurnedOverCardsFromBefore + 1 + positionFromTop;
-  // move later pegged first
-  const at =
-    delay +
-    positionFromTop *
-      (discardDuration + flipDuration + instantAnimationDuration);
-  const flipAnimation: FlipAnimation = {
-    flip: true,
-    duration: flipDuration,
-  };
-  const segments = [
-    createZIndexAnimationSegment(turnedOverZIndex, { at }),
-    flipAnimation,
-    getMoveRotateSegment(
-      false,
-      turnedOverPosition,
-      discardDuration,
-      undefined,
-      undefined,
-      onComplete
-    ),
-  ];
-  if (flipCardData.animationSequence) {
-    flipCardData.animationSequence.push(...segments);
-  } else {
-    flipCardData.animationSequence = segments;
-  }
-};
-
-function getTeamShowScore(pegger: string, myMatch: MyMatch): number {
-  const isMe = pegger === myMatch.myId;
-  if (isMe) {
-    return (
-      getPeggerShowScore(pegger, myMatch) +
-      getPeggerShowScore(myMatch.otherPlayers[1].id, myMatch)
-    );
-  }
-  return (
-    getPeggerShowScore(myMatch.otherPlayers[0].id, myMatch) +
-    getPeggerShowScore(myMatch.otherPlayers[2].id, myMatch)
-  );
-}
-
-function getPeggerBoxScore(pegger: string, myMatch: MyMatch): number {
-  const dealer = myMatch.dealerDetails.current;
-  const boxScore = myMatch.showScoring.boxScore.score;
-  return pegger === dealer ? boxScore : 0;
-}
-
-function getPeggerShowScore(pegger: string, myMatch: MyMatch): number {
-  const showScoring = myMatch.showScoring;
-  const playerShowScore = showScoring.playerShowScores.find(
-    (playerShowScore) => playerShowScore.playerId === pegger
-  ) as PlayerShowScore;
-  const playerBoxScore = getPeggerBoxScore(pegger, myMatch);
-  return playerShowScore.showScore.score + playerBoxScore;
-}
-
-// todo - this needs to change as need to remove show scores for non pegger
-function getPeggedScoreWhenShowState(peggedCard: PeggedCard, myMatch: MyMatch) {
-  const teamGame = myMatch.otherPlayers.length === 3;
-  const scorer = teamGame ? getTeamShowScore : getPeggerShowScore;
-  const pegger = peggedCard.owner;
-  const showScore = scorer(pegger, myMatch);
-
-  const peggerScoreIndex = getPlayerScoreIndex(
-    pegger,
-    myMatch.myId,
-    myMatch.otherPlayers,
-    teamGame
-  );
-  return myMatch.scores.map((score, index) => {
-    const isPegger = index === peggerScoreIndex;
-    if (isPegger) {
-      return {
-        ...score,
-        frontPeg: score.frontPeg - showScore,
-        backPeg: score.backPeg - showScore,
-      };
-    }
-    return score;
-  });
-}
-
-function getPeggedScores(peggedCard: PeggedCard, myMatch: MyMatch): Score[] {
-  switch (myMatch.gameState) {
-    case CribGameState.Show:
-      return getPeggedScoreWhenShowState(peggedCard, myMatch);
-    default:
-      return myMatch.scores;
-  }
-}
-
-function cloneScore(score: Score): Score {
-  return {
-    ...score,
-  };
-}
-function shiftScoreBack(score: Score, amount: number): Score {
-  return {
-    games: score.games,
-    frontPeg: score.backPeg,
-    backPeg: score.frontPeg - amount,
-  };
-}
-
-function splitPeggingShowScores(
-  peggedCard: PeggedCard,
-  showScoring: ShowScoring,
-  scores: Score[],
-  myId: string,
-  otherPlayers: OtherPlayer[]
-): Score[][] {
-  const isTeams = otherPlayers.length === 3;
-  const scoresInReverse = [scores]; //box
-  const addScore = (playerId: string, score: number) => {
-    const playerScoreIndex = getPlayerScoreIndex(
-      playerId,
-      myId,
-      otherPlayers,
-      isTeams
-    );
-    const lastScores = scoresInReverse[scoresInReverse.length - 1];
-    scoresInReverse.push(
-      lastScores.map((lastScore, index) => {
-        if (index === playerScoreIndex) {
-          return shiftScoreBack(lastScore, score);
-        } else {
-          return cloneScore(lastScore); // might not need to do this
-        }
-      })
-    );
-  };
-  showScoring.playerShowScores.reverse().forEach((playerScore) => {
-    addScore(playerScore.playerId, playerScore.showScore.score);
-  });
-  addScore(peggedCard.owner, peggedCard.peggingScore.score);
-  return scoresInReverse.reverse();
-}
 
 function PlayMatchInner({
   matchDetail,
@@ -718,7 +411,6 @@ function PlayMatchInner({
               variant: "success",
             }
           );
-          //const peggedScores = getPeggedScores(peggedCard, myMatch);
           switch (myMatch.gameState) {
             case CribGameState.GameWon:
             case CribGameState.MatchWon:
@@ -733,44 +425,19 @@ function PlayMatchInner({
           }
         };
 
-        const getMoveToPeggingPositionAnimationSequence = (
+        const getMoveToPeggingPositionCompleted = (
           peggedCard: PeggedCard,
-          peggedCardPosition: number,
-          duration: number,
-          animationCompleteCallback: () => void,
-          pegScoring: Score[]
-        ): [FlipCardAnimationSequence, number] => {
-          return [
-            [
-              createZIndexAnimationSegment(5 + peggedCardPosition, {}),
-              getMoveRotateSegment(
-                false,
-                positions.peggingPositions.inPlay[peggedCardPosition],
-                duration,
-                undefined,
-                undefined,
-                () => {
-                  const peggingScore = peggedCard.peggingScore;
-                  if (peggingScore.score > 0) {
-                    peggingScored(
-                      peggedCard,
-                      pegScoring,
-                      animationCompleteCallback
-                    );
-                  } else {
-                    animationCompleteCallback();
-                  }
-                }
-              ),
-            ],
-            instantAnimationDuration + duration,
-          ];
-        };
-
-        const ensurePeggingState = (cardData: FlipCardData) => {
-          if (cardData.state !== FlipCardState.PeggingTurnedOver) {
-            cardData.state = FlipCardState.PeggingInPlay;
-          }
+          pegScoring: Score[],
+          animationCompleteCallback: () => void
+        ) => {
+          return () => {
+            const peggingScore = peggedCard.peggingScore;
+            if (peggingScore.score > 0) {
+              peggingScored(peggedCard, pegScoring, animationCompleteCallback);
+            } else {
+              animationCompleteCallback();
+            }
+          };
         };
 
         const iPegged = (
@@ -847,57 +514,6 @@ function PlayMatchInner({
           newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const addTurnOverOneAtATimeAnimation = (
-          prevFlipCardDatas: FlipCardDatas,
-          newFlipCardDatas: FlipCardDatas,
-          delay: number,
-          onComplete: () => void
-        ) => {
-          const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
-            .concat(prevFlipCardDatas.otherPlayersCards.flat())
-            .filter((cardData) => {
-              return cardData.state === FlipCardState.PeggingTurnedOver;
-            }).length;
-
-          const addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards =
-            (newFlipCardDatas: FlipCardData[]) => {
-              newFlipCardDatas.forEach((newFlipCardData) => {
-                if (newFlipCardData.playingCard !== undefined) {
-                  const turnedOverCardIndex =
-                    myMatch.pegging.turnedOverCards.findIndex(
-                      (turnedOverCard) => {
-                        return cardMatch(
-                          turnedOverCard.playingCard,
-                          newFlipCardData.playingCard as PlayingCard
-                        );
-                      }
-                    );
-                  if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
-                    const lastToMove =
-                      turnedOverCardIndex === numTurnedOverCardsFromBefore;
-                    addFlipMoveToTurnedOverPositionAnimationSequence(
-                      newFlipCardData,
-                      turnedOverCardIndex,
-                      numTurnedOverCardsFromBefore,
-                      myMatch.pegging.turnedOverCards.length -
-                        numTurnedOverCardsFromBefore,
-                      delay,
-                      positions.peggingPositions.turnedOver,
-                      lastToMove ? onComplete : undefined
-                    );
-                  }
-                }
-              });
-            };
-
-          addFlipMoveToTurnedOverPositionAnimationSequenceToTurnedOverCards(
-            newFlipCardDatas.otherPlayersCards
-              .flat()
-              .concat(newFlipCardDatas.myCards)
-          );
-        };
-
         const applyTurnOverTogetherAnimation = (
           flipCardData: FlipCardData,
           turnedOverCardIndex: number,
@@ -933,10 +549,6 @@ function PlayMatchInner({
           ];
 
           if (!isTop) {
-            const instantFlipAnimation: FlipAnimation = {
-              flip: true,
-              duration: instantAnimationDuration,
-            };
             segments.push(instantFlipAnimation, [
               undefined,
               { opacity: 0 },
@@ -1034,48 +646,7 @@ function PlayMatchInner({
           };
         };
 
-        const setTurnedOver = (flipCardDatas: FlipCardDatas): FlipCardDatas => {
-          const newFlipCardDatas = { ...flipCardDatas };
-          newFlipCardDatas.myCards = newFlipCardDatas.myCards.map(
-            (cardData) => {
-              return {
-                ...cardData,
-                state: FlipCardState.PeggingTurnedOver,
-              };
-            }
-          );
-          newFlipCardDatas.otherPlayersCards =
-            newFlipCardDatas.otherPlayersCards.map((otherPlayerCards) => {
-              return otherPlayerCards.map((otherPlayerCard) => {
-                return {
-                  ...otherPlayerCard,
-                  state: FlipCardState.PeggingTurnedOver,
-                };
-              });
-            });
-          return newFlipCardDatas;
-        };
 
-        const setOrAddToAnimationSequence = (
-          flipCardData: FlipCardData,
-          segments: FlipCardAnimationSequence
-        ) => {
-          if (flipCardData.animationSequence === undefined) {
-            flipCardData.animationSequence = segments;
-          } else {
-            flipCardData.animationSequence.push(...segments);
-          }
-        };
-
-        const createHideShowSegment = (
-          hide: boolean
-        ): DomSegmentOptionalElementOrSelectorWithOptions => {
-          return [
-            undefined,
-            { opacity: hide ? 0 : 1 },
-            { duration: instantAnimationDuration },
-          ];
-        };
         const returnedZIndex = -1;
         const returnTurnedOverCardsToPlayers = (
           cardsAndOwners: CardsAndOwners,
@@ -1231,238 +802,6 @@ function PlayMatchInner({
           return numCardsReturned * returnDuration;
         };
 
-        type CardsAndOwner = { cards: FlipCardData[]; owner: string };
-        type CardsAndOwners = CardsAndOwner[];
-        const getCardsWithOwners = (newFlipCardDatas: FlipCardDatas) => {
-          const cardsAndOwners: CardsAndOwners = [
-            {
-              cards: newFlipCardDatas.myCards,
-              owner: myMatch.myId,
-            },
-          ];
-          myMatch.otherPlayers.forEach((otherPlayer, index) => {
-            cardsAndOwners.push({
-              owner: otherPlayer.id,
-              cards: newFlipCardDatas.otherPlayersCards[index],
-            });
-          });
-          return cardsAndOwners;
-        };
-
-        interface ShowScorePart {
-          scoringCards: FlipCardData[];
-          notScoringCards: FlipCardData[];
-          score: number;
-          /*
-            todo - will have an option for specifying
-            e.g
-            Pair royal / Threes / Three of a kind
-            Double pair / Fours / Four of a kind
-            Run / x-card run
-            Flush / x-card flush
-            One for his nob
-
-          */
-          description: string;
-
-          // add an id for sorting ?
-        }
-
-        type GetNotScoring = (
-          contributingCards: PlayingCard[]
-        ) => FlipCardData[];
-
-        const addFifteenTwoShowScoreParts = (
-          showScoreParts: ShowScorePart[],
-          contributingCards: PlayingCard[][],
-          getNotScoring: GetNotScoring,
-          flipCardDataLookup: PlayingCardLookupFlipCardData
-        ) => {
-          contributingCards.forEach((playingCards) => {
-            const showScorePart: ShowScorePart = {
-              description: "Fifteen",
-              score: 2,
-              scoringCards: playingCards.map((playingCard) =>
-                flipCardDataLookup.get(playingCard)
-              ),
-              notScoringCards: getNotScoring(playingCards),
-            };
-            showScoreParts.push(showScorePart);
-          });
-        };
-
-        const getShowScoreParts = (
-          showScore: ShowScore,
-          scoringCardDatas: FlipCardData[]
-        ): ShowScorePart[] => {
-          const showScoreParts: ShowScorePart[] = [];
-          const handAndCutCardPlayingCards = scoringCardDatas.map(
-            (flipCardData) => flipCardData.playingCard as PlayingCard
-          );
-          const flipCardDataLookup = new PlayingCardLookupFlipCardData(
-            scoringCardDatas
-          );
-
-          const getNotScoring: GetNotScoring = (contributingCards) => {
-            return handAndCutCardPlayingCards
-              .filter(
-                (handOrCutCard) => !contributingCards.includes(handOrCutCard)
-              )
-              .map((notIncludedCard) =>
-                flipCardDataLookup.get(notIncludedCard)
-              );
-          };
-          //for now not sorting
-          addFifteenTwoShowScoreParts(
-            showScoreParts,
-            showScore.fifteenTwos,
-            getNotScoring,
-            flipCardDataLookup
-          );
-          // todo remaining enough to do RAD
-          return showScoreParts;
-        };
-
-        interface PlayerScoring {
-          playerId: string;
-          showScoreParts: ShowScorePart[];
-          showCardDatas: FlipCardData[];
-        }
-        // naming tbd
-        const getPlayerScorings = (
-          showScoring: ShowScoring,
-          cardsAndOwners: CardsAndOwners,
-          cutCard: FlipCardData,
-          box: PlayingCard[]
-        ): PlayerScoring[] => {
-          const boxCardDatas: FlipCardData[] = [];
-          // these are in order
-          const playerScoring = showScoring.playerShowScores.map(
-            (playerShowScore) => {
-              const cardsAndOwner = cardsAndOwners.find(
-                (cardsAndOwner) =>
-                  cardsAndOwner.owner === playerShowScore.playerId
-              ) as CardsAndOwner;
-              const cards = cardsAndOwner.cards;
-              const showCardDatas: FlipCardData[] = [cutCard];
-              cards.forEach((card) => {
-                if (
-                  card.state === FlipCardState.PeggingInPlay ||
-                  card.state === FlipCardState.PeggingTurnedOver
-                ) {
-                  showCardDatas.push(card);
-                } else {
-                  boxCardDatas.push(card);
-                }
-              });
-              const playerScoring: PlayerScoring = {
-                playerId: playerShowScore.playerId,
-                showCardDatas: showCardDatas,
-                showScoreParts: getShowScoreParts(
-                  playerShowScore.showScore,
-                  showCardDatas
-                ),
-              };
-              return playerScoring;
-            }
-          );
-          boxCardDatas.forEach((boxCardData, i) => {
-            boxCardData.playingCard = box[i];
-          });
-          boxCardDatas.push(cutCard);
-          // for now game not won and there is a box score
-          playerScoring.push({
-            showCardDatas: boxCardDatas,
-            showScoreParts: getShowScoreParts(
-              showScoring.boxScore,
-              boxCardDatas
-            ),
-            playerId:
-              showScoring.playerShowScores[
-                showScoring.playerShowScores.length - 1
-              ].playerId,
-          });
-
-          return playerScoring;
-        };
-
-        // todo options
-        interface IShowAnimator {
-          showScorePart(
-            at: number,
-            scoringCards: FlipCardData[],
-            notScoringCards: FlipCardData[]
-          ): number;
-          initialize(at: number, flipCardDatas: FlipCardData[]): number;
-          finalize(at: number, showCardDatas: FlipCardData[]): number;
-        }
-
-        const getShowAnimator = (): IShowAnimator => {
-          // opacity
-          const fadeDuration = 1;
-          const outOpacity = 0.3;
-          const fadeInOut = (
-            fadeIn: boolean,
-            at: number,
-            card: FlipCardData
-          ) => {
-            const sequence: FlipCardAnimationSequence = [
-              [
-                undefined,
-                { opacity: fadeIn ? 1 : outOpacity },
-                { duration: fadeDuration, at },
-              ],
-            ];
-            setOrAddToAnimationSequence(card, sequence);
-          };
-
-          return {
-            initialize(at: number, showCardDatas: FlipCardData[]): number {
-              showCardDatas.forEach((showCardData) => {
-                fadeInOut(false, at, showCardData);
-              });
-              return fadeDuration;
-            },
-            finalize(at: number, showCardDatas: FlipCardData[]): number {
-              showCardDatas.forEach((showCardData) => {
-                fadeInOut(true, at, showCardData);
-              });
-              return fadeDuration;
-            },
-            showScorePart(
-              at: number,
-              scoringCards: FlipCardData[],
-              notScoringCards: FlipCardData[]
-            ) {
-              scoringCards.forEach((scoringCard) =>
-                fadeInOut(true, at, scoringCard)
-              );
-              notScoringCards.forEach((scoringCard) =>
-                fadeInOut(false, at, scoringCard)
-              );
-              return fadeDuration;
-            },
-          };
-        };
-
-        const moveCutCardToPlayerHand = (
-          cutCard: FlipCardData,
-          at: number,
-          duration: number,
-          handPosition: DiscardPositions
-        ) => {
-          const animation: FlipCardAnimationSequence = [
-            getMoveRotateSegment(
-              handPosition.isHorizontal,
-              handPosition.positions[4],
-              duration,
-              undefined,
-              at
-            ),
-          ];
-          setOrAddToAnimationSequence(cutCard, animation);
-        };
-
         const showAndScore = (
           showScoring: ShowScoring,
           cardsAndOwners: CardsAndOwners,
@@ -1474,7 +813,16 @@ function PlayMatchInner({
           scoreMessageDuration: number
         ) => {
           let at = startAt;
-
+          const showAndWaitForSnackbar = (
+            msg: string,
+            variant: VariantType
+          ) => {
+            delayEnqueueSnackbar(at * 1000, msg, {
+              variant,
+              autoHideDuration: scoreMessageDuration * 1000,
+            });
+            at += scoreMessageDuration;
+          };
           const showAnimator = getShowAnimator();
           // for now game not won and there is a box score
 
@@ -1504,16 +852,11 @@ function PlayMatchInner({
 
             const showScoreParts = playerScoring.showScoreParts;
             if (showScoreParts.length === 0) {
-              // have option for player name
-              delayEnqueueSnackbar(
-                at * 1000,
+              // todo have option for player id
+              showAndWaitForSnackbar(
                 `${playerScoring.playerId} ${isBox ? "box " : ""}scored 19 !`,
-                {
-                  variant: "info",
-                  autoHideDuration: scoreMessageDuration * 1000,
-                }
+                "info"
               );
-              at += scoreMessageDuration;
             } else {
               if (isBox) {
                 // do box movement and increment at
@@ -1530,16 +873,10 @@ function PlayMatchInner({
               );
 
               scoreTotal += showScorePart.score;
-              //todo create function for these two lines
-              delayEnqueueSnackbar(
-                at * 1000,
+              showAndWaitForSnackbar(
                 `${showScorePart.description} ${scoreTotal}`,
-                {
-                  variant: "success",
-                  autoHideDuration: scoreMessageDuration * 1000,
-                }
+                "success"
               );
-              at += scoreMessageDuration;
             });
             const showScoring = pegShowScoring.shift() as Score[];
             if (showScoreParts.length !== 0) {
@@ -1549,7 +886,7 @@ function PlayMatchInner({
                   colouredScores: getColouredScores(showScoring),
                 });
               }, at * 1000);
-              at += 2;
+              at += defaultCribBoardDuration;
             }
             // playerScoringFinishedAnimation -
           });
@@ -1564,7 +901,11 @@ function PlayMatchInner({
           pegShowScoring: Score[][],
           onComplete: () => void
         ) => {
-          const cardsAndOwners = getCardsWithOwners(newFlipCardDatas);
+          const cardsAndOwners = getCardsWithOwners(
+            newFlipCardDatas,
+            myMatch.myId,
+            myMatch.otherPlayers
+          );
 
           let returnInPlayAt = at;
           if (myMatch.pegging.turnedOverCards.length > 0) {
@@ -1596,6 +937,28 @@ function PlayMatchInner({
             2
           );
         };
+
+        const x = (
+          peggedCardPosition:number,
+          pegScores:Score[],
+          peggedCard:PeggedCard,
+          peggingScored:(peggedCard:PeggedCard, pegScoring:Score[], cribBoardAnimationOnComplete?:() => void) => void,
+          animationCompleteCallback:() => void
+        ) => {
+          return getMoveToPeggingPositionAnimationSequence(
+            peggedCardPosition,
+            positions.peggingPositions.inPlay,
+            discardDuration,
+            () => {
+              const peggingScore = peggedCard.peggingScore;
+              if (peggingScore.score > 0) {
+                peggingScored(peggedCard, pegScores, animationCompleteCallback);
+              } else {
+                animationCompleteCallback();
+              }
+            }
+          );
+        }
 
         animationManager.current.animate(
           // eslint-disable-next-line complexity
@@ -1633,11 +996,14 @@ function PlayMatchInner({
             );
             const [moveToPeggingPositionAnimationSequence, pegDuration] =
               getMoveToPeggingPositionAnimationSequence(
-                peggedCard,
                 peggedCardPosition,
+                positions.peggingPositions.inPlay,
                 discardDuration,
-                onComplete,
-                pegShowScoring.shift() as Score[]
+                getMoveToPeggingPositionCompleted(
+                  peggedCard,
+                  pegShowScoring.shift() as Score[],
+                  onComplete
+                )
               );
             let pegDelay = pegDuration;
             if (isMe) {

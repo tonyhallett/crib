@@ -90,6 +90,7 @@ const getIsNewGame = (newPegInfos: PegInfo[]) => {
   return isNewGame;
 };
 
+export const defaultCribBoardDuration = 2;
 export function AnimatedCribBoard({
   cribBoardUrl,
   pegHoleRadius,
@@ -103,7 +104,7 @@ export function AnimatedCribBoard({
   pegRadius,
   at = 0,
   // could even determine distance and keep constant
-  moveDuration = 2,
+  moveDuration = defaultCribBoardDuration,
   onComplete,
   style,
 }: {

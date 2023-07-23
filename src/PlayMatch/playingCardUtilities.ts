@@ -1,4 +1,15 @@
+import { PlayingCard } from "../generatedTypes";
 import { Pips } from "../generatedTypes";
+
+export const cardMatch = (
+  playingCard1: PlayingCard,
+  playingCard2: PlayingCard
+) => {
+  return (
+    playingCard1.suit === playingCard2.suit &&
+    playingCard1.pips === playingCard2.pips
+  );
+};
 
 // eslint-disable-next-line complexity
 export const getCardValue = (pips: Pips) => {
