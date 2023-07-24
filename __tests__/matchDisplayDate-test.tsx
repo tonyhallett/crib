@@ -1,4 +1,4 @@
-import { TableDisplayDate } from "../src/TableDisplayDate";
+import { TableDisplayDate } from "../src/controls/TableDisplayDate";
 
 describe("MatchDisplayDate", () => {
   it("works with equality operators", () => {

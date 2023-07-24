@@ -1,4 +1,4 @@
-import { permute } from "./utilities/permute";
+import { permute } from "../utilities/permute";
 
 export enum Suit {
   Hearts,

@@ -1,9 +1,13 @@
 import { IconButton, Paper } from "@mui/material";
-import { LocalMatch } from "./LocalMatch";
-import { HeadCell, SortableTable, TableRowData } from "./SortableTable";
+import { LocalMatch } from "./localMatch";
+import {
+  HeadCell,
+  SortableTable,
+  TableRowData,
+} from "./controls/SortableTable";
 import { CribGameState, MyMatch, Score } from "./generatedTypes";
 import GamesIcon from "@mui/icons-material/Games";
-import { TableDisplayDate } from "./TableDisplayDate";
+import { TableDisplayDate } from "./controls/TableDisplayDate";
 import { MatchDetail } from "./App";
 
 interface MatchesData {

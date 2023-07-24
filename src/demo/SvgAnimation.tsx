@@ -1,6 +1,6 @@
 import { CSSProperties, Fragment } from "react";
-import { useAnimateSegments } from "./fixAnimationSequence/useAnimateSegments";
-import { fill } from "./utilities/arrayHelpers";
+import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
+import { fill } from "../utilities/arrayHelpers";
 import { motion } from "framer-motion";
 
 const colours: CSSProperties["color"][] = ["red", "blue", "green"];

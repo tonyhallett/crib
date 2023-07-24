@@ -7,7 +7,7 @@ import {
   Pips,
   Card,
   Cards,
-} from "../src/Scorer";
+} from "../src/demo/Scorer";
 describe("scorer", () => {
   const aceClubs = cardFromJson("AC");
   const twoClubs = cardFromJson("2C");

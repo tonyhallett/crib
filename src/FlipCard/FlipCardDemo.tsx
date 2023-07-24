@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { WoodWhenPlaying } from "../WoodWhenPlaying";
+import { WoodWhenPlaying } from "../backgrounds/WoodWhenPlaying";
 import { Pips, Suit } from "../generatedTypes";
 import {
   FlipCardProps,

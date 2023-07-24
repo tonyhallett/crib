@@ -29,7 +29,11 @@ import {
   numPeggingInPlayCards,
   setPlayableCardsState,
 } from "./flipCardDataHelpers";
-import { DiscardPositions, PeggingPositions, Point } from "./matchLayoutManager";
+import {
+  DiscardPositions,
+  PeggingPositions,
+  Point,
+} from "./matchLayoutManager";
 import { peggingScored } from "./peggingScored";
 import { cardMatch, getCardValue } from "./playingCardUtilities";
 import { getOfAKindScore } from "./scoringUtilities";

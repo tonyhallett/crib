@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { MatchDetail } from "../App";
 import { FlipCardProps } from "../FlipCard/FlipCard";
-import { LocalMatch } from "../LocalMatch";
+import { LocalMatch } from "../localMatch";
 import { ColouredScores } from "../crib-board/CribBoard";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { CribClient, CribHub } from "../generatedTypes";

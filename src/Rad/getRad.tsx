@@ -3,7 +3,7 @@ import isParcelDevMode from "../utilities/isParcelDevMode";
 import { RadHubConnectionBuilder } from "./RadHubConnectionBuilder";
 import { jsonLocalStorageWithChange } from "./jsonLocalStorage";
 import { inMemoryStorage } from "./inMemoryLocalStorage";
-import { LocalMatch } from "../LocalMatch";
+import { LocalMatch } from "../localMatch";
 import { IStorage } from "./IStorage";
 
 let signalRX: Pick<typeof signalR, "HubConnectionBuilder"> = signalR;

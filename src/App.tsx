@@ -19,7 +19,7 @@ import {
   LocalMatch,
   createLocalMatch,
   removeDealIndicator,
-} from "./LocalMatch";
+} from "./localMatch";
 import { AppBar, Badge, IconButton, Toolbar } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import { CardsIcon } from "./CardsIcon";
@@ -33,14 +33,14 @@ import {
 } from "./PlayMatch/PlayMatchTypes";
 import { closeSnackbar, useSnackbar } from "notistack";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import { WoodWhenPlaying, woodUrl } from "./WoodWhenPlaying";
+import { WoodWhenPlaying, woodUrl } from "./backgrounds/WoodWhenPlaying";
 import GamesIcon from "@mui/icons-material/Games";
 import { SnackbarAction } from "notistack";
 import { useOrientation } from "./hooks/useOrientation";
 import { useFullscreenFullscreenElement } from "./hooks/useFullscreen";
 import { useWindowResize } from "./hooks/useWindowResize";
 import { RequiresFullscreen } from "./RequiresFullscreen";
-import cribBoardWoodUrl from "./cribBoardWoodUrl";
+import cribBoardWoodUrl from "./backgrounds/cribBoardWoodUrl";
 import { useImagePreload } from "./hooks/useImagePreload";
 import { PlayMatchContext } from "./PlayMatchContext";
 import { PlayMatch } from "./PlayMatch/PlayMatch";

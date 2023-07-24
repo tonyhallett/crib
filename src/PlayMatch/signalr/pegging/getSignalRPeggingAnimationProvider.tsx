@@ -11,10 +11,7 @@ import { DelayEnqueueSnackbar } from "../../../hooks/useSnackbarWithDelay";
 import { EnqueueSnackbar } from "notistack";
 import { addShowAnimation } from "../../theShow";
 import { splitPeggingShowScores } from "../../splitPeggingShowScores";
-import {
-  FlipCardDatas,
-  SetCribboardState,
-} from "../../PlayMatchTypes";
+import { FlipCardDatas, SetCribboardState } from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
 import { discardDuration, flipDuration } from "../../animationDurations";
 
@@ -43,9 +40,9 @@ export function getSignalRPeggingAnimationProvider(
   getPositions: () => Positions,
   allowPegging: () => void,
   setNextPlayer: (nextPlayer: string) => void,
-  snackBarMethods:{
-    enqueueSnackbar: EnqueueSnackbar,
-    delayEnqueueSnackbar: DelayEnqueueSnackbar,
+  snackBarMethods: {
+    enqueueSnackbar: EnqueueSnackbar;
+    delayEnqueueSnackbar: DelayEnqueueSnackbar;
   },
   setCribBoardState: SetCribboardState
 ): AnimationProvider {
@@ -74,7 +71,7 @@ export function getSignalRPeggingAnimationProvider(
       animationCompleteCallback
     );
 
-    const {pegDelay,newFlipCardDatas} = performPegging(
+    const { pegDelay, newFlipCardDatas } = performPegging(
       didTurnOver,
       prevFlipCardDatas,
       peggedCard,
@@ -84,7 +81,7 @@ export function getSignalRPeggingAnimationProvider(
       setCribBoardState,
       snackBarMethods.enqueueSnackbar,
       onComplete
-    )
+    );
 
     if (myMatch.gameState === CribGameState.Show) {
       addShowAnimation(

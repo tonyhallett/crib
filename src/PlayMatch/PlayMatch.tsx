@@ -1,11 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  CribGameState,
-  MyMatch,
-  Pips,
-  PlayingCard,
-} from "../generatedTypes";
-import { LocalMatch, shouldDeal } from "../LocalMatch";
+import { CribGameState, MyMatch, Pips, PlayingCard } from "../generatedTypes";
+import { LocalMatch, shouldDeal } from "../localMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
 import { Box } from "./matchLayoutManager";
@@ -19,7 +14,7 @@ import { getDiscardToBoxSegment } from "./animationSegments";
 import { AnimationManager } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
-import cribBoardWoodUrl from "../cribBoardWoodUrl";
+import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";

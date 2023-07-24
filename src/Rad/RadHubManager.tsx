@@ -16,7 +16,7 @@ import {
 } from "../generatedTypes";
 import { motion } from "framer-motion";
 import { cribStorage } from "./getRad";
-import { LocalMatch } from "../LocalMatch";
+import { LocalMatch } from "../localMatch";
 import {
   AceHearts,
   AceSpades,

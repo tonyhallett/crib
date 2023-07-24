@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CribBoard, ColouredScores, ColouredScore } from "./CribBoard";
 import { AnimatedCribBoard } from "./AnimatedCribBoard";
-import cribBoardWoodUrl from "../cribBoardWoodUrl";
+import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 
 export function CribBoardExample() {
   const [scores, setScores] = useState<ColouredScores>({

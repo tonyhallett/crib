@@ -1,10 +1,10 @@
 import { IconButton } from "@mui/material";
 import { LocalFriendship } from "./LocalMyFriend";
-import { SortableTable, TableRowData } from "./SortableTable";
+import { SortableTable, TableRowData } from "./controls/SortableTable";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import { sortHeadCells } from "./sortHeadCells";
+import { sortHeadCells } from "./controls/sortHeadCells";
 import { CribHub, FriendshipStatus } from "./generatedTypes";
-import { TableDisplayDate } from "./TableDisplayDate";
+import { TableDisplayDate } from "./controls/TableDisplayDate";
 
 interface FriendsDisplay {
   friend: string;

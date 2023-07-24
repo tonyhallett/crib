@@ -21,7 +21,7 @@ import {
 } from "./animationSegments";
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
-import { LocalMatch } from "../LocalMatch";
+import { LocalMatch } from "../localMatch";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { MatchDetail } from "../App";
 import { createDiscardZIndexAnimationSegment } from "./getDiscardToBoxZIndexStartSegment";

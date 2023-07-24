@@ -1,13 +1,28 @@
-import { MyMatch, OtherPlayer, PeggedCard, PlayingCard, Score } from "../../../generatedTypes";
+import {
+  MyMatch,
+  OtherPlayer,
+  PeggedCard,
+  PlayingCard,
+  Score,
+} from "../../../generatedTypes";
 import { PeggingPositions } from "../../matchLayoutManager";
 import {
-  addTurnOverTogetherAnimation, getMoveToPeggingPositionAnimationSequenceAndScore,
-  setTurnedOver
+  addTurnOverTogetherAnimation,
+  getMoveToPeggingPositionAnimationSequenceAndScore,
+  setTurnedOver,
 } from "../../signalRPeg";
 import { getPeggedCardPositionIndex } from "../../signalRPeg";
 import { EnqueueSnackbar } from "notistack";
-import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "../../PlayMatchTypes";
-import { FlipCardAnimationSequence, FlipAnimation } from "../../../FlipCard/FlipCard";
+import {
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+  SetCribboardState,
+} from "../../PlayMatchTypes";
+import {
+  FlipCardAnimationSequence,
+  FlipAnimation,
+} from "../../../FlipCard/FlipCard";
 import { cardMatch } from "../../playingCardUtilities";
 import { discardDuration, flipDuration } from "../../animationDurations";
 
@@ -90,7 +105,8 @@ const otherPlayerPegged = (
   newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
 };
 
-export function performPegging(turnedOver: boolean,
+export function performPegging(
+  turnedOver: boolean,
   prevFlipCardDatas: FlipCardDatas,
   peggedCard: PeggedCard,
   pegScoring: Score[],
@@ -98,24 +114,26 @@ export function performPegging(turnedOver: boolean,
   myMatch: MyMatch,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  onComplete: () => void) {
+  onComplete: () => void
+) {
   const peggedPlayingCard = peggedCard.playingCard;
   const playerId = peggedCard.owner;
   const newFlipCardDatas = turnedOver
     ? setTurnedOver(prevFlipCardDatas)
     : { ...prevFlipCardDatas };
 
-  const [moveToPeggingPositionAnimationSequence, pegDuration] = getMoveToPeggingPositionAnimationSequenceAndScore(
-    getPeggedCardPositionIndex(prevFlipCardDatas),
-    peggingPositions.inPlay,
-    pegScoring,
-    peggedCard,
-    discardDuration,
-    myMatch.gameState,
-    setCribBoardState,
-    enqueueSnackbar,
-    onComplete
-  );
+  const [moveToPeggingPositionAnimationSequence, pegDuration] =
+    getMoveToPeggingPositionAnimationSequenceAndScore(
+      getPeggedCardPositionIndex(prevFlipCardDatas),
+      peggingPositions.inPlay,
+      pegScoring,
+      peggedCard,
+      discardDuration,
+      myMatch.gameState,
+      setCribBoardState,
+      enqueueSnackbar,
+      onComplete
+    );
 
   let pegDelay = pegDuration;
   const isMe = myMatch.myId === playerId;
@@ -152,6 +170,6 @@ export function performPegging(turnedOver: boolean,
   }
   return {
     pegDelay,
-    newFlipCardDatas
+    newFlipCardDatas,
   };
 }
