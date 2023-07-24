@@ -40,7 +40,7 @@ const iPegged = (
   newFlipCardDatas.myCards = newMyFlipCardDatas;
 };
 
-export const otherPlayerPegged = (
+const otherPlayerPegged = (
   prevFlipCardDatas: FlipCardDatas,
   newFlipCardDatas: FlipCardDatas,
   flipDuration: number,
