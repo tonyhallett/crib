@@ -357,17 +357,21 @@ function PlayMatchInner({
         );
       },
       peg(playerId, peggedPlayingCard, myMatch) {
+        const getPositions = () => positions;
         animationManager.current.animate(
           getSignalRPeggingAnimationProvider(
+            // these 3 arguments to be in an object
             myMatch,
             playerId,
             peggedPlayingCard,
 
-            positions,
+            getPositions,
             allowPegging,
             setNextPlayer,
-            enqueueSnackbar,
+
+            enqueueSnackbar, // object for these two
             delayEnqueueSnackbar,
+
             setCribBoardState
           )
         );

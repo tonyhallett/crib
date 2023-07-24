@@ -115,7 +115,7 @@ export function getSignalRPeggingAnimationProvider(
   myMatch: MyMatch,
   playerId: string,
   peggedPlayingCard: PlayingCard,
-  positions: Positions,
+  getPositions: () => Positions,
   allowPegging: () => void,
   setNextPlayer: (nextPlayer: string) => void,
 
@@ -132,7 +132,7 @@ export function getSignalRPeggingAnimationProvider(
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
     allowPegging();
     setNextPlayer(myMatch.pegging.nextPlayer);
-
+    const positions = getPositions();
     const peggedCard = getLastPeggedCard(myMatch.pegging);
     const pegShowScoring = splitPeggingShowScores(
       peggedCard,
