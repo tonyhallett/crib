@@ -8,7 +8,12 @@ import { VariantType } from "notistack";
 import { CardsAndOwners, getPlayerScorings, getShowAnimator } from "./theShow";
 import { getColouredScores } from "./getColouredScores";
 import { FlipCardData, SetCribboardState } from "./PlayMatchTypes";
-import { ShowAndScoreAnimationOptions } from "./PlayMatch";
+
+export interface ShowAndScoreAnimationOptions {
+  at: number;
+  moveCutCardDuration: number;
+  scoreMessageDuration: number;
+}
 
 export function showAndScore(
   showScoring: ShowScoring,

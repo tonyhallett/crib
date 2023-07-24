@@ -1,3 +1,4 @@
+import { MatchDetail } from "./App";
 import { ChangeHistory, CribGameState, MyMatch } from "./generatedTypes";
 
 type LocalChangeHistory = Omit<ChangeHistory, "lastChangeDate"> & {
@@ -14,6 +15,12 @@ function iHaveNotDiscarded(myMatch: MyMatch) {
 }
 
 export const dealActionIndicator = -1;
+
+export function shouldDeal(matchDetail: MatchDetail) {
+  return (
+    matchDetail.localMatch.changeHistory.numberOfActions === dealActionIndicator
+  );
+}
 
 export function createLocalMatch(myMatch: MyMatch): LocalMatch {
   const changeHistory = myMatch.changeHistory;

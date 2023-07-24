@@ -615,18 +615,6 @@ export const addShowAnimation = (
   playerPositions: PlayerPositions[],
   setCribBoardState: SetCribboardState,
   delayEnqueueSnackbar: DelayEnqueueSnackbar
-  /* showAndScore: (
-    showScoring: ShowScoring,
-    cardsAndOwners: CardsAndOwners,
-    cutCard: FlipCardData,
-    pegShowScoring: Score[][],
-    box: PlayingCard[],
-    animationOptions:{
-      at: number,
-      moveCutCardDuration: number,
-      scoreMessageDuration: number,
-    }
-  ) => void */
 ) => {
   const cardsAndOwners = getCardsWithOwners(
     newFlipCardDatas,

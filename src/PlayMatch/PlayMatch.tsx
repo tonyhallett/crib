@@ -2,11 +2,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CribGameState,
   MyMatch,
-  PeggedCard,
   Pips,
   PlayingCard,
 } from "../generatedTypes";
-import { LocalMatch, dealActionIndicator } from "../LocalMatch";
+import { LocalMatch, shouldDeal } from "../LocalMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
 import { Box } from "./matchLayoutManager";
@@ -42,34 +41,14 @@ import {
   useMemoedOrientationDependentValues,
   useMemoedPositionsAndCardSize,
 } from "./playMatchHooks";
-import { getSignalRPeggingAnimationProvider } from "./getSignalRPeggingAnimationProvider";
-
-function shouldDeal(matchDetail: MatchDetail) {
-  return (
-    matchDetail.localMatch.changeHistory.numberOfActions === dealActionIndicator
-  );
-}
+import { getSignalRPeggingAnimationProvider } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
+import { discardDuration, flipDuration } from "./animationDurations";
 
 function noNewActions(matchDetail: MatchDetail) {
   return (
     matchDetail.localMatch.changeHistory.numberOfActions ===
     matchDetail.match.changeHistory.numberOfActions
   );
-}
-
-export const getTurnedOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
-  return (
-    myMatch.gameState === CribGameState.Pegging && peggedCard.peggingScore.is31
-  );
-};
-
-export const discardDuration = 0.5;
-export const flipDuration = 0.5;
-
-export interface ShowAndScoreAnimationOptions {
-  at: number;
-  moveCutCardDuration: number;
-  scoreMessageDuration: number;
 }
 
 function PlayMatchInner({
@@ -360,18 +339,14 @@ function PlayMatchInner({
         const getPositions = () => positions;
         animationManager.current.animate(
           getSignalRPeggingAnimationProvider(
-            // these 3 arguments to be in an object
             myMatch,
-            playerId,
-            peggedPlayingCard,
-
             getPositions,
             allowPegging,
             setNextPlayer,
-
-            enqueueSnackbar, // object for these two
-            delayEnqueueSnackbar,
-
+            {
+              enqueueSnackbar,
+              delayEnqueueSnackbar,
+            },
             setCribBoardState
           )
         );

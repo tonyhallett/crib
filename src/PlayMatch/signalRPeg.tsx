@@ -39,12 +39,6 @@ export const setTurnedOver = (flipCardDatas: FlipCardDatas): FlipCardDatas => {
   return setPlayableCardsState(flipCardDatas, FlipCardState.PeggingTurnedOver);
 };
 
-export const ensurePeggingState = (cardData: FlipCardData) => {
-  if (cardData.state !== FlipCardState.PeggingTurnedOver) {
-    cardData.state = FlipCardState.PeggingInPlay;
-  }
-};
-
 export const moveCutCardToPlayerHand = (
   cutCard: FlipCardData,
   at: number,
