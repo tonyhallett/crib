@@ -1,4 +1,4 @@
-import { JsonReviver, dateReviver } from "./utilities/jsonDateReviver";
+import { JsonReviver, dateReviver } from "../utilities/jsonDateReviver";
 
 // note that the storage event is not fired in the same window that called localStorage.setItem(), localStorage.removeItem() or localStorage.clear(). It is fired in all other windows than the one that made the changes. See https://developer.mozilla.org/en-US/docs/Web/API/StorageEvent
 interface StorageChangeEvent {

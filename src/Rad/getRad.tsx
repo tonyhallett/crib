@@ -1,7 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 import isParcelDevMode from "../utilities/isParcelDevMode";
 import { RadHubConnectionBuilder } from "./RadHubConnectionBuilder";
-import { jsonLocalStorageWithChange } from "../jsonLocalStorage";
+import { jsonLocalStorageWithChange } from "./jsonLocalStorage";
 import { inMemoryStorage } from "./inMemoryLocalStorage";
 import { LocalMatch } from "../LocalMatch";
 import { IStorage } from "./IStorage";
