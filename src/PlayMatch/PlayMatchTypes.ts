@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction, useState } from "react";
 import { MatchDetail } from "../App";
 import { FlipCardProps } from "../FlipCard/FlipCard";
 import { LocalMatch } from "../LocalMatch";
@@ -63,3 +64,4 @@ export interface CribBoardState {
   colouredScores: ColouredScores;
   onComplete?: OnComplete;
 }
+export type SetCribboardState = Dispatch<SetStateAction<CribBoardState>>

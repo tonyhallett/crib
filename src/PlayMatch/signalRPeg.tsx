@@ -10,8 +10,9 @@ import {
   PlayingCard,
   Score,
 } from "../generatedTypes";
+import { EnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
 import { arrayLast } from "../utilities/arrayHelpers";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
+import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "./PlayMatchTypes";
 import {
   createZIndexAnimationSegment,
   getMoveRotateSegment,
@@ -24,6 +25,7 @@ import {
   setPlayableCardsState,
 } from "./flipCardDataHelpers";
 import { DiscardPositions, Point, Positions } from "./matchLayoutManager";
+import { peggingScored } from "./peggingScored";
 import { cardMatch, getCardValue } from "./playingCardUtilities";
 import { getOfAKindScore } from "./scoringUtilities";
 import { getAppendMessage } from "./stringUtilities";
@@ -62,11 +64,9 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   pegScores: Score[],
   peggedCard: PeggedCard,
   discardDuration: number,
-  peggingScored: (
-    peggedCard: PeggedCard,
-    pegScoring: Score[],
-    cribBoardAnimationOnComplete: () => void
-  ) => void,
+  gameState: CribGameState,
+  setCribBoardState:SetCribboardState,
+  enqueueSnackbar:EnqueueSnackbar,
   animationCompleteCallback: () => void
 ) => {
   return getMoveToPeggingPositionAnimationSequence(
@@ -76,7 +76,13 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
     () => {
       const peggingScore = peggedCard.peggingScore;
       if (peggingScore.score > 0) {
-        peggingScored(peggedCard, pegScores, animationCompleteCallback);
+        peggingScored(
+          peggedCard, 
+          pegScores, 
+          gameState,
+          setCribBoardState,
+          enqueueSnackbar,
+          animationCompleteCallback);
       } else {
         animationCompleteCallback();
       }

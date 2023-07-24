@@ -2,7 +2,7 @@ import { FlipCardDatas } from "./PlayMatchTypes";
 
 export type AnimationCompletionRegistration = (callback: () => void) => void;
 
-type AnimationProvider = (
+export type AnimationProvider = (
   animationCompletedCallback: () => void,
   prevFlipCardDatas: FlipCardDatas | undefined
 ) => FlipCardDatas;

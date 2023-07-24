@@ -278,7 +278,7 @@ const useMyPegging = (
   ];
 };
 
-export function useMyControl(
+export function useControlMyCards(
   children: ReactNode,
   numDiscards: number,
   discard: (
@@ -301,9 +301,7 @@ export function useMyControl(
     pegCount
   );
 
-  let clickHandler: MouseEventHandler = () => {
-    //
-  };
+  let clickHandler: MouseEventHandler = noop;
   let element: JSX.Element | undefined;
   switch (gameState) {
     case CribGameState.Discard:

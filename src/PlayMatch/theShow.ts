@@ -1,5 +1,4 @@
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
-import { defaultCribBoardDuration } from "../crib-board/AnimatedCribBoard";
 import {
   MyMatch,
   OtherPlayer,
@@ -9,7 +8,8 @@ import {
   ShowScore,
   ShowScoring,
 } from "../generatedTypes";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
+import { DelayEnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
+import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "./PlayMatchTypes";
 import {
   createHideShowSegment,
   createZIndexAnimationSegment,
@@ -19,6 +19,7 @@ import {
 import { getPlayerPositionIndex } from "./getPlayerPositions";
 import { PlayerPositions } from "./matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
+import { showAndScore } from "./showAndScore";
 
 export interface FlipCardDataLookup {
   [playingCard: string]: FlipCardData;
@@ -405,18 +406,22 @@ export function getTurnOverOrder(turnedOverCards: PeggedCard[]) {
   return turnOverOrder;
 }
 
+export interface ReturnCardsToPlayersAnimationOptions{
+  flipDuration: number,
+  returnDuration: number,
+  onComplete: () => void
+}
 export const returnCardsToPlayers = (
   myMatch: MyMatch,
   at: number,
   playerPositions: PlayerPositions[],
   cardsAndOwners: CardsAndOwners,
-  flipDuration: number,
-  returnDuration: number,
-  onComplete: () => void
+  animationOptions:ReturnCardsToPlayersAnimationOptions
 ): {
   returnInPlayAt: number;
   duration: number;
 } => {
+  const {flipDuration, returnDuration, onComplete} = animationOptions;
   let returnInPlayAt = at;
   if (myMatch.pegging.turnedOverCards.length > 0) {
     // prev and new could be the same
@@ -591,27 +596,32 @@ export const returnInPlayCardsToPlayers = (
   return numCardsReturned * returnDuration;
 };
 
+interface ShowAnimationOptions extends ReturnCardsToPlayersAnimationOptions {
+  at: number,
+  moveCutCardDuration: number,
+}
+
 export const addShowAnimation = (
   prevFlipCardDatas: FlipCardDatas,
   newFlipCardDatas: FlipCardDatas,
-  at: number,
-  flipDuration: number,
-  returnDuration: number,
-  moveCutCardDuration: number,
+  showAnimationOptions:ShowAnimationOptions,
   pegShowScoring: Score[][],
-  onComplete: () => void,
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
-  showAndScore: (
+  setCribBoardState: SetCribboardState,
+  delayEnqueueSnackbar: DelayEnqueueSnackbar,
+  /* showAndScore: (
     showScoring: ShowScoring,
     cardsAndOwners: CardsAndOwners,
     cutCard: FlipCardData,
     pegShowScoring: Score[][],
     box: PlayingCard[],
-    startAt: number,
-    moveCutCardDuration: number,
-    scoreMessageDuration: number
-  ) => void
+    animationOptions:{
+      at: number,
+      moveCutCardDuration: number,
+      scoreMessageDuration: number,
+    }
+  ) => void */
 ) => {
   const cardsAndOwners = getCardsWithOwners(
     newFlipCardDatas,
@@ -621,12 +631,10 @@ export const addShowAnimation = (
 
   const { returnInPlayAt, duration } = returnCardsToPlayers(
     myMatch,
-    at,
+    showAnimationOptions.at,
     playerPositions,
     cardsAndOwners,
-    flipDuration,
-    returnDuration,
-    onComplete
+    {...showAnimationOptions}
   );
 
   showAndScore(
@@ -635,8 +643,14 @@ export const addShowAnimation = (
     newFlipCardDatas.cutCard,
     pegShowScoring,
     myMatch.box,
-    returnInPlayAt + duration,
-    moveCutCardDuration,
-    defaultCribBoardDuration
+    {
+      at: returnInPlayAt + duration,
+      moveCutCardDuration: showAnimationOptions.moveCutCardDuration,
+      scoreMessageDuration:2
+    },
+    setCribBoardState,
+    delayEnqueueSnackbar,
+    myMatch,
+    playerPositions
   );
 };
