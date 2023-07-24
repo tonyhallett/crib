@@ -7,9 +7,9 @@ import {
 import { getPeggedCardPositionIndex } from "../../signalRPeg";
 import { EnqueueSnackbar } from "notistack";
 import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "../../PlayMatchTypes";
-import { discardDuration, flipDuration } from "../../PlayMatch";
 import { FlipCardAnimationSequence, FlipAnimation } from "../../../FlipCard/FlipCard";
 import { cardMatch } from "../../playingCardUtilities";
+import { discardDuration, flipDuration } from "../../animationDurations";
 
 const ensurePeggingState = (cardData: FlipCardData) => {
   if (cardData.state !== FlipCardState.PeggingTurnedOver) {
