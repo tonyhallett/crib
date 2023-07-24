@@ -9,7 +9,12 @@ import {
   ShowScoring,
 } from "../generatedTypes";
 import { DelayEnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
-import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "./PlayMatchTypes";
+import {
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+  SetCribboardState,
+} from "./PlayMatchTypes";
 import {
   createHideShowSegment,
   createZIndexAnimationSegment,
@@ -406,22 +411,22 @@ export function getTurnOverOrder(turnedOverCards: PeggedCard[]) {
   return turnOverOrder;
 }
 
-export interface ReturnCardsToPlayersAnimationOptions{
-  flipDuration: number,
-  returnDuration: number,
-  onComplete: () => void
+export interface ReturnCardsToPlayersAnimationOptions {
+  flipDuration: number;
+  returnDuration: number;
+  onComplete: () => void;
 }
 export const returnCardsToPlayers = (
   myMatch: MyMatch,
   at: number,
   playerPositions: PlayerPositions[],
   cardsAndOwners: CardsAndOwners,
-  animationOptions:ReturnCardsToPlayersAnimationOptions
+  animationOptions: ReturnCardsToPlayersAnimationOptions
 ): {
   returnInPlayAt: number;
   duration: number;
 } => {
-  const {flipDuration, returnDuration, onComplete} = animationOptions;
+  const { flipDuration, returnDuration, onComplete } = animationOptions;
   let returnInPlayAt = at;
   if (myMatch.pegging.turnedOverCards.length > 0) {
     // prev and new could be the same
@@ -597,19 +602,19 @@ export const returnInPlayCardsToPlayers = (
 };
 
 interface ShowAnimationOptions extends ReturnCardsToPlayersAnimationOptions {
-  at: number,
-  moveCutCardDuration: number,
+  at: number;
+  moveCutCardDuration: number;
 }
 
 export const addShowAnimation = (
   prevFlipCardDatas: FlipCardDatas,
   newFlipCardDatas: FlipCardDatas,
-  showAnimationOptions:ShowAnimationOptions,
+  showAnimationOptions: ShowAnimationOptions,
   pegShowScoring: Score[][],
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
   setCribBoardState: SetCribboardState,
-  delayEnqueueSnackbar: DelayEnqueueSnackbar,
+  delayEnqueueSnackbar: DelayEnqueueSnackbar
   /* showAndScore: (
     showScoring: ShowScoring,
     cardsAndOwners: CardsAndOwners,
@@ -634,7 +639,7 @@ export const addShowAnimation = (
     showAnimationOptions.at,
     playerPositions,
     cardsAndOwners,
-    {...showAnimationOptions}
+    { ...showAnimationOptions }
   );
 
   showAndScore(
@@ -646,7 +651,7 @@ export const addShowAnimation = (
     {
       at: returnInPlayAt + duration,
       moveCutCardDuration: showAnimationOptions.moveCutCardDuration,
-      scoreMessageDuration:2
+      scoreMessageDuration: 2,
     },
     setCribBoardState,
     delayEnqueueSnackbar,

@@ -4,17 +4,16 @@ import { EnqueueSnackbar } from "notistack";
 import { getColouredScores } from "./getColouredScores";
 import { SetCribboardState } from "./PlayMatchTypes";
 
-export function peggingScored(peggedCard: PeggedCard,
+export function peggingScored(
+  peggedCard: PeggedCard,
   pegScoring: Score[],
   gameState: CribGameState,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  cribBoardAnimationOnComplete: () => void) {
+  cribBoardAnimationOnComplete: () => void
+) {
   enqueueSnackbar(
-    getPeggedScoreMessage(
-      peggedCard.peggingScore,
-      peggedCard.playingCard.pips
-    ),
+    getPeggedScoreMessage(peggedCard.peggingScore, peggedCard.playingCard.pips),
     {
       variant: "success",
     }

@@ -1,18 +1,11 @@
-import {
-  MyMatch, PlayingCard,
-  Score,
-  ShowScoring
-} from "../generatedTypes";
+import { MyMatch, PlayingCard, Score, ShowScoring } from "../generatedTypes";
 import { PlayerPositions } from "./matchLayoutManager";
 import { getPlayerPositions } from "./getPlayerPositions";
 import { defaultCribBoardDuration } from "../crib-board/AnimatedCribBoard";
 import { moveCutCardToPlayerHand } from "./signalRPeg";
 import { DelayEnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
 import { VariantType } from "notistack";
-import {
-  CardsAndOwners, getPlayerScorings,
-  getShowAnimator
-} from "./theShow";
+import { CardsAndOwners, getPlayerScorings, getShowAnimator } from "./theShow";
 import { getColouredScores } from "./getColouredScores";
 import { FlipCardData, SetCribboardState } from "./PlayMatchTypes";
 import { ShowAndScoreAnimationOptions } from "./PlayMatch";
@@ -31,10 +24,7 @@ export function showAndScore(
 ) {
   const { moveCutCardDuration, scoreMessageDuration } = animationOptions;
   let at = animationOptions.at;
-  const showAndWaitForSnackbar = (
-    msg: string,
-    variant: VariantType
-  ) => {
+  const showAndWaitForSnackbar = (msg: string, variant: VariantType) => {
     delayEnqueueSnackbar(at * 1000, msg, {
       variant,
       autoHideDuration: scoreMessageDuration * 1000,

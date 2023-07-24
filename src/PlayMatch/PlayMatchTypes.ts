@@ -64,4 +64,4 @@ export interface CribBoardState {
   colouredScores: ColouredScores;
   onComplete?: OnComplete;
 }
-export type SetCribboardState = Dispatch<SetStateAction<CribBoardState>>
+export type SetCribboardState = Dispatch<SetStateAction<CribBoardState>>;

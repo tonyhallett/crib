@@ -19,18 +19,14 @@ import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
 import { getDiscardToBoxSegment } from "./animationSegments";
 import { AnimationManager } from "./AnimationManager";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import {
-  AnimatedCribBoard,
-} from "../crib-board/AnimatedCribBoard";
+import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useControlMyCards } from "./useControlMyCards";
-import {
-  getPeggingCount,
-} from "./signalRPeg";
+import { getPeggingCount } from "./signalRPeg";
 
 import { useSnackbarWithDelay } from "../hooks/useSnackbarWithDelay";
 import { getColouredScores } from "./getColouredScores";
@@ -70,11 +66,10 @@ export const getTurnedOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
 export const discardDuration = 0.5;
 export const flipDuration = 0.5;
 
-
-export interface ShowAndScoreAnimationOptions{
-  at: number,
-  moveCutCardDuration: number,
-  scoreMessageDuration: number,
+export interface ShowAndScoreAnimationOptions {
+  at: number;
+  moveCutCardDuration: number;
+  scoreMessageDuration: number;
 }
 
 function PlayMatchInner({
@@ -367,13 +362,14 @@ function PlayMatchInner({
             myMatch,
             playerId,
             peggedPlayingCard,
-            
+
             positions,
             allowPegging,
             setNextPlayer,
-            enqueueSnackbar,delayEnqueueSnackbar,
-            setCribBoardState,
-            )
+            enqueueSnackbar,
+            delayEnqueueSnackbar,
+            setCribBoardState
+          )
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -12,7 +12,12 @@ import {
 } from "../generatedTypes";
 import { EnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
 import { arrayLast } from "../utilities/arrayHelpers";
-import { FlipCardData, FlipCardDatas, FlipCardState, SetCribboardState } from "./PlayMatchTypes";
+import {
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+  SetCribboardState,
+} from "./PlayMatchTypes";
 import {
   createZIndexAnimationSegment,
   getMoveRotateSegment,
@@ -65,8 +70,8 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   peggedCard: PeggedCard,
   discardDuration: number,
   gameState: CribGameState,
-  setCribBoardState:SetCribboardState,
-  enqueueSnackbar:EnqueueSnackbar,
+  setCribBoardState: SetCribboardState,
+  enqueueSnackbar: EnqueueSnackbar,
   animationCompleteCallback: () => void
 ) => {
   return getMoveToPeggingPositionAnimationSequence(
@@ -77,12 +82,13 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
       const peggingScore = peggedCard.peggingScore;
       if (peggingScore.score > 0) {
         peggingScored(
-          peggedCard, 
-          pegScores, 
+          peggedCard,
+          pegScores,
           gameState,
           setCribBoardState,
           enqueueSnackbar,
-          animationCompleteCallback);
+          animationCompleteCallback
+        );
       } else {
         animationCompleteCallback();
       }
