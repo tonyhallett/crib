@@ -2,10 +2,11 @@ import {
   CribGameState,
   MyMatch,
   OtherPlayer,
+  PeggedCard,
   PlayingCard,
   Score,
 } from "../generatedTypes";
-import { Positions } from "./matchLayoutManager";
+import { PeggingPositions, Positions } from "./matchLayoutManager";
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import { AnimationProvider } from "./AnimationManager";
 import {
@@ -97,67 +98,30 @@ const otherPlayerPegged = (
   newFlipCardDatas.otherPlayersCards = newOtherPlayersCards;
 };
 
-const createOnComplete = (
-  additionalAnimation: boolean,
-  animationCompleteCallback: () => void
+const performPegging = (
+  turnedOver:boolean,
+  prevFlipCardDatas:FlipCardDatas,
+
+  peggedCard:PeggedCard,// are these the same
+  peggedPlayingCard:PlayingCard,
+  
+  pegScoring:Score[],
+  peggingPositions:PeggingPositions,
+  playerId:string, // need this if supply the peggedCard
+  myMatch:MyMatch,
+  setCribBoardState:SetCribboardState,
+  enqueueSnackbar:EnqueueSnackbar,
+  onComplete:() => void
 ) => {
-  const numCompletesToComplete = additionalAnimation ? 2 : 1;
-  let numCompleted = 0;
-  return () => {
-    numCompleted++;
-    if (numCompleted === numCompletesToComplete) {
-      animationCompleteCallback();
-    }
-  };
-};
-
-export function getSignalRPeggingAnimationProvider(
-  myMatch: MyMatch,
-  playerId: string,
-  peggedPlayingCard: PlayingCard,
-  getPositions: () => Positions,
-  allowPegging: () => void,
-  setNextPlayer: (nextPlayer: string) => void,
-
-  enqueueSnackbar: EnqueueSnackbar,
-  delayEnqueueSnackbar: DelayEnqueueSnackbar,
-
-  setCribBoardState: SetCribboardState
-): AnimationProvider {
-  // eslint-disable-next-line complexity
-  const animationProvider: AnimationProvider = (
-    animationCompleteCallback,
-    prevFlipCardDatas
-  ) => {
-    prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
-    allowPegging();
-    setNextPlayer(myMatch.pegging.nextPlayer);
-    const positions = getPositions();
-    const peggedCard = getLastPeggedCard(myMatch.pegging);
-    const pegShowScoring = splitPeggingShowScores(
-      peggedCard,
-      myMatch.showScoring,
-      myMatch.scores,
-      myMatch.myId,
-      myMatch.otherPlayers
-    );
-
-    const turnedOver = getTurnedOver(peggedCard, myMatch);
-
-    const onComplete = createOnComplete(
-      turnedOver || myMatch.gameState === CribGameState.Show,
-      animationCompleteCallback
-    );
-
-    const newFlipCardDatas = turnedOver
+  const newFlipCardDatas = turnedOver
       ? setTurnedOver(prevFlipCardDatas)
       : { ...prevFlipCardDatas };
 
     const [moveToPeggingPositionAnimationSequence, pegDuration] =
       getMoveToPeggingPositionAnimationSequenceAndScore(
         getPeggedCardPositionIndex(prevFlipCardDatas),
-        positions.peggingPositions.inPlay,
-        pegShowScoring.shift() as Score[],
+        peggingPositions.inPlay,
+        pegScoring,
         peggedCard,
         discardDuration,
         myMatch.gameState,
@@ -194,11 +158,84 @@ export function getSignalRPeggingAnimationProvider(
         pegDelay,
         onComplete,
         myMatch,
-        positions,
+        peggingPositions,
         discardDuration,
         flipDuration
       );
     }
+    return {
+      pegDelay,
+      newFlipCardDatas
+    }
+}
+
+const createOnComplete = (
+  additionalAnimation: boolean,
+  animationCompleteCallback: () => void
+) => {
+  const numCompletesToComplete = additionalAnimation ? 2 : 1;
+  let numCompleted = 0;
+  return () => {
+    numCompleted++;
+    if (numCompleted === numCompletesToComplete) {
+      animationCompleteCallback();
+    }
+  };
+};
+
+
+
+export function getSignalRPeggingAnimationProvider(
+  myMatch: MyMatch,
+  playerId: string,// don't need this
+  peggedPlayingCard: PlayingCard, // don't need this
+  getPositions: () => Positions,
+  allowPegging: () => void,
+  setNextPlayer: (nextPlayer: string) => void,
+
+  enqueueSnackbar: EnqueueSnackbar,
+  delayEnqueueSnackbar: DelayEnqueueSnackbar,
+
+  setCribBoardState: SetCribboardState
+): AnimationProvider {
+  // eslint-disable-next-line complexity
+  const animationProvider: AnimationProvider = (
+    animationCompleteCallback,
+    prevFlipCardDatas
+  ) => {
+    prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
+    allowPegging();
+    setNextPlayer(myMatch.pegging.nextPlayer);
+    const positions = getPositions();
+    const peggedCard = getLastPeggedCard(myMatch.pegging);
+    const pegShowScoring = splitPeggingShowScores(
+      peggedCard,
+      myMatch.showScoring,
+      myMatch.scores,
+      myMatch.myId,
+      myMatch.otherPlayers
+    );
+
+    const turnedOver = getTurnedOver(peggedCard, myMatch);
+
+    const onComplete = createOnComplete(
+      turnedOver || myMatch.gameState === CribGameState.Show,
+      animationCompleteCallback
+    );
+
+    const {pegDelay,newFlipCardDatas} = performPegging(
+      turnedOver,
+      prevFlipCardDatas,
+      peggedCard,
+      peggedPlayingCard,
+      pegShowScoring.shift() as Score[],
+      positions.peggingPositions,
+      playerId,
+      myMatch,
+      setCribBoardState,
+      enqueueSnackbar,
+      onComplete
+    )
 
     if (myMatch.gameState === CribGameState.Show) {
       addShowAnimation(

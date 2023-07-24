@@ -29,7 +29,7 @@ import {
   numPeggingInPlayCards,
   setPlayableCardsState,
 } from "./flipCardDataHelpers";
-import { DiscardPositions, Point, Positions } from "./matchLayoutManager";
+import { DiscardPositions, PeggingPositions, Point } from "./matchLayoutManager";
 import { peggingScored } from "./peggingScored";
 import { cardMatch, getCardValue } from "./playingCardUtilities";
 import { getOfAKindScore } from "./scoringUtilities";
@@ -189,7 +189,7 @@ export const addTurnOverTogetherAnimation = (
   delay: number,
   onComplete: () => void,
   myMatch: MyMatch,
-  positions: Positions,
+  peggingPositions: PeggingPositions,
   discardDuration: number,
   flipDuration: number
 ) => {
@@ -218,8 +218,8 @@ export const addTurnOverTogetherAnimation = (
             myMatch.pegging.turnedOverCards.length -
               numTurnedOverCardsFromBefore,
             delay,
-            positions.peggingPositions.turnedOver,
-            positions.peggingPositions.inPlay[0],
+            peggingPositions.turnedOver,
+            peggingPositions.inPlay[0],
             discardDuration,
             discardDuration,
             flipDuration,
