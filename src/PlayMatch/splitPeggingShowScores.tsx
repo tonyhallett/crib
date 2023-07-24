@@ -2,16 +2,18 @@ import { OtherPlayer, PeggedCard, Score, ShowScoring } from "../generatedTypes";
 import { getPlayerScoreIndex } from "./getPlayerPositions";
 
 function shiftScoreBack(score: Score, amount: number): Score {
-  return {
+  const frontPegFromBefore  = score.backPeg;
+  const shiftedScore = {
     games: score.games,
-    frontPeg: score.backPeg,
-    backPeg: score.frontPeg - amount,
+    frontPeg: frontPegFromBefore,// revert previous numeric score
+    backPeg: frontPegFromBefore - amount,
   };
+  return shiftedScore;
 }
 
 export function splitPeggingShowScores(
   peggedCard: PeggedCard,
-  showScoring: ShowScoring,
+  showScoring: ShowScoring|undefined,
   scores: Score[],
   myId: string,
   otherPlayers: OtherPlayer[]
@@ -36,9 +38,13 @@ export function splitPeggingShowScores(
       })
     );
   };
-  showScoring.playerShowScores.reverse().forEach((playerScore) => {
-    addScore(playerScore.playerId, playerScore.showScore.score);
-  });
-  addScore(peggedCard.owner, peggedCard.peggingScore.score);
-  return scoresInReverse.reverse();
+  if(showScoring){
+    showScoring.playerShowScores.reverse().forEach((playerScore) => {
+      addScore(playerScore.playerId, playerScore.showScore.score);
+    });
+    addScore(peggedCard.owner, peggedCard.peggingScore.score);
+    return scoresInReverse.reverse();
+  } 
+  
+  return [scores];
 }

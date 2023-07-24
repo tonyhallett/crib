@@ -13,6 +13,7 @@ import {
   Suit,
   FourOfAKind,
   ThreeOfAKind,
+  ShowScore,
 } from "../generatedTypes";
 import { motion } from "framer-motion";
 import { cribStorage } from "./getRad";
@@ -39,6 +40,7 @@ import {
   TenDiamonds,
   JackDiamonds,
   KingClubs,
+  ThreeClubs,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -60,6 +62,18 @@ type ActionMyMatch = MyMatch & {
   actions: MyMatchAction[];
   currentAction: number;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const score19: ShowScore = {
+  fifteenTwos: [],
+  runs: [],
+  pairs: [],
+  flush: [],
+  fourOfAKind: undefined as unknown as FourOfAKind,
+  threeOfAKind: undefined as unknown as ThreeOfAKind,
+  oneForHisKnob: undefined as unknown as PlayingCard,
+  score: 0,
+}
 
 const matches: ActionMyMatch[] = [
   {
@@ -1372,10 +1386,8 @@ const matches: ActionMyMatch[] = [
         methodName: "peg",
         args: [
           "Player2",
-          {
-            pips: Pips.Ace,
-            suit: Suit.Hearts,
-          } as PlayingCard,
+          ThreeClubs
+          ,
           {
             id: "2 player pegging turnedover - peg completes",
             changeHistory: {
@@ -1389,8 +1401,8 @@ const matches: ActionMyMatch[] = [
             myCards: [],
             cutCard: TwoDiamonds,
             scores: [
-              { games: 1, frontPeg: 26, backPeg: 22 },
-              { games: 2, frontPeg: 15, backPeg: 12 },
+              { games: 1, frontPeg: 27, backPeg: 22 },
+              { games: 2, frontPeg: 31, backPeg: 12 },
             ],
             pegging: {
               turnedOverCards: [
@@ -1433,14 +1445,14 @@ const matches: ActionMyMatch[] = [
                 },
                 {
                   owner: "Player2",
-                  playingCard: AceHearts,
+                  playingCard: ThreeClubs,
                   peggingScore: {
-                    score: 3,
+                    score: 7,
                     is31: false,
-                    is15: true,
+                    is15: false,
                     isLastGo: true,
                     numCardsInRun: 0,
-                    numOfAKind: 0,
+                    numOfAKind: 3,
                   },
                 },
               ],
@@ -1473,8 +1485,8 @@ const matches: ActionMyMatch[] = [
                 flush: [],
                 fourOfAKind: undefined as unknown as FourOfAKind,
                 threeOfAKind: undefined as unknown as ThreeOfAKind,
-                oneForHisKnob: undefined as unknown as PlayingCard,
-                score: 0,
+                oneForHisKnob: JackDiamonds,
+                score: 1,
               },
               playerShowScores: [
                 {
@@ -1496,14 +1508,25 @@ const matches: ActionMyMatch[] = [
                 {
                   playerId: "Player2",
                   showScore: {
-                    fifteenTwos: [],
-                    runs: [],
-                    pairs: [],
+                    fifteenTwos: [
+                      [QueenSpades,TwoDiamonds,ThreeClubs],
+                      [QueenSpades,TwoDiamonds,ThreeSpades],
+                    ],
+                    runs: [
+                      [AceSpades,TwoDiamonds,ThreeClubs],
+                      [AceSpades,TwoDiamonds,ThreeSpades],
+                    ],
+                    pairs: [
+                      {
+                        card1:ThreeClubs,
+                        card2:ThreeSpades,
+                      }
+                    ],
                     flush: [],
                     fourOfAKind: undefined as unknown as FourOfAKind,
                     threeOfAKind: undefined as unknown as ThreeOfAKind,
                     oneForHisKnob: undefined as unknown as PlayingCard,
-                    score: 0,
+                    score: 12,
                   },
                 },
               ],

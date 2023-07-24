@@ -5,6 +5,9 @@ import { jsonLocalStorageWithChange } from "./jsonLocalStorage";
 import { inMemoryStorage } from "./inMemoryLocalStorage";
 import { LocalMatch } from "../localMatch";
 import { IStorage } from "./IStorage";
+import { Auth0Provider as ActualAuth0Provider } from "@auth0/auth0-react";
+import { Auth0Provider as RadAuth0Provider } from "./Auth0Provider";
+import { RadHubManager } from "./RadHubManager";
 
 let signalRX: Pick<typeof signalR, "HubConnectionBuilder"> = signalR;
 interface ICribStorage {
@@ -31,13 +34,18 @@ class CribStorage implements ICribStorage {
 }
 
 let storage: IStorage = jsonLocalStorageWithChange;
+let Auth0Provider = ActualAuth0Provider;
 const devMode = isParcelDevMode();
-
+const Component = devMode ? <RadHubManager/> : undefined;
 if (devMode) {
+  Auth0Provider = RadAuth0Provider;
   signalRX = {
     HubConnectionBuilder: RadHubConnectionBuilder,
   };
   storage = inMemoryStorage;
 }
+
+
+
 const cribStorage = new CribStorage(storage);
-export { signalRX, cribStorage };
+export { signalRX, cribStorage, Auth0Provider, Component};
