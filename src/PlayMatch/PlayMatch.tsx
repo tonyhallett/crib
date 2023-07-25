@@ -46,6 +46,8 @@ function noNewActions(matchDetail: MatchDetail) {
   );
 }
 
+
+
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -218,6 +220,7 @@ function PlayMatchInner({
                   const nibs = "nibs";
                   enqueueSnackbar(`Two for his ${nibs} !`, {
                     variant: "success",
+                    key: playMatchSnackbarKey,
                   });
                   requiresCompletion = false;
                   setCribBoardState({
@@ -361,7 +364,6 @@ function PlayMatchInner({
     allowPegging,
     delayEnqueueSnackbar,
   ]);
-
   const staticRender = useCallback(() => {
     const myMatch = matchDetail.match;
     // no animations required

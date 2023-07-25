@@ -8,6 +8,7 @@ import { VariantType } from "notistack";
 import { CardsAndOwners, getPlayerScorings, getShowAnimator } from "./theShow";
 import { getColouredScores } from "./getColouredScores";
 import { FlipCardData, SetCribboardState } from "./PlayMatchTypes";
+import { playMatchSnackbarKey } from "../App";
 
 export interface ShowAndScoreAnimationOptions {
   at: number;
@@ -30,7 +31,7 @@ export function showAndScore(
   const { moveCutCardDuration, scoreMessageDuration } = animationOptions;
   let at = animationOptions.at;
   const showAndWaitForSnackbar = (msg: string, variant: VariantType) => {
-    delayEnqueueSnackbar(at * 1000, msg, {
+    delayEnqueueSnackbar(at * 1000, playMatchSnackbarKey, msg, {
       variant,
       autoHideDuration: scoreMessageDuration * 1000,
     });

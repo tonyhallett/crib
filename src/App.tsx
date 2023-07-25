@@ -31,7 +31,6 @@ import {
   PlayMatchCribClientMethods,
   PlayMatchProps,
 } from "./PlayMatch/PlayMatchTypes";
-import { closeSnackbar, useSnackbar } from "notistack";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { WoodWhenPlaying, woodUrl } from "./backgrounds/WoodWhenPlaying";
 import GamesIcon from "@mui/icons-material/Games";
@@ -44,6 +43,7 @@ import cribBoardWoodUrl from "./backgrounds/cribBoardWoodUrl";
 import { useImagePreload } from "./hooks/useImagePreload";
 import { PlayMatchContext } from "./PlayMatchContext";
 import { PlayMatch } from "./PlayMatch/PlayMatch";
+import { useSnackbarWithDelay } from "./hooks/useSnackbarWithDelay";
 
 type MenuItem = "Friends" | "Matches";
 
@@ -65,6 +65,7 @@ function ensureLocalMatch(match: MyMatch) {
   }
   return localMatch;
 }
+export const playMatchSnackbarKey = "playmatch-snackbar";
 
 /* eslint-disable complexity */
 export default function App() {
@@ -73,7 +74,7 @@ export default function App() {
   const hasRenderAMatch = useRef(false);
   const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl);
   const woodImageLoaded = useImagePreload(woodUrl);
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, stopDelayed, closeSnackbar } = useSnackbarWithDelay();
   const cribHubRef = useRef<CribHub | undefined>(undefined);
   const playMatchCribClientRef = useRef<PlayMatchCribClient | undefined>(
     undefined
@@ -174,7 +175,7 @@ export default function App() {
         action,
       });
     },
-    [doPlayMatch, enqueueSnackbar]
+    [doPlayMatch, enqueueSnackbar, closeSnackbar]
   );
 
   const updateLocalMatch = useCallback((newLocalMatch: LocalMatch) => {
@@ -385,6 +386,12 @@ export default function App() {
       hasRenderAMatch.current = true;
     }
   });
+  useEffect(() => {
+    return () => {
+      closeSnackbar(playMatchSnackbarKey);
+      stopDelayed(playMatchSnackbarKey);
+    }
+  })
   const playMatchCribHub = useMemo<PlayMatchProps["playMatchCribHub"]>(
     () => ({
       discard(discard1, discard2) {

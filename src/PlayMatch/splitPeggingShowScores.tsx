@@ -2,34 +2,6 @@ import { OtherPlayer, PeggedCard, Score, ShowScoring } from "../generatedTypes";
 import { fill } from "../utilities/arrayHelpers";
 import { getPlayerScoreIndex } from "./getPlayerPositions";
 
-function shiftScoreBack(score: Score, amount: number, isPegging:boolean): Score {
-  let shiftedScore:Score
-  if(isPegging){
-    shiftedScore = {
-      games: score.games,
-      frontPeg: score.frontPeg - amount,
-      backPeg: score.frontPeg - amount,// for this 
-    };
-  }else{
-    const frontPegFromBefore  = score.backPeg;
-    shiftedScore = {
-      games: score.games,
-      frontPeg: frontPegFromBefore,// revert previous numeric score
-      backPeg: frontPegFromBefore - amount,
-    };
-  }
-  console.log(`shifted ${amount}`);
-  logScores([score, shiftedScore]);
-    
-  return shiftedScore;
-}
-const scoreStr = (score:Score) => `${score.frontPeg} ${score.backPeg}`
-const logScores = (scores: Score[]) => {
-  const firstScore = scores[0];
-  const secondScore = scores[1];
-  console.log(`${scoreStr(firstScore)}, ${scoreStr(secondScore)}`);
-}
-
 interface ScoresAndTotal {
   scores:number[],
   total:number,

@@ -26,6 +26,7 @@ import { DOMKeyframesDefinition } from "framer-motion";
 import { useSnackbar } from "notistack";
 import { noop } from "./noop";
 import { getCardValue } from "./playingCardUtilities";
+import { playMatchSnackbarKey } from "../App";
 
 type Animate = (
   sequence: SmartAnimationSequence,
@@ -241,7 +242,7 @@ const useMyPegging = (
           } else {
             enqueueSnackbar(
               `Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`,
-              { variant: "error" }
+              { variant: "error", key:playMatchSnackbarKey }
             );
             animate([getBlurMyCardSegment(playingCard, 1, 2)]);
           }

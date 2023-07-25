@@ -3,6 +3,7 @@ import { getPeggedScoreMessage } from "./signalRPeg";
 import { EnqueueSnackbar } from "notistack";
 import { getColouredScores } from "./getColouredScores";
 import { SetCribboardState } from "./PlayMatchTypes";
+import { playMatchSnackbarKey } from "../App";
 
 export function peggingScored(
   peggedCard: PeggedCard,
@@ -16,6 +17,7 @@ export function peggingScored(
     getPeggedScoreMessage(peggedCard.peggingScore, peggedCard.playingCard.pips),
     {
       variant: "success",
+      key:playMatchSnackbarKey
     }
   );
   switch (gameState) {
