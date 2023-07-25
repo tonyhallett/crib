@@ -1401,8 +1401,8 @@ const matches: ActionMyMatch[] = [
             myCards: [],
             cutCard: TwoDiamonds,
             scores: [
-              { games: 1, frontPeg: 27, backPeg: 22 },
-              { games: 2, frontPeg: 31, backPeg: 12 },
+              { games: 1, frontPeg: 27, backPeg: 26 },
+              { games: 2, frontPeg: 31, backPeg: 19 },
             ],
             pegging: {
               turnedOverCards: [
@@ -1490,22 +1490,6 @@ const matches: ActionMyMatch[] = [
               },
               playerShowScores: [
                 {
-                  playerId: "Me",
-                  showScore: {
-                    fifteenTwos: [
-                      [KingSpades, TwoSpades, ThreeHearts],
-                      [JackSpades, TwoSpades, ThreeHearts],
-                    ],
-                    runs: [],
-                    pairs: [],
-                    flush: [],
-                    fourOfAKind: undefined as unknown as FourOfAKind,
-                    threeOfAKind: undefined as unknown as ThreeOfAKind,
-                    oneForHisKnob: undefined as unknown as PlayingCard,
-                    score: 4,
-                  },
-                },
-                {
                   playerId: "Player2",
                   showScore: {
                     fifteenTwos: [
@@ -1527,6 +1511,22 @@ const matches: ActionMyMatch[] = [
                     threeOfAKind: undefined as unknown as ThreeOfAKind,
                     oneForHisKnob: undefined as unknown as PlayingCard,
                     score: 12,
+                  },
+                },
+                {
+                  playerId: "Me",
+                  showScore: {
+                    fifteenTwos: [
+                      [KingSpades, TwoSpades, ThreeHearts],
+                      [JackSpades, TwoSpades, ThreeHearts],
+                    ],
+                    runs: [],
+                    pairs: [],
+                    flush: [],
+                    fourOfAKind: undefined as unknown as FourOfAKind,
+                    threeOfAKind: undefined as unknown as ThreeOfAKind,
+                    oneForHisKnob: undefined as unknown as PlayingCard,
+                    score: 4,
                   },
                 },
               ],
