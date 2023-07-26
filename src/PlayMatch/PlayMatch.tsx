@@ -16,7 +16,7 @@ import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
-import { MatchDetail } from "../App";
+import { MatchDetail, playMatchSnackbarKey } from "../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { usePeggingOverlay } from "./usePeggingOverlay";
 import { useControlMyCards } from "./useControlMyCards";
@@ -45,8 +45,6 @@ function noNewActions(matchDetail: MatchDetail) {
     matchDetail.match.changeHistory.numberOfActions
   );
 }
-
-
 
 function PlayMatchInner({
   matchDetail,

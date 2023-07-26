@@ -78,7 +78,7 @@ export const Auth0Provider = (opts: Auth0ProviderOptions): JSX.Element => {
 
   return (
     <Auth0Context.Provider value={contextValue}>
-        {opts.children}
+      {opts.children}
     </Auth0Context.Provider>
   );
 };

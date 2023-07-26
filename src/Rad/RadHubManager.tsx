@@ -73,7 +73,7 @@ const score19: ShowScore = {
   threeOfAKind: undefined as unknown as ThreeOfAKind,
   oneForHisKnob: undefined as unknown as PlayingCard,
   score: 0,
-}
+};
 
 const matches: ActionMyMatch[] = [
   {
@@ -1386,8 +1386,7 @@ const matches: ActionMyMatch[] = [
         methodName: "peg",
         args: [
           "Player2",
-          ThreeClubs
-          ,
+          ThreeClubs,
           {
             id: "2 player pegging turnedover - peg completes",
             changeHistory: {
@@ -1493,18 +1492,18 @@ const matches: ActionMyMatch[] = [
                   playerId: "Player2",
                   showScore: {
                     fifteenTwos: [
-                      [QueenSpades,TwoDiamonds,ThreeClubs],
-                      [QueenSpades,TwoDiamonds,ThreeSpades],
+                      [QueenSpades, TwoDiamonds, ThreeClubs],
+                      [QueenSpades, TwoDiamonds, ThreeSpades],
                     ],
                     runs: [
-                      [AceSpades,TwoDiamonds,ThreeClubs],
-                      [AceSpades,TwoDiamonds,ThreeSpades],
+                      [AceSpades, TwoDiamonds, ThreeClubs],
+                      [AceSpades, TwoDiamonds, ThreeSpades],
                     ],
                     pairs: [
                       {
-                        card1:ThreeClubs,
-                        card2:ThreeSpades,
-                      }
+                        card1: ThreeClubs,
+                        card2: ThreeSpades,
+                      },
                     ],
                     flush: [],
                     fourOfAKind: undefined as unknown as FourOfAKind,

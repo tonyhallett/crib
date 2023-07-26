@@ -242,7 +242,7 @@ const useMyPegging = (
           } else {
             enqueueSnackbar(
               `Cannot peg the ${playingCard.pips} of ${playingCard.suit} when count is ${pegCount}`,
-              { variant: "error", key:playMatchSnackbarKey }
+              { variant: "error", key: playMatchSnackbarKey }
             );
             animate([getBlurMyCardSegment(playingCard, 1, 2)]);
           }

@@ -36,7 +36,7 @@ class CribStorage implements ICribStorage {
 let storage: IStorage = jsonLocalStorageWithChange;
 let Auth0Provider = ActualAuth0Provider;
 const devMode = isParcelDevMode();
-const Component = devMode ? <RadHubManager/> : undefined;
+const Component = devMode ? <RadHubManager /> : undefined;
 if (devMode) {
   Auth0Provider = RadAuth0Provider;
   signalRX = {
@@ -45,7 +45,5 @@ if (devMode) {
   storage = inMemoryStorage;
 }
 
-
-
 const cribStorage = new CribStorage(storage);
-export { signalRX, cribStorage, Auth0Provider, Component};
+export { signalRX, cribStorage, Auth0Provider, Component };

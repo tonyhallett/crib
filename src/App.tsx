@@ -74,7 +74,8 @@ export default function App() {
   const hasRenderAMatch = useRef(false);
   const cribBoardImageLoaded = useImagePreload(cribBoardWoodUrl);
   const woodImageLoaded = useImagePreload(woodUrl);
-  const { enqueueSnackbar, stopDelayed, closeSnackbar } = useSnackbarWithDelay();
+  const { enqueueSnackbar, stopDelayed, closeSnackbar } =
+    useSnackbarWithDelay();
   const cribHubRef = useRef<CribHub | undefined>(undefined);
   const playMatchCribClientRef = useRef<PlayMatchCribClient | undefined>(
     undefined
@@ -390,8 +391,8 @@ export default function App() {
     return () => {
       closeSnackbar(playMatchSnackbarKey);
       stopDelayed(playMatchSnackbarKey);
-    }
-  })
+    };
+  });
   const playMatchCribHub = useMemo<PlayMatchProps["playMatchCribHub"]>(
     () => ({
       discard(discard1, discard2) {

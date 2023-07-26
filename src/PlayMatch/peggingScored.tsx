@@ -17,7 +17,7 @@ export function peggingScored(
     getPeggedScoreMessage(peggedCard.peggingScore, peggedCard.playingCard.pips),
     {
       variant: "success",
-      key:playMatchSnackbarKey
+      key: playMatchSnackbarKey,
     }
   );
   switch (gameState) {
