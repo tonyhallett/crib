@@ -1,164 +1,38 @@
-import {
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  TextField,
-  DialogActions,
-  Box,
-  createTheme,
-  ThemeProvider,
-  CssBaseline,
-  BottomNavigation,
-  BottomNavigationAction,
-  AppBar,
-  IconButton,
-  Toolbar,
-  styled,
-} from "@mui/material";
+import { Typography, AppBar, Toolbar } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
-import { Word, initialWords } from "./initialWords";
-import SimpleKeyboard, { KeyboardOptions } from "react-simple-keyboard";
+import { initialWords } from "./initialWords";
 import HangmanSVG from "./HangmanSVG";
 import "react-simple-keyboard/build/css/index.css";
-import EditIcon from "@mui/icons-material/Edit";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { CenteredElement } from "./CenteredElement";
+import { CenteredClue } from "./CenteredClue";
+import { Guess } from "./Guess";
+import { useHangmanKeyboard } from "./HangmanKeyboard";
+import { GameOverDialog } from "./GameOverDialog";
+import { GamePlayState, getGameState } from "./getGameState";
+import { GuessedWord } from "./types";
+import { useSettingsDialog } from "./useSettingsDialog";
+import { useNewWordDialog } from "./useNewWordDialog";
+import { usePickWord } from "./usePickWord";
 
-const CenteredElement = (props: { children: React.ReactNode }) => {
-  return (
-    <Box display="flex" justifyContent="center">
-      {props.children}
-    </Box>
-  );
-};
-
-function getIncorrectGuesses(word: string, guessedLetters: string[]): string[] {
-  const incorrectGuesses: string[] = [];
-  guessedLetters.forEach((letter) => {
-    if (!word.includes(letter)) {
-      incorrectGuesses.push(letter);
-    }
-  });
-  return incorrectGuesses;
-}
-
-const getCorrectlyGuessed = (word: string, guessedLetters: string[]) => {
-  for (let i = 0; i < word.length; i++) {
-    if (!guessedLetters.includes(word[i])) {
-      return false;
-    }
-  }
-  return true;
-};
-
-const numIncorrectGuessesGameOver = 6;
-function incorrectGuessesGameOver(numIncorrectGuesses: number) {
-  return numIncorrectGuesses === 6;
-}
-
-interface GuessedWord {
-  word: string;
-  clue: string;
-  guessedLetters: string[];
-  // for simplicity could add state
-}
-
-enum GamePlayState {
-  PLAYING,
-  WON,
-  LOST,
-}
-
-interface GameState {
-  incorrectGuesses: string[];
-  correctGuesses: string[];
-  playState: GamePlayState;
-}
-
-const getGameState = (guessedWord: GuessedWord): GameState => {
-  const incorrectGuesses = getIncorrectGuesses(
-    guessedWord.word,
-    guessedWord.guessedLetters
-  );
-  const correctGuesses = guessedWord.guessedLetters.filter(
-    (letter) => !incorrectGuesses.includes(letter)
-  );
-  const gameState: GameState = {
-    incorrectGuesses,
-    correctGuesses,
-    playState: GamePlayState.PLAYING,
+const getGuessedWord = (
+  guessedWords: GuessedWord[],
+  currentWordIndex: number
+) => {
+  let guessedWord: GuessedWord = {
+    word: "",
+    clue: "",
+    guessedLetters: [],
   };
-  if (getCorrectlyGuessed(guessedWord.word, guessedWord.guessedLetters)) {
-    gameState.playState = GamePlayState.WON;
+  if (guessedWords.length > 0) {
+    guessedWord = guessedWords[currentWordIndex];
   }
-  if (incorrectGuessesGameOver(incorrectGuesses.length)) {
-    gameState.playState = GamePlayState.LOST;
-  }
-  return gameState;
+  return guessedWord;
 };
-
-declare module "@mui/material/styles" {
-  interface Theme {
-    guess: {
-      success: string;
-      failure: string;
-    };
-  }
-  // allow configuration using `createTheme`
-  interface ThemeOptions {
-    guess: {
-      success: string;
-      failure: string;
-    };
-  }
-}
-
-export const HangmanRoot = () => {
-  const theme = createTheme({
-    typography: {
-      fontFamily: "Indie Flower, cursive",
-    },
-    guess: {
-      success: "green",
-      failure: "red",
-    },
-  });
-
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <HangmanApp />
-    </ThemeProvider>
-  );
-};
-
-const correctGuessClassName = "correctguess";
-const incorrectGuessClassName = "incorrectguess";
-const KeyboardWrapper = styled("div")(({ theme }) => {
-  const guess = theme.guess;
-  return {
-    "& .hg-theme-default": {
-      fontFamily: theme.typography.fontFamily,
-    },
-    "& .hg-button.incorrectguess": {
-      backgroundColor: guess.failure,
-    },
-    "& .hg-button.correctguess": {
-      backgroundColor: guess.success,
-    },
-  };
-});
 
 // eslint-disable-next-line complexity
-type BottomNavigationValue = "Words" | "Options";
-// eslint-disable-next-line complexity
-const HangmanApp: React.FC = () => {
+export const HangmanApp: React.FC = () => {
   const [guessedWords, setGuessedWords] = useState<GuessedWord[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
-
-  const [openDialog, setOpenDialog] = useState<boolean>(false);
-  const [newWord, setNewWord] = useState<string>("");
-  const [newClue, setNewClue] = useState<string>("");
 
   useEffect(() => {
     const storedGuessedWords = localStorage.getItem("guessedWords");
@@ -191,18 +65,32 @@ const HangmanApp: React.FC = () => {
   }, [guessedWords, currentWordIndex]);
 
   const updateGuessedWord = useCallback(
-    (newGuessedWord: GuessedWord) => {
+    (newGuessedWord: GuessedWord, guessWordIndex: number) => {
       const newGuessedWords = guessedWords.map((guessedWord, index) => {
-        if (index === currentWordIndex) {
+        if (index === guessWordIndex) {
           return newGuessedWord;
         }
         return guessedWord;
       });
       setGuessedWords(newGuessedWords);
     },
-    [currentWordIndex, guessedWords]
+    [guessedWords]
   );
-  // THIS USED GAMEOVER STATE - would be better to use calculated and disable the keyboard
+
+  const updateCurrentGuessedWord = useCallback(
+    (newGuessedWord: GuessedWord) => {
+      updateGuessedWord(newGuessedWord, currentWordIndex);
+    },
+    [currentWordIndex, updateGuessedWord]
+  );
+
+  const tryAgain = () => {
+    updateCurrentGuessedWord({
+      ...guessedWords[currentWordIndex],
+      guessedLetters: [],
+    });
+  };
+
   const handleGuess = useCallback(
     (letter: string) => {
       const guessedWord = guessedWords[currentWordIndex];
@@ -211,60 +99,78 @@ const HangmanApp: React.FC = () => {
           ...guessedWord,
           guessedLetters: [...guessedWord.guessedLetters, letter],
         };
-        updateGuessedWord(newGuessedWord);
+        updateCurrentGuessedWord(newGuessedWord);
       }
     },
-    [guessedWords, currentWordIndex, updateGuessedWord]
+    [guessedWords, currentWordIndex, updateCurrentGuessedWord]
   );
 
-  const resetGame = () => {
+  const nextWord = () => {
+    const getNextWordIndex = (prevIndex: number) => {
+      return prevIndex === guessedWords.length - 1 ? 0 : prevIndex + 1;
+    };
+
     setCurrentWordIndex((prevIndex) => {
-      const newIndex =
-        prevIndex === guessedWords.length - 1 ? 0 : prevIndex + 1;
-      return newIndex;
+      let count = 0;
+      let nextGuessedWord: GuessedWord | undefined;
+      let index = prevIndex;
+      while (nextGuessedWord === undefined && count < guessedWords.length) {
+        index = getNextWordIndex(index);
+        const guessedWord = guessedWords[index];
+        const { playState } = getGameState(guessedWord);
+        if (playState === GamePlayState.PLAYING) {
+          nextGuessedWord = guessedWord;
+        }
+        count++;
+      }
+
+      return index;
     });
   };
 
-  const tryAgain = () => {
-    updateGuessedWord({
-      ...guessedWords[currentWordIndex],
+  const addNewWord = (newWord: string, newClue: string, andPlay: boolean) => {
+    const newWordObject: GuessedWord = {
+      word: newWord.trim().toUpperCase(),
+      clue: newClue.trim(),
       guessedLetters: [],
-    });
-  };
+    };
+    setGuessedWords([...guessedWords, newWordObject]);
 
-  /* const handleWordSelection = (index: number) => {
-    setCurrentWordIndex(index);
-    resetGame();
-  };
-
-  const handleNewWord = () => {
-    if (newWord.trim() && newClue.trim()) {
-      const newWordObject: Word = {
-        word: newWord.toUpperCase(),
-        clue: newClue,
-      };
-      setGuessedWords([...words, newWordObject]);
-      setOpenDialog(false);
-      setNewWord("");
-      setNewClue("");
+    if (andPlay) {
+      setCurrentWordIndex(guessedWords.length);
     }
-  }; */
+  };
 
-  if (guessedWords.length === 0) {
-    return null;
-  }
-  const guessedWord = guessedWords[currentWordIndex];
+  const guessedWord = getGuessedWord(guessedWords, currentWordIndex);
+
   const { correctGuesses, incorrectGuesses, playState } =
     getGameState(guessedWord);
   const gameOver = playState !== GamePlayState.PLAYING;
-  const gameOverMessage =
-    playState === GamePlayState.WON ? "You Won!" : `Unlucky - try again`;
-  const keyboardHandler: KeyboardOptions["onKeyReleased"] = gameOver
-    ? undefined
-    : (input) => handleGuess(input);
 
-  const correctGuessButtons = correctGuesses.join(" ");
-  const incorrectGuessButtons = incorrectGuesses.join(" ");
+  const [isQwertyCheckbox, hangmanKeyboard] = useHangmanKeyboard({
+    keyboardHandler: gameOver ? undefined : handleGuess,
+    correctGuessButtons: correctGuesses.join(" "),
+    incorrectGuessButtons: incorrectGuesses.join(" "),
+  });
+
+  const [settingsDialog, showSettingsButton] = useSettingsDialog({
+    isQwertyCheckbox,
+  });
+  const [addNewWordDialog, showAddNewWordDialogButton] =
+    useNewWordDialog(addNewWord);
+
+  const [pickWordDialog, showPickWordDialogButton, openPickWordDialog] =
+    usePickWord(guessedWords, (pickedWord, index) => {
+      setCurrentWordIndex(index);
+      updateGuessedWord(
+        {
+          ...pickedWord,
+          guessedLetters: [],
+        },
+        index
+      );
+    });
+
   return (
     <div>
       <div>
@@ -274,120 +180,30 @@ const HangmanApp: React.FC = () => {
         <CenteredElement>
           <HangmanSVG guesses={incorrectGuesses.length} />
         </CenteredElement>
-        <CenteredElement>
-          <Typography variant="h4">Clue: {guessedWord.clue}</Typography>
-        </CenteredElement>
+      </div>
 
-        {/* Render the hangman word with horizontal lines */}
-        <CenteredElement>
-          <Typography variant="h4">
-            {guessedWord.word.split(" ").map((wordPart, index) => (
-              <span key={index}>
-                {wordPart.split("").map((letter, letterIndex) => (
-                  <span key={letterIndex} style={{ marginRight: "10px" }}>
-                    {guessedWord.guessedLetters.includes(letter) ? letter : "_"}
-                  </span>
-                ))}
-                {index < guessedWord.word.split(" ").length - 1 && " "}
-              </span>
-            ))}
-          </Typography>
-        </CenteredElement>
-      </div>
-      {gameOver && (
-        <div>
-          <Dialog open>
-            <DialogActions>
-              {playState === GamePlayState.LOST && (
-                <Button variant="contained" onClick={tryAgain}>
-                  Try Again ?
-                </Button>
-              )}
-              <Button variant="contained" onClick={resetGame}>
-                Next Word
-              </Button>
-            </DialogActions>
-          </Dialog>
-          <Typography variant="body1">{gameOverMessage}</Typography>
+      <GameOverDialog
+        playState={playState}
+        winMessage="You won !"
+        loseMessage="Unlucky. Try again."
+        tryAgain={tryAgain}
+        nextWord={nextWord}
+        pickNextWord={openPickWordDialog}
+      />
+      {pickWordDialog}
+      {addNewWordDialog}
+      {settingsDialog}
 
-          {/* <Button variant="contained" onClick={() => setOpenDialog(true)}>
-            Add New Word
-          </Button> */}
-        </div>
-      )}
-      {/* Render the filter and word selection UI */}
-      <div>
-        {/* <Typography variant="body1">Word Selection:</Typography>
-        {words.map((word, index) => (
-          <Button
-            key={index}
-            onClick={() => handleWordSelection(index)}
-            variant="outlined"
-          >
-            {word.word}
-          </Button>
-        ))}
-        */}
-        {/* <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-          <DialogTitle>Add New Word</DialogTitle>
-          <div style={{ padding: "16px" }}>
-            <TextField
-              label="Word"
-              variant="outlined"
-              value={newWord}
-              onChange={(e) => setNewWord(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Clue"
-              variant="outlined"
-              value={newClue}
-              onChange={(e) => setNewClue(e.target.value)}
-              fullWidth
-              style={{ marginTop: "16px" }}
-            />
-          </div>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button onClick={handleNewWord} color="primary">
-              Add
-            </Button>
-          </DialogActions>
-        </Dialog> */}
-      </div>
-      {/* Render the keyboard */}
-      <div>
-        <KeyboardWrapper>
-          <SimpleKeyboard
-            onKeyReleased={keyboardHandler}
-            layout={{
-              default: [
-                "Q W E R T Y U I O P",
-                "A S D F G H J K L",
-                "Z X C V B N M",
-              ],
-            }}
-            buttonTheme={[
-              {
-                class: correctGuessClassName,
-                buttons: correctGuessButtons,
-              },
-              {
-                class: incorrectGuessClassName,
-                buttons: incorrectGuessButtons,
-              },
-            ]}
-          />
-        </KeyboardWrapper>
-      </div>
       <AppBar position="fixed" color="primary" sx={{ top: "auto", bottom: 0 }}>
+        <CenteredElement>
+          <Guess guessedWord={guessedWord} />
+        </CenteredElement>
+        <CenteredClue clue={guessedWord.clue} />
+        {hangmanKeyboard}
         <Toolbar>
-          <IconButton color="inherit" aria-label="edit words">
-            <EditIcon />
-          </IconButton>
-          <IconButton color="inherit" aria-label="settings">
-            <SettingsIcon />
-          </IconButton>
+          {showAddNewWordDialogButton}
+          {showSettingsButton}
+          {showPickWordDialogButton}
         </Toolbar>
       </AppBar>
     </div>

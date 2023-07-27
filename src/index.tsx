@@ -7,7 +7,8 @@ import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Auth0Provider, Component } from "./Rad/getRad";
-import HangmanApp, { HangmanRoot } from "./hangman/HangmanApp";
+import HangmanApp from "./hangman/HangmanApp";
+import { HangmanRoot } from "./hangman/HangmanRoot";
 
 const rootNode = document.getElementById("app");
 
@@ -21,7 +22,7 @@ const theme = createTheme({
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(rootNode!);
-root.render(
+/* root.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
     {Component}
@@ -39,5 +40,5 @@ root.render(
       </SnackbarProvider>
     </Auth0Provider>
   </ThemeProvider>
-);
-//root.render(<HangmanRoot/>)
+); */
+root.render(<HangmanRoot />);
