@@ -93,6 +93,11 @@ export function getSignalRPeggingAnimationProvider(
           moveCutCardDuration: discardDuration,
           flipDuration,
           onComplete,
+          flipBoxDuration:discardDuration,
+          moveBoxDuration:discardDuration,
+          scoreMessageDuration:2,
+          moveToDeckFlipDuration:flipDuration,
+          moveToDeckMoveDuration:discardDuration
         },
         pegShowScoring,
         myMatch,

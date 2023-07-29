@@ -1,6 +1,6 @@
 import {
   Box,
-  Deck,
+  DeckPosition,
   DiscardPositions,
   PlayerPositions,
   Positions,
@@ -73,7 +73,7 @@ function getDealtPlayerCard(
   isMyCard: boolean,
   dealDuration: number,
   flipDuration: number,
-  deck: Deck,
+  deck: DeckPosition,
   totalDealtCards: number,
   onComplete: OnComplete | undefined
 ): AnimatedFlipCardData {
@@ -146,7 +146,7 @@ function initializeCards(numOtherPlayers: number): MyCardsOtherPlayersCards {
 interface PlayerDealPositions {
   playerPositions: PlayerPositions[];
   boxPosition: Box;
-  deck: Deck;
+  deck: DeckPosition;
 }
 
 interface DealFlipDiscardDurations {

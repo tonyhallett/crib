@@ -86,12 +86,13 @@ export function createZIndexAnimationSegment(
 }
 
 export const createHideShowSegment = (
-  hide: boolean
+  hide: boolean,
+  at?: number
 ): DomSegmentOptionalElementOrSelectorWithOptions => {
   return [
     undefined,
     { opacity: hide ? 0 : 1 },
-    { duration: instantAnimationDuration },
+    { duration: instantAnimationDuration,at },
   ];
 };
 

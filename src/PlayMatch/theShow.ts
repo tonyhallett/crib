@@ -24,7 +24,7 @@ import {
 import { getPlayerPositionIndex } from "./getPlayerPositions";
 import { PlayerPositions } from "./matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
-import { showAndScore } from "./showAndScore";
+import { ShowAndScoreAnimationOptions, showAndScore } from "./showAndScore";
 
 export interface FlipCardDataLookup {
   [playingCard: string]: FlipCardData;
@@ -275,11 +275,15 @@ export const getPlayerScorings = (
   showScoring: ShowScoring,
   cardsAndOwners: CardsAndOwners,
   cutCard: FlipCardData,
-  box: PlayingCard[]
-): PlayerScoring[] => {
+  box: PlayingCard[],
+  additionalBoxCard:FlipCardData | undefined
+): {playerScorings:PlayerScoring[],boxCardDatas:FlipCardData[]} => {
   const boxCardDatas: FlipCardData[] = [];
+  if(additionalBoxCard){
+    boxCardDatas.push(additionalBoxCard);
+  }
   // these are in order
-  const playerScoring = showScoring.playerShowScores.map((playerShowScore) => {
+  const playerScorings = showScoring.playerShowScores.map((playerShowScore) => {
     const cardsAndOwner = cardsAndOwners.find(
       (cardsAndOwner) => cardsAndOwner.owner === playerShowScore.playerId
     ) as CardsAndOwner;
@@ -308,17 +312,20 @@ export const getPlayerScorings = (
   boxCardDatas.forEach((boxCardData, i) => {
     boxCardData.playingCard = box[i];
   });
-  boxCardDatas.push(cutCard);
+  const showBoxCards = [...boxCardDatas, cutCard  ]
   // for now game not won and there is a box score
-  playerScoring.push({
-    showCardDatas: boxCardDatas,
+  playerScorings.push({
+    showCardDatas: showBoxCards,
     showScoreParts: getShowScoreParts(showScoring.boxScore, boxCardDatas),
     playerId:
       showScoring.playerShowScores[showScoring.playerShowScores.length - 1]
         .playerId,
   });
 
-  return playerScoring;
+  return {
+    boxCardDatas,
+    playerScorings
+  }
 };
 
 // todo options
@@ -421,7 +428,8 @@ export const returnCardsToPlayers = (
   at: number,
   playerPositions: PlayerPositions[],
   cardsAndOwners: CardsAndOwners,
-  animationOptions: ReturnCardsToPlayersAnimationOptions
+  animationOptions: ReturnCardsToPlayersAnimationOptions,
+  ownerReturnedCards:OwnerReturnedCards
 ): {
   returnInPlayAt: number;
   duration: number;
@@ -436,7 +444,8 @@ export const returnCardsToPlayers = (
       flipDuration,
       returnDuration,
       myMatch,
-      playerPositions
+      playerPositions,
+      ownerReturnedCards
     );
     returnInPlayAt += turnedOverDuration;
   }
@@ -447,7 +456,8 @@ export const returnCardsToPlayers = (
     returnDuration,
     onComplete,
     myMatch,
-    playerPositions
+    playerPositions,
+    ownerReturnedCards
   );
 
   return { returnInPlayAt, duration };
@@ -460,12 +470,13 @@ export const returnTurnedOverCardsToPlayers = (
   flipDuration: number,
   returnDuration: number,
   myMatch: MyMatch,
-  playerPositions: PlayerPositions[]
+  playerPositions: PlayerPositions[],
+  ownerReturnedCards:OwnerReturnedCards
 ): number => {
   const order = getTurnOverOrder(myMatch.pegging.turnedOverCards);
   const moveDelay = 0.2;
 
-  cardsAndOwners.forEach((cardsAndOwner) => {
+  cardsAndOwners.forEach((cardsAndOwner,cardsAndOwnerIndex) => {
     const owner = cardsAndOwner.owner;
     const ownerCardsWithTurnOverOrderIndex = order
       .map((peggedCard, index) => ({ peggedCard, index }))
@@ -509,6 +520,7 @@ export const returnTurnedOverCardsToPlayers = (
           (ownerCardWithTurnOverOrderIndex) =>
             ownerCardWithTurnOverOrderIndex.index === index
         );
+        ownerReturnedCards[cardsAndOwnerIndex][positionIndex] = flipCardData;
         /*
             top card needs to account for ones below it have longer durations
             this should be the code but does not work
@@ -544,11 +556,12 @@ export const returnInPlayCardsToPlayers = (
   returnDuration: number,
   onComplete: () => void,
   myMatch: MyMatch,
-  playerPositions: PlayerPositions[]
+  playerPositions: PlayerPositions[],
+  ownerReturnedCards:OwnerReturnedCards
 ): number => {
   const inPlayCards = myMatch.pegging.inPlayCards;
   let numCardsReturned = 0;
-  cardsAndOwners.forEach((cardsAndOwner) => {
+  cardsAndOwners.forEach((cardsAndOwner, cardsAndOwnerIndex) => {
     const owner = cardsAndOwner.owner;
     const handPosition =
       playerPositions[
@@ -561,7 +574,7 @@ export const returnInPlayCardsToPlayers = (
     ).length;
     const startIndex = 4 - ownerNumTurnedOver - 1;
 
-    const ownerCards = inPlayCards.filter((pc) => pc.owner === owner);
+    const ownerInPlayCards = inPlayCards.filter((pc) => pc.owner === owner);
 
     cardsAndOwner.cards.forEach((flipCardData) => {
       if (flipCardData.state === FlipCardState.PeggingInPlay) {
@@ -572,12 +585,12 @@ export const returnInPlayCardsToPlayers = (
           )
         );
 
-        const ownerIndex = ownerCards.indexOf(inPlayCards[peggedCardIndex]);
+        const ownerInPlayCardsIndex = ownerInPlayCards.indexOf(inPlayCards[peggedCardIndex]);
         // greater the index lower the position index
-        const inPlayIndex = ownerCards.length - ownerIndex;
+        const inPlayIndex = ownerInPlayCards.length - ownerInPlayCardsIndex;
 
         const discardPositionIndex = startIndex + inPlayIndex;
-
+        ownerReturnedCards[cardsAndOwnerIndex][discardPositionIndex] = flipCardData;
         const returnIndex = inPlayCards.length - peggedCardIndex - 1;
         numCardsReturned++;
         const segments: FlipCardAnimationSequence = [
@@ -601,10 +614,18 @@ export const returnInPlayCardsToPlayers = (
   return numCardsReturned * returnDuration;
 };
 
-interface ShowAnimationOptions extends ReturnCardsToPlayersAnimationOptions {
-  at: number;
-  moveCutCardDuration: number;
+type ShowAnimationOptions = ReturnCardsToPlayersAnimationOptions & ShowAndScoreAnimationOptions;
+
+export type OwnerReturnedCards = FlipCardData[][];
+
+const initializeOwnerReturnedCards = (numPlayers:number):OwnerReturnedCards => {
+  const ownerReturnedCards:OwnerReturnedCards = new Array(numPlayers);
+  for(let i = 0;i<numPlayers;i++){
+    ownerReturnedCards[i] = new Array(4);
+  }
+  return ownerReturnedCards;
 }
+
 
 export const addShowAnimation = (
   prevFlipCardDatas: FlipCardDatas,
@@ -622,28 +643,36 @@ export const addShowAnimation = (
     myMatch.otherPlayers
   );
 
+  const ownerReturnedCards = initializeOwnerReturnedCards(cardsAndOwners.length)
+
   const { returnInPlayAt, duration } = returnCardsToPlayers(
     myMatch,
     showAnimationOptions.at,
     playerPositions,
     cardsAndOwners,
-    { ...showAnimationOptions }
+    { ...showAnimationOptions },
+    ownerReturnedCards
   );
+
+  const dealerPositionIndex = getPlayerPositionIndex(myMatch.dealerDetails.current,myMatch.myId,myMatch.otherPlayers);
+  const dealerDeckPosition = playerPositions[dealerPositionIndex].deck;
 
   showAndScore(
     myMatch.showScoring,
     cardsAndOwners,
     newFlipCardDatas.cutCard,
+    newFlipCardDatas.additionalBoxCard,
     pegShowScoring,
     myMatch.box,
     {
+      ...showAnimationOptions,
       at: returnInPlayAt + duration,
-      moveCutCardDuration: showAnimationOptions.moveCutCardDuration,
-      scoreMessageDuration: 2,
     },
     setCribBoardState,
     delayEnqueueSnackbar,
     myMatch,
-    playerPositions
+    playerPositions,
+    dealerDeckPosition,
+    ownerReturnedCards
   );
 };

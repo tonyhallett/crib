@@ -32,10 +32,13 @@ export type PlayMatchCribHub = {
 
 export enum FlipCardState {
   Todo,
+  CutCard,
   MyHand,
   OtherPlayersHand,
   PeggingInPlay,
   PeggingTurnedOver,
+  AdditionalBoxCard,
+  BottomDeckCard
 }
 export type FlipCardData = Omit<FlipCardProps, "size"> & {
   state: FlipCardState;

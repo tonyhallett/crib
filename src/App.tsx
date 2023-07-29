@@ -389,8 +389,10 @@ export default function App() {
   });
   useEffect(() => {
     return () => {
-      closeSnackbar(playMatchSnackbarKey);
-      stopDelayed(playMatchSnackbarKey);
+      if(playMatchIdRef.current === undefined){
+        closeSnackbar(playMatchSnackbarKey);
+        stopDelayed(playMatchSnackbarKey);
+      }
     };
   });
   const playMatchCribHub = useMemo<PlayMatchProps["playMatchCribHub"]>(

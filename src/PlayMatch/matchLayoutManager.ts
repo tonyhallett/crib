@@ -40,7 +40,7 @@ export interface DiscardPositions {
   isHorizontal: boolean;
 }
 
-export interface Deck {
+export interface DeckPosition {
   isHorizontal: boolean;
   position: Point;
 }
@@ -51,7 +51,7 @@ export interface Box {
 }
 
 export interface PlayerPositions {
-  deck: Deck;
+  deck: DeckPosition;
   box: Box;
   discard: DiscardPositions;
 }
@@ -220,7 +220,7 @@ class PlayerPositionsCalculator
 }
 
 interface CalculatedPeggingPositions extends PeggingPositions {
-  deck: Deck;
+  deck: DeckPosition;
   box: Box;
 }
 
@@ -432,7 +432,7 @@ class TwoPlayerPositioner extends PositionerBase {
         playerPosition = this.shiftPlayerPositions(playerPosition, i !== 0);
         return {
           deck: this.deckAndBoxInMiddle
-            ? (centeredPeggingPositions.deck as Deck)
+            ? (centeredPeggingPositions.deck as DeckPosition)
             : playerPosition.deck,
           box: this.deckAndBoxInMiddle
             ? (centeredPeggingPositions.box as Box)
@@ -610,7 +610,7 @@ class ThreePlayerPositioner extends PositionerBase {
       playerPositions: shiftedPlayerPositions.map((playerPosition) => {
         return {
           deck: this.deckAndBoxInMiddle
-            ? (positionedPeggingPositions.deck as Deck)
+            ? (positionedPeggingPositions.deck as DeckPosition)
             : playerPosition.deck,
           box: this.deckAndBoxInMiddle
             ? (positionedPeggingPositions.box as Box)
@@ -829,7 +829,7 @@ class FourPlayerPositioner extends PositionerBase {
       playerPositions: shiftedPlayerPositions.map((playerPosition) => {
         return {
           deck: this.deckAndBoxInMiddle
-            ? (positionedPeggingPositions.deck as Deck)
+            ? (positionedPeggingPositions.deck as DeckPosition)
             : playerPosition.deck,
           box: this.deckAndBoxInMiddle
             ? (positionedPeggingPositions.box as Box)
