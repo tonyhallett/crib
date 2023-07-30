@@ -27,27 +27,39 @@ function flipBoxAndMoveToPlayerHand(
   flipDuration:number,
   moveDuration:number
 ):number{
+  const pause = 0.1;
+  const flipAnimation:FlipAnimation = {
+    duration:flipDuration,
+    flip:true,
+    at:at+ pause
+  }
   boxCardDatas.forEach((boxCardData, i) => {
     const startZIndex = 4 - i;
     const animationSequence:FlipCardAnimationSequence = [
       createZIndexAnimationSegment(startZIndex,{at})
     ]
+
     if(i === 0){
-      const flipAnimation:FlipAnimation = {
-        duration:flipDuration,
-        flip:true
-      }
-      animationSequence.push(flipAnimation);
+      animationSequence.push(flipAnimation);// want below to be hidden 
     }else{
       animationSequence.push(createHideShowSegment(true));
       animationSequence.push(instantFlipAnimation);
-      animationSequence.push(createHideShowSegment(false,at + flipDuration));
+
+      // need above flip to be completed
+      animationSequence.push(createHideShowSegment(false,flipAnimation.at! + flipDuration));
     }
-    animationSequence.push(getMoveRotateSegment(handPositions.isHorizontal,handPositions.positions[i],moveDuration,moveDuration*i));
+    animationSequence.push(
+      getMoveRotateSegment(
+        handPositions.isHorizontal,
+        handPositions.positions[i],
+        moveDuration,
+        moveDuration*i + pause
+      )
+    );
     animationSequence.push(createZIndexAnimationSegment(0,{}));
     setOrAddToAnimationSequence(boxCardData,animationSequence);
   });
-  return flipDuration + 4 * moveDuration;
+  return 2 * pause + flipDuration + 4 * moveDuration;
 }
 
 export function showAndScore(
@@ -106,7 +118,12 @@ export function showAndScore(
       );
       at += moveCutCardDuration;
     } else {
-      at += flipBoxAndMoveToPlayerHand(boxCardDatas,handPositions,at, animationOptions.flipBoxDuration,animationOptions.moveBoxDuration);
+      at += flipBoxAndMoveToPlayerHand(
+        boxCardDatas,
+        handPositions,
+        at, 
+        animationOptions.flipBoxDuration,
+        animationOptions.moveBoxDuration);
     }
 
     const showScoreParts = playerScoring.showScoreParts;
@@ -144,7 +161,7 @@ export function showAndScore(
       at += defaultCribBoardDuration;
     }
     const cardsToMoveToDeck = isBox ? playerScoring.showCardDatas : returnedCards;
-    at += moveToDeck(cardsToMoveToDeck, currentDeckPosition,handPositions, at, 1 + (i * 4),animationOptions);
+    at += moveToDeckIndividually(cardsToMoveToDeck, currentDeckPosition,handPositions, at, 1 + (i * 4),animationOptions);
   });
 }
 
@@ -153,7 +170,7 @@ interface MoveToDeckAnimationOptions{
   moveToDeckMoveDuration:number
 }
 
-function moveToDeck(
+function moveToDeckIndividually(
   flipCardDatas:FlipCardData[], 
   deckPosition:DeckPosition,
   handPositions:DiscardPositions, 
