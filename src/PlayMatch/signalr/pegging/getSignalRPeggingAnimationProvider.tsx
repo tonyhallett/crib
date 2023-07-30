@@ -97,7 +97,8 @@ export function getSignalRPeggingAnimationProvider(
           moveBoxDuration:discardDuration,
           scoreMessageDuration:2,
           moveToDeckFlipDuration:flipDuration,
-          moveToDeckMoveDuration:discardDuration
+          moveToDeckMoveToDeckDuration:discardDuration,
+          moveToDeckMoveToFirstDuration:discardDuration,
         },
         pegShowScoring,
         myMatch,

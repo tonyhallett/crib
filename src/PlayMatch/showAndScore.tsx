@@ -12,7 +12,7 @@ import { playMatchSnackbarKey } from "../App";
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import { createHideShowSegment, createZIndexAnimationSegment, getMoveRotateSegment, instantFlipAnimation, setOrAddToAnimationSequence } from "./animationSegments";
 
-export interface ShowAndScoreAnimationOptions extends MoveToDeckAnimationOptions {
+export interface ShowAndScoreAnimationOptions extends MoveToDeckTogetherAnimationOptions {
   at: number;
   moveCutCardDuration: number;
   scoreMessageDuration: number;
@@ -161,7 +161,7 @@ export function showAndScore(
       at += defaultCribBoardDuration;
     }
     const cardsToMoveToDeck = isBox ? playerScoring.showCardDatas : returnedCards;
-    at += moveToDeckIndividually(cardsToMoveToDeck, currentDeckPosition,handPositions, at, 1 + (i * 4),animationOptions);
+    at += moveToDeckTogether(cardsToMoveToDeck, currentDeckPosition,handPositions, at, 1 + (i * 4),animationOptions);
   });
 }
 
@@ -193,4 +193,51 @@ function moveToDeckIndividually(
     setOrAddToAnimationSequence(flipCardData,animationSequence);
   });
   return moveToDeckFlipDuration + flipCardDatas.length * moveToDeckMoveDuration;
+}
+
+interface MoveToDeckTogetherAnimationOptions{
+  moveToDeckMoveToFirstDuration:number,
+  moveToDeckFlipDuration:number,
+  moveToDeckMoveToDeckDuration:number
+}
+
+function moveToDeckTogether(
+  flipCardDatas:FlipCardData[], 
+  deckPosition:DeckPosition,
+  handPositions:DiscardPositions, 
+  at:number, 
+  currentDeckCount:number,
+  animationOptions:MoveToDeckTogetherAnimationOptions
+):number{
+  const pause = 0.1;
+  const firstPosition = handPositions.positions[0];
+  const lastCardIndex = flipCardDatas.length - 1;
+  const {moveToDeckFlipDuration,moveToDeckMoveToDeckDuration,moveToDeckMoveToFirstDuration} = animationOptions
+  //const {moveToDeckFlipDuration,moveToDeckMoveDuration} = {moveToDeckFlipDuration:2,moveToDeckMoveDuration:2};
+  flipCardDatas.forEach((flipCardData,positionIndex) => {
+
+    const flipAnimation:FlipAnimation = {
+      duration:moveToDeckFlipDuration,
+      flip:true,
+      at:at + moveToDeckMoveToFirstDuration + pause
+    }
+    const animationSequence:FlipCardAnimationSequence = [
+      createZIndexAnimationSegment(currentDeckCount + positionIndex,{at}),// for correct positioning when slide upon each other
+      getMoveRotateSegment(handPositions.isHorizontal,firstPosition,moveToDeckMoveToFirstDuration),
+    ]
+    if(positionIndex === lastCardIndex){
+      animationSequence.push(flipAnimation);
+      
+    }else{
+      animationSequence.push(createHideShowSegment(true));
+      animationSequence.push(instantFlipAnimation);
+      animationSequence.push(createHideShowSegment(false,flipAnimation.at! + flipAnimation.duration));
+    }
+
+    // needs a pause
+    animationSequence.push(getMoveRotateSegment(deckPosition.isHorizontal,deckPosition.position,moveToDeckMoveToDeckDuration));
+
+    setOrAddToAnimationSequence(flipCardData,animationSequence);
+  });
+  return moveToDeckMoveToFirstDuration + pause + moveToDeckFlipDuration + moveToDeckMoveToDeckDuration;
 }

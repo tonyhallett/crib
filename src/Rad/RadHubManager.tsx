@@ -1522,7 +1522,10 @@ const matches: ActionMyMatch[] = [
                       [JackSpades, TwoDiamonds, ThreeHearts],
                     ],
                     runs: [],
-                    pairs: [TwoSpades, TwoDiamonds],
+                    pairs: [{
+                      card1:TwoSpades,
+                      card2:TwoDiamonds
+                    }],
                     flush: [],
                     fourOfAKind: undefined as unknown as FourOfAKind,
                     threeOfAKind: undefined as unknown as ThreeOfAKind,
