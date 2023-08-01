@@ -9,6 +9,7 @@ using CribAzureFunctionApp.Matches.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace CribAzureFunctionApp.Matches.Scoring.Match
 {
@@ -38,11 +39,12 @@ namespace CribAzureFunctionApp.Matches.Scoring.Match
             return gameWon;
         }
 
-        private bool Score(CribMatch match, string playerId, int scoreIncrement)
+        internal bool Score(CribMatch match, string playerId, int scoreIncrement)
         {
             var score = scoreFinder.Find(match, playerId);
+            var currentGames = score.Games;
             scoreIncrementer.Increment(score, scoreIncrement);
-            return score.FrontPeg == 0;
+            return currentGames != score.Games;
         }
 
 
@@ -94,7 +96,7 @@ namespace CribAzureFunctionApp.Matches.Scoring.Match
 
 
                 gameWon = Score(match, playerId, showScore.Score);
-                if (gameWon) return true;
+                if (gameWon) break;
             }
             ShowScore? boxScore = null;
             if (!gameWon)

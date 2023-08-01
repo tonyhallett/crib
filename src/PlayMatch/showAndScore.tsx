@@ -20,6 +20,8 @@ export interface ShowAndScoreAnimationOptions extends MoveToDeckTogetherAnimatio
   moveBoxDuration:number
 }
 
+type FlipAnimationAt = FlipAnimation & { at: number };
+
 function flipBoxAndMoveToPlayerHand(
   boxCardDatas: FlipCardData[],
   handPositions:DiscardPositions,
@@ -28,7 +30,7 @@ function flipBoxAndMoveToPlayerHand(
   moveDuration:number
 ):number{
   const pause = 0.1;
-  const flipAnimation:FlipAnimation = {
+  const flipAnimation:FlipAnimationAt = {
     duration:flipDuration,
     flip:true,
     at:at+ pause
@@ -46,7 +48,7 @@ function flipBoxAndMoveToPlayerHand(
       animationSequence.push(instantFlipAnimation);
 
       // need above flip to be completed
-      animationSequence.push(createHideShowSegment(false,flipAnimation.at! + flipDuration));
+      animationSequence.push(createHideShowSegment(false,flipAnimation.at + flipDuration));
     }
     animationSequence.push(
       getMoveRotateSegment(
@@ -170,6 +172,7 @@ interface MoveToDeckAnimationOptions{
   moveToDeckMoveDuration:number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function moveToDeckIndividually(
   flipCardDatas:FlipCardData[], 
   deckPosition:DeckPosition,
@@ -216,7 +219,7 @@ function moveToDeckTogether(
   //const {moveToDeckFlipDuration,moveToDeckMoveDuration} = {moveToDeckFlipDuration:2,moveToDeckMoveDuration:2};
   flipCardDatas.forEach((flipCardData,positionIndex) => {
 
-    const flipAnimation:FlipAnimation = {
+    const flipAnimation:FlipAnimationAt = {
       duration:moveToDeckFlipDuration,
       flip:true,
       at:at + moveToDeckMoveToFirstDuration + pause
@@ -231,7 +234,7 @@ function moveToDeckTogether(
     }else{
       animationSequence.push(createHideShowSegment(true));
       animationSequence.push(instantFlipAnimation);
-      animationSequence.push(createHideShowSegment(false,flipAnimation.at! + flipAnimation.duration));
+      animationSequence.push(createHideShowSegment(false,flipAnimation.at + flipAnimation.duration));
     }
 
     // needs a pause

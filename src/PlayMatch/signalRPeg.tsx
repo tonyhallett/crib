@@ -1,4 +1,5 @@
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
+import { defaultCribBoardDuration } from "../crib-board/AnimatedCribBoard";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import {
   CribGameState,
@@ -13,6 +14,7 @@ import {
 import { EnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
 import { arrayLast } from "../utilities/arrayHelpers";
 import {
+  Duration,
   FlipCardData,
   FlipCardDatas,
   FlipCardState,
@@ -70,21 +72,25 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   gameState: CribGameState,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  animationCompleteCallback: () => void
-) => {
-  return getMoveToPeggingPositionAnimationSequence(
+  animationCompleteCallback: () => void,
+  peggingScoreSnackbarDurationSeconds = 5
+) : [FlipCardAnimationSequence, Duration] => {
+  const scored = peggedCard.peggingScore.score > 0;
+  const scoreDuration = scored ? Math.max(peggingScoreSnackbarDurationSeconds, defaultCribBoardDuration) : 0;
+
+  const [sequence, moveToPeggingPositionDuration] = getMoveToPeggingPositionAnimationSequence(
     peggedCardPosition,
     inPlayPositions,
     discardDuration,
     () => {
-      const peggingScore = peggedCard.peggingScore;
-      if (peggingScore.score > 0) {
+      if (scored) {
         peggingScored(
           peggedCard,
           pegScores,
           gameState,
           setCribBoardState,
           enqueueSnackbar,
+          peggingScoreSnackbarDurationSeconds,
           animationCompleteCallback
         );
       } else {
@@ -92,6 +98,7 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
       }
     }
   );
+  return [sequence, moveToPeggingPositionDuration + scoreDuration];
 };
 
 export const getMoveToPeggingPositionAnimationSequence = (
@@ -99,7 +106,7 @@ export const getMoveToPeggingPositionAnimationSequence = (
   inPlay: Point[],
   duration: number,
   moveCompleted: () => void
-): [FlipCardAnimationSequence, number] => {
+): [FlipCardAnimationSequence, Duration] => {
   return [
     [
       createZIndexAnimationSegment(5 + peggedCardPosition, {}),
@@ -125,7 +132,7 @@ const applyTurnOverTogetherAnimation = (
   turnedOverPosition: Point,
   firstPeggedPosition: Point,
   overlayDuration: number,
-  turnOverDuration: number,
+  moveToTurnOverDuration: number,
   flipDuration: number,
   onComplete: OnComplete
 ): void => {
@@ -167,7 +174,7 @@ const applyTurnOverTogetherAnimation = (
     createZIndexAnimationSegment(turnedOverZIndex, {
       at: delay + overlayDuration + flipDuration,
     }),
-    getMoveRotateSegment(false, turnedOverPosition, turnOverDuration),
+    getMoveRotateSegment(false, turnedOverPosition, moveToTurnOverDuration),
     [
       undefined,
       { opacity: 1 },

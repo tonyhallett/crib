@@ -13,6 +13,29 @@ namespace CribAzureTest.Matches.Scoring.Match
 {
     internal class CribMatchScorer_Tests
     {
+        [TestCase(0,0,0, 0,0,0, false)]
+        [TestCase(0, 0, 0, 0, 2, 0, false)]
+        [TestCase(0, 0, 0, 1, 0, 0, true)]
+        public void Score_Should_Return_Game_Won_When_Games_Incremented(int initialGames,int initialFrontPeg, int initialBackPeg, int incrementedGames,int incrementedFrontPeg, int incrementedBackPeg,bool expectedGameWon)
+        {
+            CribMatch cribMatch = new CribMatch(Empty.MatchPlayer(""),Empty.MatchPlayer(""),null,null, CribGameState.Show,Cards.AceClubs,Empty.Cards, Empty.DealerDetails,Empty.Pegging,Empty.Scores,"","",Empty.ChangeHistory,"",null);
+            var mockScoreFinder = new Mock<IScoreFinder>();
+            var score = new Score(initialGames, initialFrontPeg, initialBackPeg);
+            mockScoreFinder.Setup(scoreFinder => scoreFinder.Find(It.IsAny<CribMatch>(), It.IsAny<string>())).Returns(score);
+            var mockScoreIncrementer = new Mock<IScoreIncrementer>();
+            var scoreIncrement = 0;
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(score, scoreIncrement)).Callback(() =>
+            {
+                score.Games = incrementedGames;
+                score.FrontPeg = incrementedFrontPeg;
+                score.BackPeg = incrementedBackPeg;
+            });
+            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, mockScoreIncrementer.Object,new Mock<ICribScorer>().Object, new Mock<IHandReconstructor>().Object);
+
+            var gameWon = cribMatchScorer.Score(cribMatch, "", scoreIncrement);
+            Assert.That(gameWon, Is.EqualTo(expectedGameWon));
+        }
+
         [Test]
         public void ScoreCutCard_Should_Not_Change_Score_If_Not_A_Jack()
         {
@@ -91,8 +114,10 @@ namespace CribAzureTest.Matches.Scoring.Match
             Assert.That(peggingResult, Is.EqualTo(pegged31 ? PeggingResult.ThirtyOne : PeggingResult.Continue));
         }
 
-        [Test]
-        public void ScorePegging_Should_Return_GameWon_When_Game_Won()
+        [TestCase(PeggingResult.GameWon)]
+        [TestCase(PeggingResult.Continue)]
+        [TestCase(PeggingResult.ThirtyOne)]
+        public void ScorePegging_Should_Return_Correct_PeggingResult(PeggingResult pegResult)
         {
             var match = new CribMatch(
                 Empty.MatchPlayer(""), Empty.MatchPlayer(""), null, null, CribGameState.Discard, Cards.JackHearts, Empty.Cards, new DealerDetails("", "dealerid"),
@@ -101,17 +126,36 @@ namespace CribAzureTest.Matches.Scoring.Match
 
 
             var mockScoreFinder = new Mock<IScoreFinder>();
-            var teamOrPlayerScore = new Score(0, 0, 0); // score incrementer will set FrontPeg to 0 when game won
+            var teamOrPlayerScore = new Score(0, 0, 0);
             mockScoreFinder.Setup(scoreFinder => scoreFinder.Find(match, "pegger")).Returns(teamOrPlayerScore);
 
             var mockCribScorer = new Mock<ICribScorer>();
-            mockCribScorer.Setup(cribScorer => cribScorer.GetPegging(It.IsAny<List<PlayingCard>>(), It.IsAny<bool>())).Returns(new PegScoring(false, false, 0, 0, false));
+            PegScoring pegScoring = new PegScoring(false, true, 0, 0, false);
+            switch (pegResult)
+            {
+                case PeggingResult.ThirtyOne:
+                    pegScoring = new PegScoring(true, false, 0, 0, false);
+                    break;
+                case PeggingResult.GameWon:
+                    pegScoring = new PegScoring(false, false, 3, 0, false);
+                    break;
 
-            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, new Mock<IScoreIncrementer>().Object, mockCribScorer.Object, new Mock<IHandReconstructor>().Object);
+            }
+            
+            mockCribScorer.Setup(cribScorer => cribScorer.GetPegging(It.IsAny<List<PlayingCard>>(), It.IsAny<bool>())).Returns(pegScoring);
+            var mockScoreIncrementer = new Mock<IScoreIncrementer>();
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(teamOrPlayerScore, pegScoring.Score)).Callback(() =>
+            {
+                if(pegResult == PeggingResult.GameWon)
+                {
+                    teamOrPlayerScore.Games = 1;
+                }
+            });
+            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object,mockScoreIncrementer.Object, mockCribScorer.Object, new Mock<IHandReconstructor>().Object);
 
             var (peggingResult, _) = cribMatchScorer.ScorePegging(match, new List<PlayingCard>(),true, "pegger");
 
-            Assert.That(peggingResult, Is.EqualTo(PeggingResult.GameWon));
+            Assert.That(peggingResult, Is.EqualTo(pegResult));
         }
 
 
@@ -190,10 +234,17 @@ namespace CribAzureTest.Matches.Scoring.Match
                 Empty.Scores, "3", "id", Empty.ChangeHistory, "", null);
 
             var mockScoreFinder = new Mock<IScoreFinder>();
-            var teamOrPlayerScore = gameWon ? new Score(0, 0, 0) : new Score(1, 2, 3); // FrontPeg 0 ( after score incrementer ) determines
+            var teamOrPlayerScore = new Score(0, 0, 0);
             mockScoreFinder.Setup(scoreFinder => scoreFinder.Find(match, "player")).Returns(teamOrPlayerScore);
-
-            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, new Mock<IScoreIncrementer>().Object, new Mock<ICribScorer>().Object, new Mock<IHandReconstructor>().Object);
+            var mockScoreIncrementer = new Mock<IScoreIncrementer>();
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(teamOrPlayerScore, 1)).Callback(() =>
+            {
+                if (gameWon)
+                {
+                    teamOrPlayerScore.Games = 1;
+                }
+            });
+            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, mockScoreIncrementer.Object, new Mock<ICribScorer>().Object, new Mock<IHandReconstructor>().Object);
 
             Assert.That(cribMatchScorer.ScoreGo(match, "player"), Is.EqualTo(gameWon));
         }
@@ -506,14 +557,15 @@ namespace CribAzureTest.Matches.Scoring.Match
                 "3", "id", Empty.ChangeHistory, "", null);
 
 
-            // it is the action of the score incrementer that determines - for simplicity sets the score 
             var mockScoreFinder = new Mock<IScoreFinder>(MockBehavior.Strict);
-            var winningScore = new Score(0, 0, 0);
-            var notWinningScore = new Score(1, 2, 3);
+            var p1Score = new Score(0, 0, 0);
+            var p1BoxScore = new Score(0, 0, 0);
+            var p2Score = new Score(0, 0, 0);
+
             mockScoreFinder.SetupSequence(scoreFinder => scoreFinder.Find(match, "p1"))
-                .Returns(scoreShowWinner == ScoreShowWinner.P1 ? winningScore : notWinningScore)
-                .Returns(scoreShowWinner == ScoreShowWinner.Box ? winningScore : notWinningScore);
-            mockScoreFinder.Setup(scoreFinder => scoreFinder.Find(match, "p2")).Returns(scoreShowWinner == ScoreShowWinner.P2 ? winningScore : notWinningScore);
+                .Returns(p1Score)
+                .Returns(p1BoxScore);
+            mockScoreFinder.Setup(scoreFinder => scoreFinder.Find(match, "p2")).Returns(p2Score);
 
             var mockHandReconstructor = new Mock<IHandReconstructor>();
             var p1Hand = new List<PlayingCard> { Cards.AceClubs };
@@ -524,7 +576,29 @@ namespace CribAzureTest.Matches.Scoring.Match
 
             var mockCribScorer = new Mock<ICribScorer>();
             mockCribScorer.Setup(cribScorer => cribScorer.GetShow(It.IsAny<List<PlayingCard>>(), It.IsAny<PlayingCard>(), It.IsAny<bool>())).Returns(new ShowScore());
-            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, new Mock<IScoreIncrementer>().Object, mockCribScorer.Object, mockHandReconstructor.Object);
+            var mockScoreIncrementer = new Mock<IScoreIncrementer>();
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(p1Score, 0)).Callback(() =>
+            {
+                if(scoreShowWinner == ScoreShowWinner.P1)
+                {
+                    p1Score.Games = 1;
+                }
+            });
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(p1BoxScore, 0)).Callback(() =>
+            {
+                if (scoreShowWinner == ScoreShowWinner.Box)
+                {
+                    p1BoxScore.Games = 1;
+                }
+            });
+            mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(p2Score, 0)).Callback(() =>
+            {
+                if (scoreShowWinner == ScoreShowWinner.P2)
+                {
+                    p2Score.Games = 1;
+                }
+            });
+            var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, mockScoreIncrementer.Object, mockCribScorer.Object, mockHandReconstructor.Object);
 
             var gameWon = cribMatchScorer.ScoreShow(match);
             Assert.That(gameWon, Is.EqualTo(scoreShowWinner != ScoreShowWinner.None));
@@ -559,19 +633,26 @@ namespace CribAzureTest.Matches.Scoring.Match
                 .Returns(new List<(string, IEnumerable<PlayingCard>)> { ("p1", p1Hand), ("p2", dealerHand) });
 
             var mockCribScorer = new Mock<ICribScorer>(MockBehavior.Strict); // Strict
-            mockCribScorer.Setup(cribScorer => cribScorer.GetShow(p1Hand, Cards.JackHearts, false)).Returns(new ShowScore() { OneForHisKnob = Cards.JackDiamonds });
+            var p1ShowScore = new ShowScore() { OneForHisKnob = Cards.JackDiamonds };
+            mockCribScorer.Setup(cribScorer => cribScorer.GetShow(p1Hand, Cards.JackHearts, false)).Returns(p1ShowScore);
 
 
             var mockScoreIncrementer = new Mock<IScoreIncrementer>(MockBehavior.Strict); // Strict
             mockScoreIncrementer.Setup(scoreIncrementer => scoreIncrementer.Increment(p1Score, 1)).Callback<Score, int>((score, _) =>
             {
-                score.FrontPeg = 0;
-                score.BackPeg = 0;
+                score.Games = 2;
             });
             var cribMatchScorer = new CribMatchScorer(mockScoreFinder.Object, mockScoreIncrementer.Object, mockCribScorer.Object, mockHandReconstructor.Object);
 
-            var gameWon = cribMatchScorer.ScoreShow(match);
-            Assert.That(gameWon, Is.True);
+            cribMatchScorer.ScoreShow(match);
+
+            var showScoring = match.ShowScoring;
+            Assert.That(showScoring, Is.Not.Null);
+            Assert.That(showScoring.BoxScore, Is.Null);
+            Assert.That(showScoring.PlayerShowScores.Count, Is.EqualTo(1));
+            var p1ShowScores = showScoring.PlayerShowScores[0];
+            Assert.That(p1ShowScores.PlayerId, Is.EqualTo("p1"));
+            Assert.That(p1ShowScores.ShowScore, Is.SameAs(p1ShowScore));
 
         }
 
