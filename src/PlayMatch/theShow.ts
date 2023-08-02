@@ -107,7 +107,7 @@ const scoringParts: ScoringPart[] = [
   },
   (showScore: ShowScore) => {
     const threeOfAKind = showScore.threeOfAKind;
-    if (threeOfAKind !== undefined) {
+    if (threeOfAKind) {
       return {
         contributingParts: [
           {
@@ -127,7 +127,7 @@ const scoringParts: ScoringPart[] = [
   },
   (showScore: ShowScore) => {
     const fourOfAKind = showScore.fourOfAKind;
-    if (fourOfAKind !== undefined) {
+    if (fourOfAKind) {
       return {
         contributingParts: [
           {
@@ -180,7 +180,7 @@ const scoringParts: ScoringPart[] = [
   },
   (showScore: ShowScore) => {
     const oneForHisKnob = showScore.oneForHisKnob;
-    if (oneForHisKnob !== undefined) {
+    if (oneForHisKnob) {
       return {
         contributingParts: [
           {
@@ -246,6 +246,7 @@ interface PlayerScoring {
   playerId: string;
   showScoreParts: ShowScorePart[];
   showCardDatas: FlipCardData[];
+  isBox:boolean
 }
 
 type CardsAndOwner = { cards: FlipCardData[]; owner: string };
@@ -283,6 +284,7 @@ export const getPlayerScorings = (
     boxCardDatas.push(additionalBoxCard);
   }
   // these are in order
+    
   const playerScorings = showScoring.playerShowScores.map((playerShowScore) => {
     const cardsAndOwner = cardsAndOwners.find(
       (cardsAndOwner) => cardsAndOwner.owner === playerShowScore.playerId
@@ -306,6 +308,7 @@ export const getPlayerScorings = (
         playerShowScore.showScore,
         showCardDatas
       ),
+      isBox:false
     };
     return playerScoring;
   });
@@ -313,14 +316,17 @@ export const getPlayerScorings = (
     boxCardData.playingCard = box[i];
   });
   const showBoxCards = [...boxCardDatas, cutCard  ]
-  // for now game not won and there is a box score
-  playerScorings.push({
-    showCardDatas: showBoxCards,
-    showScoreParts: getShowScoreParts(showScoring.boxScore, boxCardDatas),
-    playerId:
-      showScoring.playerShowScores[showScoring.playerShowScores.length - 1]
-        .playerId,
-  });
+  if(showScoring.boxScore){
+    playerScorings.push({
+      isBox:true,
+      showCardDatas: showBoxCards,
+      showScoreParts: getShowScoreParts(showScoring.boxScore, boxCardDatas),
+      playerId:
+        showScoring.playerShowScores[showScoring.playerShowScores.length - 1]
+          .playerId,
+    });
+  }
+  
 
   return {
     boxCardDatas,
@@ -658,12 +664,12 @@ export const addShowAnimation = (
   const dealerDeckPosition = playerPositions[dealerPositionIndex].deck;
 
   showAndScore(
-    myMatch.showScoring,
+    myMatch.showScoring as ShowScoring,
     cardsAndOwners,
     newFlipCardDatas.cutCard,
     newFlipCardDatas.additionalBoxCard,
     pegShowScoring,
-    myMatch.box,
+    myMatch.box as PlayingCard[],
     {
       ...showAnimationOptions,
       at: returnInPlayAt + duration,

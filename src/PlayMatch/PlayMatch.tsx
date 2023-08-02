@@ -54,6 +54,7 @@ function PlayMatchInner({
   landscape,
   hasRenderedAMatch,
 }: PlayMatchProps) {
+  const scoresRef = useRef(matchDetail.match.scores);
   const myMatch = matchDetail.match;
   const { enqueueSnackbar, delayEnqueueSnackbar } = useSnackbarWithDelay();
   const initiallyRendered = useRef(false);
@@ -204,10 +205,11 @@ function PlayMatchInner({
 
           const getCutCardAnimationData = (
             prevCardData: FlipCardData,
-            isJack: boolean
+            isJack: boolean,
+            cutCard:PlayingCard
           ) => {
             const newCardData = { ...prevCardData };
-            newCardData.playingCard = myMatch.cutCard;
+            newCardData.playingCard = cutCard;
             const flipAnimation: FlipAnimation = {
               flip: true,
               duration: cardFlipDuration,
@@ -312,7 +314,8 @@ function PlayMatchInner({
           if (myMatch.cutCard) {
             newFlipCardDatas.cutCard = getCutCardAnimationData(
               prevFlipCardDatas.cutCard,
-              myMatch.cutCard.pips === Pips.Jack
+              myMatch.cutCard.pips === Pips.Jack,
+              myMatch.cutCard
             );
           }
           return newFlipCardDatas;
@@ -320,6 +323,7 @@ function PlayMatchInner({
 
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
+            scoresRef.current = myMatch.scores;
             setGameState(myMatch.gameState);
             return getNew(
               prevFlipCardDatas as FlipCardDatas,
@@ -343,7 +347,8 @@ function PlayMatchInner({
               enqueueSnackbar,
               delayEnqueueSnackbar,
             },
-            setCribBoardState
+            setCribBoardState,
+            scoresRef
           )
         );
       },

@@ -28,7 +28,7 @@ const withUrlSpy = jest.spyOn(
   "withUrl"
 );
 const mockConnectionOn = jest.fn();
-let sendListeners: Map<string, (...args: any[]) => void> = new Map();
+const sendListeners: Map<string, (...args: any[]) => void> = new Map();
 
 jest
   .spyOn(signalR.HubConnectionBuilder.prototype, "build")
@@ -157,10 +157,10 @@ describe("<App/>", () => {
       ...args: Parameters<CribClient["initialPlayerData"]>
     ) => {
       sendListeners.set("InitialPlayerData", () => {
-        var initialPlayerDataHandler: CribClient["initialPlayerData"] =
-          mockConnectionOn.mock.calls.find((args) => {
+        const initialPlayerDataHandler =
+          (mockConnectionOn.mock.calls.find((args) => {
             return args[0] === "initialPlayerData";
-          })![1];
+          }) as unknown[])[1] as  CribClient["initialPlayerData"];
         // will not accept null
         initialPlayerDataHandler(args[0], args[1]);
       });
@@ -168,7 +168,9 @@ describe("<App/>", () => {
 
     // describe what happens when click submit that sends to the server and when server responds all is good
 
-    xit("should render server friends when click Friends menu", async () => {});
+    xit("should render server friends when click Friends menu", async () => {
+      //
+    });
   });
 
   describe("when not authenticated", () => {

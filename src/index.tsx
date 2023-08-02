@@ -21,7 +21,7 @@ const theme = createTheme({
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(rootNode!);
-/* root.render(
+root.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
     {Component}
@@ -39,5 +39,4 @@ const root = createRoot(rootNode!);
       </SnackbarProvider>
     </Auth0Provider>
   </ThemeProvider>
-); */
-root.render(<WordGrid/>)
+);

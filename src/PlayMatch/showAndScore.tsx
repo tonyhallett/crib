@@ -100,8 +100,7 @@ export function showAndScore(
 
   // eslint-disable-next-line complexity
   playerScorings.forEach((playerScoring, i) => {
-    const cardsAndOwnerIndex = cardsAndOwners.findIndex(cardsAndOwner => playerScoring.playerId === cardsAndOwner.owner);
-    const returnedCards = ownerReturnedCards[cardsAndOwnerIndex];
+    
     const handPositions = getPlayerPositions(
       myMatch.myId,
       playerScoring.playerId,
@@ -109,7 +108,7 @@ export function showAndScore(
       myMatch.otherPlayers
     ).discard;
 
-    const isBox = i === playerScorings.length - 1;
+    const isBox = playerScoring.isBox;
 
     if (!isBox) {
       moveCutCardToPlayerHand(
@@ -162,6 +161,9 @@ export function showAndScore(
       }, at * 1000);
       at += defaultCribBoardDuration;
     }
+
+    const cardsAndOwnerIndex = cardsAndOwners.findIndex(cardsAndOwner => playerScoring.playerId === cardsAndOwner.owner);
+    const returnedCards = ownerReturnedCards[cardsAndOwnerIndex];
     const cardsToMoveToDeck = isBox ? playerScoring.showCardDatas : returnedCards;
     at += moveToDeckTogether(cardsToMoveToDeck, currentDeckPosition,handPositions, at, 1 + (i * 4),animationOptions);
   });

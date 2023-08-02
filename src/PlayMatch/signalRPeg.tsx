@@ -69,7 +69,6 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   pegScores: Score[],
   peggedCard: PeggedCard,
   discardDuration: number,
-  gameState: CribGameState,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   animationCompleteCallback: () => void,
@@ -87,7 +86,6 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
         peggingScored(
           peggedCard,
           pegScores,
-          gameState,
           setCribBoardState,
           enqueueSnackbar,
           peggingScoreSnackbarDurationSeconds,

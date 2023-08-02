@@ -166,7 +166,7 @@ export function getPeggingCardDatas(
   const nonPlayerCardDatas = getNonPlayerCardDatas(
     dealerPositions.box,
     dealerPositions.deck,
-    match.cutCard,
+    match.cutCard as PlayingCard,
     numPlayers
   );
 

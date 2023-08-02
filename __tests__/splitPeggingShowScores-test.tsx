@@ -1,6 +1,8 @@
 import { splitPeggingShowScores } from "../src/PlayMatch/splitPeggingShowScores";
 import {
+  CribGameState,
   FourOfAKind,
+  PegScoring,
   PeggedCard,
   PlayerScoringHistory,
   PlayingCard,
@@ -44,13 +46,60 @@ describe("splitPeggingSchowScores", () => {
       },
       undefined,
       scores,
-      "me",
+      myId,
+      [],
+      CribGameState.Pegging,
       []
     );
     expect(splitScores).toEqual([scores]);
   });
 
-  it("should separate box, player scores and pegging", () => {
+  it("should return 121 without game increment when pegging wins", () => {
+    const scores = [
+      { games: 1, frontPeg: 0, backPeg: 0 },
+      { games: 2, frontPeg: 4, backPeg: 0 },
+    ];
+    const splitScores = splitPeggingShowScores(
+      {
+        peggingScore: {
+          is15: true,
+          is31: false,
+          isLastGo: false,
+          numCardsInRun: 0,
+          numOfAKind: 0,
+          score: 2,
+        },
+        owner: myId,
+        playingCard: TenSpades,
+      },
+      undefined,
+      scores,
+      "me",
+      [{discarded:true,playerScoringHistory:undefined as unknown as PlayerScoringHistory, id:otherPlayerId,ready:false}],
+      CribGameState.GameWon,
+      []
+    );
+    const expectedScores:Score[][] = [[
+      {
+        games:0,
+        frontPeg:121,
+        backPeg:0
+      },
+      scores[1]
+    ]]
+    expect(splitScores).toEqual(expectedScores);
+  });
+
+  const myId = "me";
+  const otherPlayerId = "other";
+  function scoringTest(
+    beforePegShowScores:Score[], 
+    showScoring:ShowScoring|undefined, 
+    pegScoring:PegScoring, 
+    pegScoringIsMe:boolean,
+    cribGameState:CribGameState,
+  ){
+    // this needs to change for game won
     const score = (scores: Score[], isMe: boolean, amount: number) => {
       const newScores = [{ ...scores[0] }, { ...scores[1] }];
       const index = isMe ? 0 : 1;
@@ -60,14 +109,112 @@ describe("splitPeggingSchowScores", () => {
       return newScores;
     };
 
+    const stages:Score[][] = []
+
+    const peggedCard: PeggedCard = {
+      owner: pegScoringIsMe ? myId : otherPlayerId,
+      peggingScore: pegScoring,
+      playingCard: TenSpades,
+    };
+
+    const expectedScoresAfterPegging = score(
+      beforePegShowScores,
+      pegScoringIsMe,
+      peggedCard.peggingScore.score
+    );
+    stages.push(expectedScoresAfterPegging);
+
+    if(showScoring !== undefined){
+      const playerShowScores = [...showScoring.playerShowScores];
+      if(showScoring.boxScore){
+        playerShowScores.push({
+          playerId:playerShowScores[1].playerId,
+          showScore:showScoring.boxScore
+        })
+      }
+      playerShowScores.forEach(playerShowScore => {
+        stages.push(score(stages[stages.length -1 ], playerShowScore.playerId === myId,playerShowScore.showScore.score));
+      })
+    }
+
+    
+    const spltPeggingScores = splitPeggingShowScores(
+      peggedCard,
+      showScoring,
+      stages[stages.length - 1],
+      myId,
+      [
+        {
+          id: otherPlayerId,
+          discarded: true,
+          playerScoringHistory: undefined as unknown as PlayerScoringHistory,
+          ready: false,
+        },
+      ],
+      cribGameState,
+      beforePegShowScores
+    );
+
+    spltPeggingScores.forEach((scores, index) => {
+      for (let i = 0; i < scores.length; i++) {
+        const score = scores[i];
+        const expectedScore = stages[index][i];
+        expect(score.frontPeg).toEqual(expectedScore.frontPeg);
+      }
+    });
+  }
+
+  it("should separate box, player scores and pegging", () => {
     const beforePegShowScores = [
       { games: 1, frontPeg: 5, backPeg: 3 },
       { games: 0, frontPeg: 2, backPeg: 1 },
     ];
-
-    const peggedCard: PeggedCard = {
-      owner: "me",
-      peggingScore: {
+    scoringTest(
+      beforePegShowScores,
+      {
+        boxScore: {
+          score: 4, // ************************************************
+          fifteenTwos: [
+            [TenSpades, TenDiamonds],
+            [QueenClubs, QueenDiamonds],
+          ],
+          runs: [],
+          pairs: [],
+          flush: [],
+          oneForHisKnob: undefined as unknown as PlayingCard,
+          threeOfAKind: undefined as unknown as ThreeOfAKind,
+          fourOfAKind: undefined as unknown as FourOfAKind,
+        },
+        playerShowScores: [
+          {
+            playerId: otherPlayerId,
+            showScore: {
+              score: 5, // ********************************************
+              fifteenTwos: [],
+              runs: [[AceHearts, TwoHearts, ThreeHearts, FourHearts, FiveHearts]],
+              pairs: [],
+              flush: [],
+              oneForHisKnob: undefined as unknown as PlayingCard,
+              threeOfAKind: undefined as unknown as ThreeOfAKind,
+              fourOfAKind: undefined as unknown as FourOfAKind,
+            },
+          },
+          {
+            playerId: myId,
+            showScore: {
+              score: 3, // ********************************************
+              fifteenTwos: [],
+              runs: [[ThreeClubs, FourClubs, FiveDiamonds]],
+              pairs: [],
+              flush: [],
+              oneForHisKnob: undefined as unknown as PlayingCard,
+              threeOfAKind: undefined as unknown as ThreeOfAKind,
+              fourOfAKind: undefined as unknown as FourOfAKind,
+            },
+          },
+        ],
+      },
+      {
         is15: true,
         is31: false,
         isLastGo: false,
@@ -75,104 +222,67 @@ describe("splitPeggingSchowScores", () => {
         numOfAKind: 0,
         score: 2,
       },
-      playingCard: TenSpades,
-    };
-    const expectedScoresAfterPegging2 = score(
-      beforePegShowScores,
       true,
-      peggedCard.peggingScore.score
-    );
-
-    const showScoring: ShowScoring = {
-      boxScore: {
-        score: 4, // ************************************************
-        fifteenTwos: [
-          [TenSpades, TenDiamonds],
-          [QueenClubs, QueenDiamonds],
-        ],
-        runs: [],
-        pairs: [],
-        flush: [],
-        oneForHisKnob: undefined as unknown as PlayingCard,
-        threeOfAKind: undefined as unknown as ThreeOfAKind,
-        fourOfAKind: undefined as unknown as FourOfAKind,
-      },
-      playerShowScores: [
-        {
-          playerId: "other",
-          showScore: {
-            score: 5, // ********************************************
-            fifteenTwos: [],
-            runs: [[AceHearts, TwoHearts, ThreeHearts, FourHearts, FiveHearts]],
-            pairs: [],
-            flush: [],
-            oneForHisKnob: undefined as unknown as PlayingCard,
-            threeOfAKind: undefined as unknown as ThreeOfAKind,
-            fourOfAKind: undefined as unknown as FourOfAKind,
-          },
-        },
-        {
-          playerId: "me",
-          showScore: {
-            score: 3, // ********************************************
-            fifteenTwos: [],
-            runs: [[ThreeClubs, FourClubs, FiveDiamonds]],
-            pairs: [],
-            flush: [],
-            oneForHisKnob: undefined as unknown as PlayingCard,
-            threeOfAKind: undefined as unknown as ThreeOfAKind,
-            fourOfAKind: undefined as unknown as FourOfAKind,
-          },
-        },
-      ],
-    };
-    const expectedAfterOtherScores5 = score(
-      expectedScoresAfterPegging2,
-      showScoring.playerShowScores[0].playerId === "me",
-      showScoring.playerShowScores[0].showScore.score
-    );
-    const expectedAfterMeScores3 = score(
-      expectedAfterOtherScores5,
-      showScoring.playerShowScores[1].playerId === "me",
-      showScoring.playerShowScores[1].showScore.score
-    );
-    const afterBoxScores4 = score(
-      expectedAfterMeScores3,
-      showScoring.playerShowScores[1].playerId === "me",
-      showScoring.boxScore.score
-    );
-
-    const stages = [
-      beforePegShowScores,
-
-      expectedScoresAfterPegging2,
-      expectedAfterOtherScores5,
-      expectedAfterMeScores3,
-      afterBoxScores4,
-    ];
-
-    const spltPeggingScores = splitPeggingShowScores(
-      peggedCard,
-      showScoring,
-      afterBoxScores4,
-      "me",
-      [
-        {
-          id: "other",
-          discarded: true,
-          playerScoringHistory: undefined as unknown as PlayerScoringHistory,
-          ready: false,
-        },
-      ]
-    );
-
-    spltPeggingScores.forEach((scores, index) => {
-      for (let i = 0; i < scores.length; i++) {
-        const score = scores[i];
-        const expectedScore = stages[index + 1][i];
-        expect(score.frontPeg).toEqual(expectedScore.frontPeg);
-      }
-    });
+      CribGameState.Show,
+      )
   });
+
+  it("should work when there is no box score", () => {
+    const beforePegShowScores = [
+      { games: 1, frontPeg: 5, backPeg: 3 },
+      { games: 0, frontPeg: 2, backPeg: 1 },
+    ];
+    scoringTest(
+      beforePegShowScores,
+      {
+        playerShowScores: [
+          {
+            playerId: otherPlayerId,
+            showScore: {
+              score: 5, // ********************************************
+              fifteenTwos: [],
+              runs: [[AceHearts, TwoHearts, ThreeHearts, FourHearts, FiveHearts]],
+              pairs: [],
+              flush: [],
+              oneForHisKnob: undefined as unknown as PlayingCard,
+              threeOfAKind: undefined as unknown as ThreeOfAKind,
+              fourOfAKind: undefined as unknown as FourOfAKind,
+            },
+          },
+          {
+            playerId: myId,
+            showScore: {
+              score: 3, // ********************************************
+              fifteenTwos: [],
+              runs: [[ThreeClubs, FourClubs, FiveDiamonds]],
+              pairs: [],
+              flush: [],
+              oneForHisKnob: undefined as unknown as PlayingCard,
+              threeOfAKind: undefined as unknown as ThreeOfAKind,
+              fourOfAKind: undefined as unknown as FourOfAKind,
+            },
+          },
+        ],
+      },
+      {
+        is15: true,
+        is31: false,
+        isLastGo: false,
+        numCardsInRun: 0,
+        numOfAKind: 0,
+        score: 2,
+      },
+      true,
+      CribGameState.Show)
+  });
+
+  it("should work when game won and show score would exceed 121", () => {
+    throw new Error("not implemented");
+  });
+
+
+
+  // A change the score function to replicate server when game wins
+
   // do a team score
 });

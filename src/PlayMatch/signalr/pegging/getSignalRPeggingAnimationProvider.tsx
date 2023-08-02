@@ -3,6 +3,7 @@ import {
   MyMatch,
   PeggedCard,
   Score,
+  ShowScoring,
 } from "../../../generatedTypes";
 import { Positions } from "../../matchLayoutManager";
 import { AnimationProvider } from "../../AnimationManager";
@@ -14,6 +15,7 @@ import { splitPeggingShowScores } from "../../splitPeggingShowScores";
 import { FlipCardDatas, SetCribboardState } from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
 import { discardDuration, flipDuration } from "../../animationDurations";
+import { MutableRefObject } from "react";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -44,7 +46,8 @@ export function getSignalRPeggingAnimationProvider(
     enqueueSnackbar: EnqueueSnackbar;
     delayEnqueueSnackbar: DelayEnqueueSnackbar;
   },
-  setCribBoardState: SetCribboardState
+  setCribBoardState: SetCribboardState,
+  scoresRef:MutableRefObject<Score[]> // assumption is that when access current will be current
 ): AnimationProvider {
   // eslint-disable-next-line complexity
   const animationProvider: AnimationProvider = (
@@ -56,12 +59,15 @@ export function getSignalRPeggingAnimationProvider(
     setNextPlayer(myMatch.pegging.nextPlayer);
     const positions = getPositions();
     const peggedCard = getLastPeggedCard(myMatch.pegging);
+    const previousScores = scoresRef.current;
     const pegShowScoring = splitPeggingShowScores(
       peggedCard,
-      myMatch.showScoring,
+      myMatch.showScoring as ShowScoring,
       myMatch.scores,
       myMatch.myId,
-      myMatch.otherPlayers
+      myMatch.otherPlayers,
+      myMatch.gameState,
+      previousScores
     );
 
     const didTurnOver = getDidTurnOver(peggedCard, myMatch);
@@ -107,7 +113,7 @@ export function getSignalRPeggingAnimationProvider(
         snackBarMethods.delayEnqueueSnackbar
       );
     }
-
+    scoresRef.current = myMatch.scores;
     return newFlipCardDatas;
   };
   return animationProvider;

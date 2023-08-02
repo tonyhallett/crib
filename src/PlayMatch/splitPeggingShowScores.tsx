@@ -1,4 +1,4 @@
-import { OtherPlayer, PeggedCard, Score, ShowScoring } from "../generatedTypes";
+import { CribGameState, OtherPlayer, PeggedCard, Score, ShowScoring } from "../generatedTypes";
 import { fill } from "../utilities/arrayHelpers";
 import { getPlayerScoreIndex } from "./getPlayerPositions";
 
@@ -13,9 +13,27 @@ export function splitPeggingShowScores(
   showScoring: ShowScoring | undefined,
   scores: Score[],
   myId: string,
-  otherPlayers: OtherPlayer[]
+  otherPlayers: OtherPlayer[],
+  gameState:CribGameState,
+  previousScores:Score[]
 ): Score[][] {
   const isTeams = otherPlayers.length === 3;
+  if(gameState === CribGameState.GameWon || gameState === CribGameState.MatchWon){
+    const playerScoreIndex = getPlayerScoreIndex(
+      peggedCard.owner,
+      myId,
+      otherPlayers,
+      isTeams
+    );
+    const winnerScore = scores[playerScoreIndex];
+    winnerScore.frontPeg = 121;
+    winnerScore.games = winnerScore.games - 1;
+  }
+  if(!showScoring){
+    return [scores];
+  }
+  
+  
   const scoresAndTotals: ScoresAndTotal[] = scores.map((score) => {
     return {
       finalScore: score,
@@ -36,6 +54,7 @@ export function splitPeggingShowScores(
       const scoreToAdd = playerScoreIndex === index ? score : 0;
       scoresAndTotal.total += scoreToAdd;
       scoresAndTotal.scores.push(scoreToAdd);
+
       numScores = scoresAndTotal.scores.length;
       if (isLast) {
         const startFrontPeg =
@@ -53,23 +72,22 @@ export function splitPeggingShowScores(
     });
   };
 
-  if (showScoring) {
-    addScore(peggedCard.owner, peggedCard.peggingScore.score, false);
-    let boxId = "";
-    showScoring.playerShowScores.forEach((playerScore) => {
-      boxId = playerScore.playerId;
-      addScore(playerScore.playerId, playerScore.showScore.score, false);
-    });
-    addScore(boxId, showScoring.boxScore.score, true);
-    const splitScores = fill(numScores, (i) => {
-      return scoresAndTotals.map((scoresAndTotal) => {
-        return scoresAndTotal.splitScore[i];
-      });
-    });
-    console.log("split scores");
-    console.log(JSON.stringify(splitScores));
-    return splitScores;
+  addScore(peggedCard.owner, peggedCard.peggingScore.score, false);
+  const boxIsScored = !!showScoring.boxScore;
+  let boxPlayerId = "";
+  const numPlayerScores = showScoring.playerShowScores.length;
+  showScoring.playerShowScores.forEach((playerScore,index) => {
+    const isLast = boxIsScored ? false : index === numPlayerScores - 1;
+    boxPlayerId = playerScore.playerId;
+    addScore(playerScore.playerId, playerScore.showScore.score, isLast);
+  });
+  if(showScoring.boxScore){
+    addScore(boxPlayerId, showScoring.boxScore.score, true);
   }
-
-  return [scores];
+  const splitScores = fill(numScores, (i) => {
+    return scoresAndTotals.map((scoresAndTotal) => {
+      return scoresAndTotal.splitScore[i];
+    });
+  });
+  return splitScores;
 }

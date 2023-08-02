@@ -129,7 +129,6 @@ export function performPegging(
       pegScoring,
       peggedCard,
       discardDuration,
-      myMatch.gameState,
       setCribBoardState,
       enqueueSnackbar,
       onComplete

@@ -38,7 +38,7 @@ namespace TypescriptGenerator
             TypeScriptGenerationOptions options = new TypeScriptGenerationOptions
             {
                 CustomContentMarker = "Generated from ServerlessHub<T>",
-                NullabilityMode = NullabilityMode.None
+                NullabilityMode = NullabilityMode.NullableReference
             };
             var hubTypesProvider = new HubTypesProvider();
             var rootTypesProvider = new RootTypesProvider(

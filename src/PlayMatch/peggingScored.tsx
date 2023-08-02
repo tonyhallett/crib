@@ -1,4 +1,4 @@
-import { CribGameState, PeggedCard, Score } from "../generatedTypes";
+import { PeggedCard, Score } from "../generatedTypes";
 import { getPeggedScoreMessage } from "./signalRPeg";
 import { EnqueueSnackbar } from "notistack";
 import { getColouredScores } from "./getColouredScores";
@@ -8,7 +8,6 @@ import { playMatchSnackbarKey } from "../App";
 export function peggingScored(
   peggedCard: PeggedCard,
   pegScoring: Score[],
-  gameState: CribGameState,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   peggingScoreSnackbarDurationSeconds:number,
@@ -22,16 +21,8 @@ export function peggingScored(
       autoHideDuration: peggingScoreSnackbarDurationSeconds * 1000
     }
   );
-  switch (gameState) {
-    case CribGameState.GameWon:
-    case CribGameState.MatchWon:
-      // todo - pegs are reset so need to determine score
-      break;
-    case CribGameState.Show:
-    case CribGameState.Pegging:
-      setCribBoardState({
-        colouredScores: getColouredScores(pegScoring),
-        onComplete: cribBoardAnimationOnComplete,
-      });
-  }
+  setCribBoardState({
+    colouredScores: getColouredScores(pegScoring),
+    onComplete: cribBoardAnimationOnComplete,
+  });
 }
