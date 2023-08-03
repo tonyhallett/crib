@@ -63,10 +63,8 @@ export function getSignalRPeggingAnimationProvider(
     const pegShowScoring = splitPeggingShowScores(
       peggedCard,
       myMatch.showScoring as ShowScoring,
-      myMatch.scores,
       myMatch.myId,
       myMatch.otherPlayers,
-      myMatch.gameState,
       previousScores
     );
 

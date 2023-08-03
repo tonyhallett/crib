@@ -26,11 +26,11 @@ export function getPlayerScoreIndex(
   player: string,
   myId: string,
   otherPlayers: OtherPlayer[],
-  teamGame: boolean
 ) {
+  const teamGame = otherPlayers.length === 3;
   let playerScoreIndex = getPlayerPositionIndex(player, myId, otherPlayers);
-  if (teamGame && playerScoreIndex !== 0) {
-    playerScoreIndex = 1;
+  if (teamGame) {
+    playerScoreIndex = playerScoreIndex % 2;
   }
   return playerScoreIndex;
 }
