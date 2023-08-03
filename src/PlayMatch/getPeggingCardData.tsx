@@ -92,7 +92,7 @@ function getOtherPlayersPeggingCardDatas(
       startFaceUp: false,
       isHorizontal: box.isHorizontal,
       position: box.position,
-      state: FlipCardState.Todo,
+      state: FlipCardState.Box,
       className: "",
     };
   });
@@ -141,7 +141,7 @@ function getMyPeggingCardDatas(
       startFaceUp: false,
       position: box.position,
       isHorizontal: box.isHorizontal,
-      state: FlipCardState.Todo,
+      state: FlipCardState.Box,
     });
   }
 

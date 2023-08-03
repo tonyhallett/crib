@@ -3,11 +3,22 @@ import { getPlayerPositions } from "./getPlayerPositions";
 import { Positions } from "./matchLayoutManager";
 
 export function getBoxPosition(myMatch: MyMatch, positions: Positions) {
-  const dealerPositions = getPlayerPositions(
+  const playerPositions = getPlayerPositions(
     myMatch.myId,
     myMatch.dealerDetails.current,
     positions.playerPositions,
     myMatch.otherPlayers
   );
-  return dealerPositions.box;
+  return playerPositions.box;
+}
+
+export function getDeckPosition(myMatch: MyMatch, positions: Positions) {
+  const playerPositions = getPlayerPositions(
+    myMatch.myId,
+    myMatch.dealerDetails.current,
+    positions.playerPositions,
+    myMatch.otherPlayers
+  );
+
+  return playerPositions.deck;
 }

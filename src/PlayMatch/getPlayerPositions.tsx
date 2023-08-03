@@ -25,7 +25,7 @@ export function getPlayerPositions(
 export function getPlayerScoreIndex(
   player: string,
   myId: string,
-  otherPlayers: OtherPlayer[],
+  otherPlayers: OtherPlayer[]
 ) {
   const teamGame = otherPlayers.length === 3;
   let playerScoreIndex = getPlayerPositionIndex(player, myId, otherPlayers);

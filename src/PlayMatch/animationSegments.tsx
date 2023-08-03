@@ -92,7 +92,7 @@ export const createHideShowSegment = (
   return [
     undefined,
     { opacity: hide ? 0 : 1 },
-    { duration: instantAnimationDuration,at },
+    { duration: instantAnimationDuration, at },
   ];
 };
 

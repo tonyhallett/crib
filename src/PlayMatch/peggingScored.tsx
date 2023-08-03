@@ -10,7 +10,7 @@ export function peggingScored(
   pegScoring: Score[],
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  peggingScoreSnackbarDurationSeconds:number,
+  peggingScoreSnackbarDurationSeconds: number,
   cribBoardAnimationOnComplete: () => void
 ) {
   enqueueSnackbar(
@@ -18,7 +18,7 @@ export function peggingScored(
     {
       variant: "success",
       key: playMatchSnackbarKey,
-      autoHideDuration: peggingScoreSnackbarDurationSeconds * 1000
+      autoHideDuration: peggingScoreSnackbarDurationSeconds * 1000,
     }
   );
   setCribBoardState({

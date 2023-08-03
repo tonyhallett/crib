@@ -389,7 +389,7 @@ export default function App() {
   });
   useEffect(() => {
     return () => {
-      if(playMatchIdRef.current === undefined){
+      if (playMatchIdRef.current === undefined) {
         closeSnackbar(playMatchSnackbarKey);
         stopDelayed(playMatchSnackbarKey);
       }

@@ -1,7 +1,6 @@
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
 import {
   MyMatch,
-  OtherPlayer,
   PeggedCard,
   PlayingCard,
   Score,
@@ -21,8 +20,9 @@ import {
   getMoveRotateSegment,
   setOrAddToAnimationSequence,
 } from "./animationSegments";
+import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
 import { getPlayerPositionIndex } from "./getPlayerPositions";
-import { PlayerPositions } from "./matchLayoutManager";
+import { DeckPosition, PlayerPositions } from "./matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
 import { ShowAndScoreAnimationOptions, showAndScore } from "./showAndScore";
 
@@ -246,61 +246,23 @@ interface PlayerScoring {
   playerId: string;
   showScoreParts: ShowScorePart[];
   showCardDatas: FlipCardData[];
-  isBox:boolean
+  isBox: boolean;
 }
-
-type CardsAndOwner = { cards: FlipCardData[]; owner: string };
-export type CardsAndOwners = CardsAndOwner[];
-export const getCardsWithOwners = (
-  newFlipCardDatas: FlipCardDatas,
-  myId: string,
-  otherPlayers: OtherPlayer[]
-) => {
-  const cardsAndOwners: CardsAndOwners = [
-    {
-      cards: newFlipCardDatas.myCards,
-      owner: myId,
-    },
-  ];
-  otherPlayers.forEach((otherPlayer, index) => {
-    cardsAndOwners.push({
-      owner: otherPlayer.id,
-      cards: newFlipCardDatas.otherPlayersCards[index],
-    });
-  });
-  return cardsAndOwners;
-};
 
 // naming tbd
 export const getPlayerScorings = (
   showScoring: ShowScoring,
   cardsAndOwners: CardsAndOwners,
-  cutCard: FlipCardData,
-  box: PlayingCard[],
-  additionalBoxCard:FlipCardData | undefined
-): {playerScorings:PlayerScoring[],boxCardDatas:FlipCardData[]} => {
-  const boxCardDatas: FlipCardData[] = [];
-  if(additionalBoxCard){
-    boxCardDatas.push(additionalBoxCard);
-  }
+  cutCard: FlipCardData
+): PlayerScoring[] => {
+  const playerCardsAndOwners = cardsAndOwners.playerCards;
   // these are in order
-    
   const playerScorings = showScoring.playerShowScores.map((playerShowScore) => {
-    const cardsAndOwner = cardsAndOwners.find(
+    const cardsAndOwner = playerCardsAndOwners.find(
       (cardsAndOwner) => cardsAndOwner.owner === playerShowScore.playerId
     ) as CardsAndOwner;
     const cards = cardsAndOwner.cards;
-    const showCardDatas: FlipCardData[] = [cutCard];
-    cards.forEach((card) => {
-      if (
-        card.state === FlipCardState.PeggingInPlay ||
-        card.state === FlipCardState.PeggingTurnedOver
-      ) {
-        showCardDatas.push(card);
-      } else {
-        boxCardDatas.push(card);
-      }
-    });
+    const showCardDatas: FlipCardData[] = [cutCard, ...cards];
     const playerScoring: PlayerScoring = {
       playerId: playerShowScore.playerId,
       showCardDatas: showCardDatas,
@@ -308,30 +270,24 @@ export const getPlayerScorings = (
         playerShowScore.showScore,
         showCardDatas
       ),
-      isBox:false
+      isBox: false,
     };
     return playerScoring;
   });
-  boxCardDatas.forEach((boxCardData, i) => {
-    boxCardData.playingCard = box[i];
-  });
-  const showBoxCards = [...boxCardDatas, cutCard  ]
-  if(showScoring.boxScore){
+
+  const showBoxCards = [...cardsAndOwners.boxCards, cutCard];
+  if (showScoring.boxScore) {
     playerScorings.push({
-      isBox:true,
+      isBox: true,
       showCardDatas: showBoxCards,
-      showScoreParts: getShowScoreParts(showScoring.boxScore, boxCardDatas),
+      showScoreParts: getShowScoreParts(showScoring.boxScore, showBoxCards),
       playerId:
         showScoring.playerShowScores[showScoring.playerShowScores.length - 1]
           .playerId,
     });
   }
-  
 
-  return {
-    boxCardDatas,
-    playerScorings
-  }
+  return playerScorings;
 };
 
 // todo options
@@ -435,7 +391,7 @@ export const returnCardsToPlayers = (
   playerPositions: PlayerPositions[],
   cardsAndOwners: CardsAndOwners,
   animationOptions: ReturnCardsToPlayersAnimationOptions,
-  ownerReturnedCards:OwnerReturnedCards
+  ownerReturnedCards: OwnerReturnedCards
 ): {
   returnInPlayAt: number;
   duration: number;
@@ -477,12 +433,13 @@ export const returnTurnedOverCardsToPlayers = (
   returnDuration: number,
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
-  ownerReturnedCards:OwnerReturnedCards
+  ownerReturnedCards: OwnerReturnedCards
 ): number => {
+  const playerCardsAndOwners = cardsAndOwners.playerCards;
   const order = getTurnOverOrder(myMatch.pegging.turnedOverCards);
   const moveDelay = 0.2;
 
-  cardsAndOwners.forEach((cardsAndOwner,cardsAndOwnerIndex) => {
+  playerCardsAndOwners.forEach((cardsAndOwner, cardsAndOwnerIndex) => {
     const owner = cardsAndOwner.owner;
     const ownerCardsWithTurnOverOrderIndex = order
       .map((peggedCard, index) => ({ peggedCard, index }))
@@ -563,11 +520,12 @@ export const returnInPlayCardsToPlayers = (
   onComplete: () => void,
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
-  ownerReturnedCards:OwnerReturnedCards
+  ownerReturnedCards: OwnerReturnedCards
 ): number => {
   const inPlayCards = myMatch.pegging.inPlayCards;
   let numCardsReturned = 0;
-  cardsAndOwners.forEach((cardsAndOwner, cardsAndOwnerIndex) => {
+  const playerCardsAndOwners = cardsAndOwners.playerCards;
+  playerCardsAndOwners.forEach((cardsAndOwner, cardsAndOwnerIndex) => {
     const owner = cardsAndOwner.owner;
     const handPosition =
       playerPositions[
@@ -591,12 +549,15 @@ export const returnInPlayCardsToPlayers = (
           )
         );
 
-        const ownerInPlayCardsIndex = ownerInPlayCards.indexOf(inPlayCards[peggedCardIndex]);
+        const ownerInPlayCardsIndex = ownerInPlayCards.indexOf(
+          inPlayCards[peggedCardIndex]
+        );
         // greater the index lower the position index
         const inPlayIndex = ownerInPlayCards.length - ownerInPlayCardsIndex;
 
         const discardPositionIndex = startIndex + inPlayIndex;
-        ownerReturnedCards[cardsAndOwnerIndex][discardPositionIndex] = flipCardData;
+        ownerReturnedCards[cardsAndOwnerIndex][discardPositionIndex] =
+          flipCardData;
         const returnIndex = inPlayCards.length - peggedCardIndex - 1;
         numCardsReturned++;
         const segments: FlipCardAnimationSequence = [
@@ -620,18 +581,20 @@ export const returnInPlayCardsToPlayers = (
   return numCardsReturned * returnDuration;
 };
 
-type ShowAnimationOptions = ReturnCardsToPlayersAnimationOptions & ShowAndScoreAnimationOptions;
+type ShowAnimationOptions = ReturnCardsToPlayersAnimationOptions &
+  ShowAndScoreAnimationOptions;
 
 export type OwnerReturnedCards = FlipCardData[][];
 
-const initializeOwnerReturnedCards = (numPlayers:number):OwnerReturnedCards => {
-  const ownerReturnedCards:OwnerReturnedCards = new Array(numPlayers);
-  for(let i = 0;i<numPlayers;i++){
+const initializeOwnerReturnedCards = (
+  numPlayers: number
+): OwnerReturnedCards => {
+  const ownerReturnedCards: OwnerReturnedCards = new Array(numPlayers);
+  for (let i = 0; i < numPlayers; i++) {
     ownerReturnedCards[i] = new Array(4);
   }
   return ownerReturnedCards;
-}
-
+};
 
 export const addShowAnimation = (
   prevFlipCardDatas: FlipCardDatas,
@@ -641,35 +604,29 @@ export const addShowAnimation = (
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
   setCribBoardState: SetCribboardState,
-  delayEnqueueSnackbar: DelayEnqueueSnackbar
+  delayEnqueueSnackbar: DelayEnqueueSnackbar,
+  cardsWithOwners: CardsAndOwners,
+  deckPosition: DeckPosition
 ) => {
-  const cardsAndOwners = getCardsWithOwners(
-    newFlipCardDatas,
-    myMatch.myId,
-    myMatch.otherPlayers
+  const cardsAndOwners = cardsWithOwners.playerCards;
+  const ownerReturnedCards = initializeOwnerReturnedCards(
+    cardsAndOwners.length
   );
-
-  const ownerReturnedCards = initializeOwnerReturnedCards(cardsAndOwners.length)
 
   const { returnInPlayAt, duration } = returnCardsToPlayers(
     myMatch,
     showAnimationOptions.at,
     playerPositions,
-    cardsAndOwners,
+    cardsWithOwners,
     { ...showAnimationOptions },
     ownerReturnedCards
   );
 
-  const dealerPositionIndex = getPlayerPositionIndex(myMatch.dealerDetails.current,myMatch.myId,myMatch.otherPlayers);
-  const dealerDeckPosition = playerPositions[dealerPositionIndex].deck;
-
   showAndScore(
     myMatch.showScoring as ShowScoring,
-    cardsAndOwners,
+    cardsWithOwners,
     newFlipCardDatas.cutCard,
-    newFlipCardDatas.additionalBoxCard,
     pegShowScoring,
-    myMatch.box as PlayingCard[],
     {
       ...showAnimationOptions,
       at: returnInPlayAt + duration,
@@ -678,7 +635,7 @@ export const addShowAnimation = (
     delayEnqueueSnackbar,
     myMatch,
     playerPositions,
-    dealerDeckPosition,
+    deckPosition,
     ownerReturnedCards
   );
 };

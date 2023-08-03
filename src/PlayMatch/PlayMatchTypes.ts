@@ -32,13 +32,14 @@ export type PlayMatchCribHub = {
 
 export enum FlipCardState {
   Todo,
+  Box,
   CutCard,
   MyHand,
   OtherPlayersHand,
   PeggingInPlay,
   PeggingTurnedOver,
   AdditionalBoxCard,
-  BottomDeckCard
+  BottomDeckCard,
 }
 export type FlipCardData = Omit<FlipCardProps, "size"> & {
   state: FlipCardState;
@@ -69,4 +70,4 @@ export interface CribBoardState {
 }
 export type SetCribboardState = Dispatch<SetStateAction<CribBoardState>>;
 
-export type Duration = number
+export type Duration = number;

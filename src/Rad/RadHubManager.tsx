@@ -726,41 +726,41 @@ const matches: ActionMyMatch[] = [
               turnedOverCards: [],
               inPlayCards: [
                 {
-                  owner:"Player2",
-                  peggingScore:{
-                    is15:false,
-                    is31:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:0,
-                    score:0
+                  owner: "Player2",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                    score: 0,
                   },
-                  playingCard:QueenHearts
+                  playingCard: QueenHearts,
                 },
                 {
-                  owner:"Me",
-                  peggingScore:{
-                    is15:false,
-                    is31:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:2,
-                    score:2
+                  owner: "Me",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 2,
+                    score: 2,
                   },
-                  playingCard:QueenSpades
+                  playingCard: QueenSpades,
                 },
                 {
-                  owner:"Player2",
-                  peggingScore:{
-                    is15:false,
-                    is31:false,
-                    isLastGo:false,
-                    numCardsInRun:0,
-                    numOfAKind:3,
-                    score:6
+                  owner: "Player2",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 3,
+                    score: 6,
                   },
-                  playingCard:QueenDiamonds
-                }
+                  playingCard: QueenDiamonds,
+                },
               ],
               goHistory: [],
               nextPlayer: "Player2",
@@ -808,29 +808,29 @@ const matches: ActionMyMatch[] = [
       turnedOverCards: [],
       inPlayCards: [
         {
-          owner:"Player2",
-          peggingScore:{
-            is15:false,
-            is31:false,
-            isLastGo:false,
-            numCardsInRun:0,
-            numOfAKind:0,
-            score:0
+          owner: "Player2",
+          peggingScore: {
+            is15: false,
+            is31: false,
+            isLastGo: false,
+            numCardsInRun: 0,
+            numOfAKind: 0,
+            score: 0,
           },
-          playingCard:QueenHearts
+          playingCard: QueenHearts,
         },
         {
-          owner:"Me",
-          peggingScore:{
-            is15:false,
-            is31:false,
-            isLastGo:false,
-            numCardsInRun:0,
-            numOfAKind:2,
-            score:2
+          owner: "Me",
+          peggingScore: {
+            is15: false,
+            is31: false,
+            isLastGo: false,
+            numCardsInRun: 0,
+            numOfAKind: 2,
+            score: 2,
           },
-          playingCard:QueenSpades
-        }
+          playingCard: QueenSpades,
+        },
       ],
       goHistory: [],
       nextPlayer: "Player2",
@@ -855,7 +855,7 @@ const matches: ActionMyMatch[] = [
     ],
     showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
-  
+
   {
     actions: [
       {
@@ -1576,10 +1576,12 @@ const matches: ActionMyMatch[] = [
                       [JackSpades, TwoDiamonds, ThreeHearts],
                     ],
                     runs: [],
-                    pairs: [{
-                      card1:TwoSpades,
-                      card2:TwoDiamonds
-                    }],
+                    pairs: [
+                      {
+                        card1: TwoSpades,
+                        card2: TwoDiamonds,
+                      },
+                    ],
                     flush: [],
                     fourOfAKind: undefined as unknown as FourOfAKind,
                     threeOfAKind: undefined as unknown as ThreeOfAKind,
@@ -1814,7 +1816,7 @@ const matches: ActionMyMatch[] = [
     cutCard: TwoDiamonds,
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
-      { games: 2, frontPeg: 115, backPeg: 110 },
+      { games: 2, frontPeg: 110, backPeg: 105 },
     ],
     pegging: {
       turnedOverCards: [

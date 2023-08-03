@@ -206,7 +206,7 @@ function PlayMatchInner({
           const getCutCardAnimationData = (
             prevCardData: FlipCardData,
             isJack: boolean,
-            cutCard:PlayingCard
+            cutCard: PlayingCard
           ) => {
             const newCardData = { ...prevCardData };
             newCardData.playingCard = cutCard;

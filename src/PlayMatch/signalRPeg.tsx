@@ -73,29 +73,32 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   enqueueSnackbar: EnqueueSnackbar,
   animationCompleteCallback: () => void,
   peggingScoreSnackbarDurationSeconds = 5
-) : [FlipCardAnimationSequence, Duration] => {
+): [FlipCardAnimationSequence, Duration] => {
   const scored = peggedCard.peggingScore.score > 0;
-  const scoreDuration = scored ? Math.max(peggingScoreSnackbarDurationSeconds, defaultCribBoardDuration) : 0;
+  const scoreDuration = scored
+    ? Math.max(peggingScoreSnackbarDurationSeconds, defaultCribBoardDuration)
+    : 0;
 
-  const [sequence, moveToPeggingPositionDuration] = getMoveToPeggingPositionAnimationSequence(
-    peggedCardPosition,
-    inPlayPositions,
-    discardDuration,
-    () => {
-      if (scored) {
-        peggingScored(
-          peggedCard,
-          pegScores,
-          setCribBoardState,
-          enqueueSnackbar,
-          peggingScoreSnackbarDurationSeconds,
-          animationCompleteCallback
-        );
-      } else {
-        animationCompleteCallback();
+  const [sequence, moveToPeggingPositionDuration] =
+    getMoveToPeggingPositionAnimationSequence(
+      peggedCardPosition,
+      inPlayPositions,
+      discardDuration,
+      () => {
+        if (scored) {
+          peggingScored(
+            peggedCard,
+            pegScores,
+            setCribBoardState,
+            enqueueSnackbar,
+            peggingScoreSnackbarDurationSeconds,
+            animationCompleteCallback
+          );
+        } else {
+          animationCompleteCallback();
+        }
       }
-    }
-  );
+    );
   return [sequence, moveToPeggingPositionDuration + scoreDuration];
 };
 

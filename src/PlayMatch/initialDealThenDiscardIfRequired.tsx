@@ -100,7 +100,7 @@ function getDealtPlayerCard(
       }
     ),
   ];
-  let state: FlipCardState = FlipCardState.Todo;
+  let state: FlipCardState = FlipCardState.OtherPlayersHand;
   if (isMyCard) {
     state = FlipCardState.MyHand;
     const flipAnimation: FlipAnimation = {
