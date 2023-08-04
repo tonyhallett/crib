@@ -24,7 +24,10 @@ import {
   FlipAnimation,
 } from "../../../FlipCard/FlipCard";
 import { cardMatch } from "../../playingCardUtilities";
-import { discardDuration, flipDuration } from "../../animation/animationDurations";
+import {
+  discardDuration,
+  flipDuration,
+} from "../../animation/animationDurations";
 
 const ensurePeggingState = (cardData: FlipCardData) => {
   if (cardData.state !== FlipCardState.PeggingTurnedOver) {

@@ -1,10 +1,25 @@
 import { MyMatch, PeggedCard, PlayingCard } from "../../generatedTypes";
-import { DeckPosition, DiscardPositions, PlayerPositions, Point } from "../layout/matchLayoutManager";
+import {
+  DeckPosition,
+  DiscardPositions,
+  PlayerPositions,
+  Point,
+} from "../layout/matchLayoutManager";
 import { CardsAndOwner, CardsAndOwners } from "../getCardsWithOwners";
 import { Duration, FlipCardData, FlipCardState } from "../PlayMatchTypes";
 import { cardMatch } from "../playingCardUtilities";
-import { FlipAnimation, FlipCardAnimationSequence } from "../../FlipCard/FlipCard";
-import { createHideShowSegment, createZIndexAnimationSegment, getMoveRotateSegment, instantAnimationDuration, moveCardsToDeckWithoutFlipping, setOrAddToAnimationSequence } from "./animationSegments";
+import {
+  FlipAnimation,
+  FlipCardAnimationSequence,
+} from "../../FlipCard/FlipCard";
+import {
+  createHideShowSegment,
+  createZIndexAnimationSegment,
+  getMoveRotateSegment,
+  instantAnimationDuration,
+  moveCardsToDeckWithoutFlipping,
+  setOrAddToAnimationSequence,
+} from "./animationSegments";
 import { getPlayerPositions } from "../getPlayerPositions";
 
 function flipStack(cards: FlipCardData[], flipDuration: number): Duration {
@@ -119,7 +134,6 @@ function movePlayerCardsToDeck(
   return duration;
 }
 
-
 function flipAndMoveCardsInPlayToDeck(
   inPlayCards: FlipCardData[],
   flipDuration: number,
@@ -222,25 +236,25 @@ export function clearUpAfterWon(
   myMatch: MyMatch,
   playerPositions: PlayerPositions[]
 ) {
-  flipDuration = 2;
-  moveToDeckDuration = 2;
+  let deckZIndex = 10;
 
   flipCutCard(cutCard, flipDuration, at);
   at += flipDuration;
+
   const turnedOverCards = getCardsWithState(
     cardsWithOwners.playerCards,
     FlipCardState.PeggingTurnedOver
   );
-  let zIndex = 10;
   if (turnedOverCards.length > 0) {
     at += moveCardsToDeckWithoutFlipping(
       turnedOverCards,
-      zIndex, // all cards are at this zIndex
+      deckZIndex, // all cards are at this zIndex
       currentDeckPosition,
       at,
       moveToDeckDuration
     );
   }
+
   const inPlayCardDatas = getOrderedInPlayCards(cardsWithOwners, inPlayCards);
   if (inPlayCards.length > 0) {
     at += flipAndMoveCardsInPlayToDeck(
@@ -248,7 +262,7 @@ export function clearUpAfterWon(
       flipDuration,
       moveToDeckDuration,
       moveToDeckDuration,
-      zIndex++, // all cards are at this zIndex
+      deckZIndex++, // all cards are at this zIndex
       currentDeckPosition,
       firstPeggingPosition,
       at
@@ -257,7 +271,7 @@ export function clearUpAfterWon(
 
   at += movePlayerCardsToDeck(
     cardsWithOwners.playerCards,
-    zIndex, // the current top zIndex - each player has all of their cards at the same zIndex - one more than the previous
+    deckZIndex, // the current top zIndex - each player has all of their cards at the same zIndex - one more than the previous
     currentDeckPosition,
     at,
     flipDuration,
@@ -266,11 +280,11 @@ export function clearUpAfterWon(
     myMatch,
     playerPositions
   );
-  zIndex += cardsWithOwners.playerCards.length;
+  deckZIndex += cardsWithOwners.playerCards.length;
 
   moveCardsToDeckWithoutFlipping(
     cardsWithOwners.boxCards,
-    zIndex,
+    deckZIndex,
     currentDeckPosition,
     at,
     moveToDeckDuration

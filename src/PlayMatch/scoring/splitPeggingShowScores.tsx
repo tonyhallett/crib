@@ -1,4 +1,9 @@
-import { OtherPlayer, PeggedCard, Score, ShowScoring } from "../../generatedTypes";
+import {
+  OtherPlayer,
+  PeggedCard,
+  Score,
+  ShowScoring,
+} from "../../generatedTypes";
 import { fill } from "../../utilities/arrayHelpers";
 import { getPlayerScoreIndex } from "../getPlayerPositions";
 

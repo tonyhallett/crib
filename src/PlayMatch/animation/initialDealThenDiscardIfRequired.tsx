@@ -20,7 +20,10 @@ import {
   getDiscardToBoxSegment,
   getMoveRotateSegment,
 } from "./animationSegments";
-import { FlipAnimation, FlipCardAnimationSequence } from "../../FlipCard/FlipCard";
+import {
+  FlipAnimation,
+  FlipCardAnimationSequence,
+} from "../../FlipCard/FlipCard";
 import { arrayOfEmptyArrays } from "../../utilities/arrayHelpers";
 import { LocalMatch } from "../../localMatch";
 import { OnComplete } from "../../fixAnimationSequence/common-motion-types";

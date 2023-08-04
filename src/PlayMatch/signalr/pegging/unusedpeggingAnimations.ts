@@ -2,7 +2,11 @@ import { Point } from "framer-motion";
 import { FlipAnimation } from "../../../FlipCard/FlipCard";
 import { OnComplete } from "../../../fixAnimationSequence/common-motion-types";
 import { MyMatch, PlayingCard } from "../../../generatedTypes";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "../../PlayMatchTypes";
+import {
+  FlipCardData,
+  FlipCardDatas,
+  FlipCardState,
+} from "../../PlayMatchTypes";
 import { getMoveRotateSegment } from "../../animation/animationSegments";
 import {
   createZIndexAnimationSegment,

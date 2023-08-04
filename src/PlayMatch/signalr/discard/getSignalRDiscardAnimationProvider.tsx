@@ -6,14 +6,20 @@ import {
   Score,
 } from "../../../generatedTypes";
 import { Box, Positions } from "../../layout/matchLayoutManager";
-import { FlipAnimation, FlipCardAnimationSequence } from "../../../FlipCard/FlipCard";
+import {
+  FlipAnimation,
+  FlipCardAnimationSequence,
+} from "../../../FlipCard/FlipCard";
 import { getDiscardToBoxSegment } from "../../animation/animationSegments";
 import { AnimationProvider } from "../../animation/AnimationManager";
 import { OnComplete } from "../../../fixAnimationSequence/common-motion-types";
 import { playMatchSnackbarKey } from "../../../App";
 import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
 import { getColouredScores } from "../../getColouredScores";
-import { getBoxPosition, getDeckPosition } from "../../layout/positions-utilities";
+import {
+  getBoxPosition,
+  getDeckPosition,
+} from "../../layout/positions-utilities";
 import { cardMatch } from "../../playingCardUtilities";
 import {
   CribBoardState,
@@ -33,9 +39,10 @@ export interface SignalRDiscardAnimationOptions {
   cardFlipDuration: number;
 }
 
-function cutCardWon(gameState:CribGameState){
-  return gameState === CribGameState.GameWon ||
-      gameState === CribGameState.MatchWon
+function cutCardWon(gameState: CribGameState) {
+  return (
+    gameState === CribGameState.GameWon || gameState === CribGameState.MatchWon
+  );
 }
 
 export function getSignalRDiscardAnimationProvider(
@@ -60,12 +67,12 @@ export function getSignalRDiscardAnimationProvider(
     setGameState(myMatch.gameState);
     const positions = getPositions();
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
-    
+
     const complete = () => {
       animationCompleteCallback && animationCompleteCallback();
       syncChangeHistories();
     };
-    
+
     const iDiscarded = discarderId === myMatch.myId;
     const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
 

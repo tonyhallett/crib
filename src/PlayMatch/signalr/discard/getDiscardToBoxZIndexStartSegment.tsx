@@ -1,10 +1,7 @@
 import { MyMatch } from "../../../generatedTypes";
 import { createDiscardZIndexAnimationSegment } from "../../animation/animationSegments";
 
-function getNumCardsAlreadyDiscarded(
-  myMatch: MyMatch,
-  numDiscards: number
-) {
+function getNumCardsAlreadyDiscarded(myMatch: MyMatch, numDiscards: number) {
   const numOtherPlayersDiscarded = myMatch.otherPlayers.filter(
     (otherPlayer) => otherPlayer.discarded
   ).length;
@@ -26,5 +23,3 @@ export function getDiscardToBoxZIndexStartSegment(
     numCardsAlreadyDiscarded + countDiscards
   );
 }
-
-

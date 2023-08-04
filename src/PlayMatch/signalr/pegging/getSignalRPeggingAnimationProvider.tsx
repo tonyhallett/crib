@@ -5,23 +5,19 @@ import {
   Score,
   ShowScoring,
 } from "../../../generatedTypes";
-import {
-  Positions,
-} from "../../layout/matchLayoutManager";
+import { Positions } from "../../layout/matchLayoutManager";
 import { AnimationProvider } from "../../animation/AnimationManager";
 import { getLastPeggedCard } from "../../signalRPeg";
 import { DelayEnqueueSnackbar } from "../../../hooks/useSnackbarWithDelay";
 import { EnqueueSnackbar } from "notistack";
 import { addShowAnimation } from "../../theShow";
-import {
-  getCardsWithOwners,
-} from "../../getCardsWithOwners";
-import {
-  FlipCardDatas,
-  SetCribboardState,
-} from "../../PlayMatchTypes";
+import { getCardsWithOwners } from "../../getCardsWithOwners";
+import { FlipCardDatas, SetCribboardState } from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
-import { discardDuration, flipDuration } from "../../animation/animationDurations";
+import {
+  discardDuration,
+  flipDuration,
+} from "../../animation/animationDurations";
 import { MutableRefObject } from "react";
 import { getDeckPosition } from "../../layout/positions-utilities";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
@@ -178,7 +174,3 @@ export function getSignalRPeggingAnimationProvider(
   };
   return animationProvider;
 }
-
-
-
-
