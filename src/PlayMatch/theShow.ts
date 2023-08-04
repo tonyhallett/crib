@@ -19,10 +19,10 @@ import {
   createZIndexAnimationSegment,
   getMoveRotateSegment,
   setOrAddToAnimationSequence,
-} from "./animationSegments";
+} from "./animation/animationSegments";
 import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
 import { getPlayerPositionIndex } from "./getPlayerPositions";
-import { DeckPosition, PlayerPositions } from "./matchLayoutManager";
+import { DeckPosition, PlayerPositions } from "./layout/matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
 import { ShowAndScoreAnimationOptions, showAndScore } from "./showAndScore";
 
@@ -242,7 +242,7 @@ interface ShowScorePart {
   description: string;
 }
 
-interface PlayerScoring {
+export interface PlayerScoring {
   playerId: string;
   showScoreParts: ShowScorePart[];
   showCardDatas: FlipCardData[];

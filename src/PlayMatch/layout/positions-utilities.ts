@@ -1,5 +1,5 @@
-import { MyMatch } from "../generatedTypes";
-import { getPlayerPositions } from "./getPlayerPositions";
+import { MyMatch } from "../../generatedTypes";
+import { getPlayerPositions } from "../getPlayerPositions";
 import { Positions } from "./matchLayoutManager";
 
 export function getBoxPosition(myMatch: MyMatch, positions: Positions) {

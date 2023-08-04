@@ -3,7 +3,7 @@ import {
   DeckPosition,
   DiscardPositions,
   PlayerPositions,
-} from "./matchLayoutManager";
+} from "./layout/matchLayoutManager";
 import { getPlayerPositions } from "./getPlayerPositions";
 import { defaultCribBoardDuration } from "../crib-board/AnimatedCribBoard";
 import { moveCutCardToPlayerHand } from "./signalRPeg";
@@ -11,6 +11,7 @@ import { DelayEnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
 import { VariantType } from "notistack";
 import {
   OwnerReturnedCards,
+  PlayerScoring,
   getPlayerScorings,
   getShowAnimator,
 } from "./theShow";
@@ -23,13 +24,13 @@ import {
   createZIndexAnimationSegment,
   getMoveRotateSegment,
   instantFlipAnimation,
+  moveCardsToDeckWithoutFlipping,
   setOrAddToAnimationSequence,
-} from "./animationSegments";
-import { moveCardsToDeckWithoutFlipping } from "./moveCardsToDeckWithoutFlipping";
-import { CardsAndOwners, CardsAndOwner } from "./getCardsWithOwners";
+} from "./animation/animationSegments";
+import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
 
 export interface ShowAndScoreAnimationOptions
-  extends MoveToDeckTogetherAnimationOptions {
+  extends MoveHandToDeckAnimationOptions {
   at: number;
   moveCutCardDuration: number;
   scoreMessageDuration: number;
@@ -179,7 +180,7 @@ export function showAndScore(
     const cardsToMoveToDeck = isBox
       ? playerScoring.showCardDatas
       : returnedCards;
-    at += moveToDeckTogether(
+    at += moveHandToDeck(
       cardsToMoveToDeck,
       currentDeckPosition,
       handPositions,
@@ -189,20 +190,63 @@ export function showAndScore(
     );
   });
 
-  let additionalToMoveToDeck: CardsAndOwner[] = [
-    ...cardsAndOwners.playerCards,
-    {
-      owner: "box",
-      cards: cardsAndOwners.boxCards,
-    },
-  ];
+  returnRemainingCardsToDeck(
+    cutCard,
+    cardsAndOwners,
+    ownerReturnedCards,
+    playerScorings,
+    currentDeckPosition,
+    at,
+    animationOptions,
+    myMatch,
+    playerPositions
+  );
+}
+
+function getRemainingCardsToMoveToDeck(
+  cardsAndOwners: CardsAndOwners,
+  ownerReturnedCards: OwnerReturnedCards,
+  playerScorings: PlayerScoring[]
+): CardsAndOwner[] {
+  const boxMarker = "box";
+  let additionalToMoveToDeck: CardsAndOwner[] = cardsAndOwners.playerCards.map(
+    (playerCards, i) => {
+      return {
+        owner: playerCards.owner,
+        cards: ownerReturnedCards[i],
+      };
+    }
+  );
+  additionalToMoveToDeck.push({
+    owner: boxMarker,
+    cards: cardsAndOwners.boxCards,
+  });
 
   additionalToMoveToDeck = additionalToMoveToDeck.filter((additional) => {
-    if (additional.owner === "box") {
+    if (additional.owner === boxMarker) {
       return !playerScorings.some((ps) => ps.isBox);
     }
     return !playerScorings.some((ps) => ps.playerId === additional.owner);
   });
+  return additionalToMoveToDeck;
+}
+
+function returnRemainingCardsToDeck(
+  cutCard: FlipCardData,
+  cardsAndOwners: CardsAndOwners,
+  ownerReturnedCards: OwnerReturnedCards,
+  playerScorings: PlayerScoring[],
+  currentDeckPosition: DeckPosition,
+  at: number,
+  animationOptions: MoveHandToDeckAnimationOptions,
+  myMatch: MyMatch,
+  playerPositions: PlayerPositions[]
+) {
+  const additionalToMoveToDeck = getRemainingCardsToMoveToDeck(
+    cardsAndOwners,
+    ownerReturnedCards,
+    playerScorings
+  );
 
   // for now do in any order
   additionalToMoveToDeck.forEach((additional) => {
@@ -213,7 +257,7 @@ export function showAndScore(
         currentDeckCount,
         currentDeckPosition,
         at,
-        animationOptions.moveBoxDuration
+        animationOptions.moveToDeckMoveToDeckDuration
       );
     } else {
       const handPositions = getPlayerPositions(
@@ -223,7 +267,7 @@ export function showAndScore(
         myMatch.otherPlayers
       ).discard;
       const currentDeckCount = 1 + playerScorings.length * 4;
-      at += moveToDeckTogether(
+      at += moveHandToDeck(
         additional.cards,
         currentDeckPosition,
         handPositions,
@@ -239,14 +283,13 @@ export function showAndScore(
 
     moveCutCardToDeck(
       cutCard,
-      moveCutCardDuration,
-      animationOptions.moveToDeckFlipDuration, // need animation options for this
+      animationOptions.moveToDeckMoveToDeckDuration,
+      animationOptions.moveToDeckFlipDuration,
       at,
       currentDeckCount,
       currentDeckPosition
     );
   }
-  // need to do cut card as well
 }
 
 function moveCutCardToDeck(
@@ -310,19 +353,19 @@ function moveToDeckIndividually(
   return moveToDeckFlipDuration + flipCardDatas.length * moveToDeckMoveDuration;
 }
 
-interface MoveToDeckTogetherAnimationOptions {
+interface MoveHandToDeckAnimationOptions {
   moveToDeckMoveToFirstDuration: number;
   moveToDeckFlipDuration: number;
   moveToDeckMoveToDeckDuration: number;
 }
 
-function moveToDeckTogether(
+function moveHandToDeck(
   flipCardDatas: FlipCardData[],
   deckPosition: DeckPosition,
   handPositions: DiscardPositions,
   at: number,
   currentDeckCount: number,
-  animationOptions: MoveToDeckTogetherAnimationOptions
+  animationOptions: MoveHandToDeckAnimationOptions
 ): Duration {
   const pause = 0.1;
   const firstPosition = handPositions.positions[0];

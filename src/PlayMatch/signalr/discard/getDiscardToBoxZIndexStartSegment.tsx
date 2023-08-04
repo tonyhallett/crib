@@ -1,7 +1,7 @@
-import { MyMatch } from "../generatedTypes";
-import { createZIndexAnimationSegment } from "./animationSegments";
+import { MyMatch } from "../../../generatedTypes";
+import { createDiscardZIndexAnimationSegment } from "../../animation/animationSegments";
 
-export function getNumCardsAlreadyDiscarded(
+function getNumCardsAlreadyDiscarded(
   myMatch: MyMatch,
   numDiscards: number
 ) {
@@ -12,6 +12,7 @@ export function getNumCardsAlreadyDiscarded(
     numOtherPlayersDiscarded + (myMatch.myCards.length === 4 ? 1 : 0);
   return (numPlayersDiscarded - 1) * numDiscards;
 }
+
 export function getDiscardToBoxZIndexStartSegment(
   myMatch: MyMatch,
   countDiscards: number
@@ -26,6 +27,4 @@ export function getDiscardToBoxZIndexStartSegment(
   );
 }
 
-export function createDiscardZIndexAnimationSegment(discardNumber: number) {
-  return createZIndexAnimationSegment(5 + discardNumber, {});
-}
+

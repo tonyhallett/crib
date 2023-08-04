@@ -1,6 +1,14 @@
 import { PlayingCard } from "../generatedTypes";
 import { Pips } from "../generatedTypes";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getPlayingCardString(playingCard: PlayingCard | undefined) {
+  if (playingCard) {
+    return `${playingCard.pips} of ${playingCard.suit}`;
+  }
+  return "";
+}
+
 export const cardMatch = (
   playingCard1: PlayingCard,
   playingCard2: PlayingCard

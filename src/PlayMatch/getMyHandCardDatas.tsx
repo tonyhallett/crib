@@ -1,5 +1,5 @@
 import { PlayingCard } from "../generatedTypes";
-import { DiscardPositions } from "./matchLayoutManager";
+import { DiscardPositions } from "./layout/matchLayoutManager";
 import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
 
 export function getMyHandCardDatas(

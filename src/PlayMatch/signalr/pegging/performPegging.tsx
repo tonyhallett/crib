@@ -5,7 +5,7 @@ import {
   PlayingCard,
   Score,
 } from "../../../generatedTypes";
-import { PeggingPositions } from "../../matchLayoutManager";
+import { PeggingPositions } from "../../layout/matchLayoutManager";
 import {
   addTurnOverTogetherAnimation,
   getMoveToPeggingPositionAnimationSequenceAndScore,
@@ -24,7 +24,7 @@ import {
   FlipAnimation,
 } from "../../../FlipCard/FlipCard";
 import { cardMatch } from "../../playingCardUtilities";
-import { discardDuration, flipDuration } from "../../animationDurations";
+import { discardDuration, flipDuration } from "../../animation/animationDurations";
 
 const ensurePeggingState = (cardData: FlipCardData) => {
   if (cardData.state !== FlipCardState.PeggingTurnedOver) {

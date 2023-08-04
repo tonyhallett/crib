@@ -31,7 +31,6 @@ export type PlayMatchCribHub = {
 };
 
 export enum FlipCardState {
-  Todo,
   Box,
   CutCard,
   MyHand,

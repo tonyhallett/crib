@@ -4,27 +4,27 @@ import {
   DiscardPositions,
   PlayerPositions,
   Positions,
-} from "./matchLayoutManager";
-import { getPlayerPositions } from "./getPlayerPositions";
+} from "../layout/matchLayoutManager";
+import { getPlayerPositions } from "../getPlayerPositions";
 import {
   FlipCardData,
   FlipCardDatas,
   FlipCardState,
   UpdateLocalMatch,
-} from "./PlayMatchTypes";
-import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
-import { MyMatch } from "../generatedTypes";
+} from "../PlayMatchTypes";
+import { getNonPlayerCardDatas } from "../getNonPlayerCardDatas";
+import { MyMatch } from "../../generatedTypes";
 import {
+  createDiscardZIndexAnimationSegment,
   createZIndexAnimationSegment,
   getDiscardToBoxSegment,
   getMoveRotateSegment,
 } from "./animationSegments";
-import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
-import { arrayOfEmptyArrays } from "../utilities/arrayHelpers";
-import { LocalMatch } from "../localMatch";
-import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { MatchDetail } from "../App";
-import { createDiscardZIndexAnimationSegment } from "./getDiscardToBoxZIndexStartSegment";
+import { FlipAnimation, FlipCardAnimationSequence } from "../../FlipCard/FlipCard";
+import { arrayOfEmptyArrays } from "../../utilities/arrayHelpers";
+import { LocalMatch } from "../../localMatch";
+import { OnComplete } from "../../fixAnimationSequence/common-motion-types";
+import { MatchDetail } from "../../App";
 
 interface DealPosition {
   playerPositions: PlayerPositions;
@@ -213,6 +213,7 @@ function addDiscardAnimation(
   discardNumber: number,
   lastDiscardOnComplete: OnComplete | undefined
 ) {
+  dealtCard.state = FlipCardState.Box;
   dealtCard.animationSequence.push(
     createDiscardZIndexAnimationSegment(discardNumber),
     getDiscardToBoxSegment(

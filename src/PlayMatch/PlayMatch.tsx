@@ -1,34 +1,22 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CribGameState, MyMatch, Pips, PlayingCard } from "../generatedTypes";
+import { CribGameState, MyMatch } from "../generatedTypes";
 import { LocalMatch, shouldDeal } from "../localMatch";
 import { getDiscardCardDatas } from "./getDiscardCardData";
 import { getPeggingCardDatas } from "./getPeggingCardData";
-import { Box } from "./matchLayoutManager";
-import {
-  FlipAnimation,
-  FlipCard,
-  FlipCardAnimationSequence,
-} from "../FlipCard/FlipCard";
-import { dealThenDiscardIfRequired } from "./initialDealThenDiscardIfRequired";
-import { getDiscardToBoxSegment } from "./animationSegments";
-import { AnimationManager } from "./AnimationManager";
-import { OnComplete } from "../fixAnimationSequence/common-motion-types";
+import { FlipCard } from "../FlipCard/FlipCard";
+import { dealThenDiscardIfRequired } from "./animation/initialDealThenDiscardIfRequired";
+import { AnimationManager } from "./animation/AnimationManager";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
-import { MatchDetail, playMatchSnackbarKey } from "../App";
-import { getDiscardToBoxZIndexStartSegment } from "./getDiscardToBoxZIndexStartSegment";
-import { usePeggingOverlay } from "./usePeggingOverlay";
-import { useControlMyCards } from "./useControlMyCards";
+import { MatchDetail } from "../App";
+import { useControlMyCards } from "./ui-hooks/useControlMyCards";
 import { getPeggingCount } from "./signalRPeg";
 
 import { useSnackbarWithDelay } from "../hooks/useSnackbarWithDelay";
 import { getColouredScores } from "./getColouredScores";
-import { getBoxPosition } from "./positions";
-import { cardMatch } from "./playingCardUtilities";
 import {
   CribBoardState,
-  FlipCardData,
   FlipCardDatas,
   PlayMatchProps,
 } from "./PlayMatchTypes";
@@ -37,7 +25,9 @@ import {
   useMemoedPositionsAndCardSize,
 } from "./playMatchHooks";
 import { getSignalRPeggingAnimationProvider } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
-import { discardDuration, flipDuration } from "./animationDurations";
+import { discardDuration, flipDuration } from "./animation/animationDurations";
+import { getSignalRDiscardAnimationProvider } from "./signalr/discard/getSignalRDiscardAnimationProvider";
+import { usePeggingOverlay } from "./ui-hooks/usePeggingOverlay";
 
 function noNewActions(matchDetail: MatchDetail) {
   return (
@@ -149,194 +139,39 @@ function PlayMatchInner({
 
   useOverflowHidden();
   useEffect(() => {
+    const getPositions = () => positions;
     return signalRRegistration({
       discard(playerId, myMatch) {
-        function getNew(
-          prevCardDatas: FlipCardDatas,
-          discardDuration: number,
-          secondDiscardDelay: number,
-          cardFlipDuration: number,
-          animationCompleteCallback: () => void
-        ): FlipCardDatas {
-          const syncChangeHistories = () => {
-            const newLocalMatch: LocalMatch = {
-              ...matchDetail.localMatch,
-              changeHistory: {
-                ...myMatch.changeHistory,
-                lastChangeDate: new Date(),
-              },
-            };
-            updateLocalMatch(newLocalMatch);
+        const syncChangeHistories = () => {
+          const newLocalMatch: LocalMatch = {
+            ...matchDetail.localMatch,
+            changeHistory: {
+              ...myMatch.changeHistory,
+              lastChangeDate: new Date(),
+            },
           };
-          const complete = () => {
-            animationCompleteCallback && animationCompleteCallback();
-            syncChangeHistories();
-          };
-          const iDiscarded = playerId === myMatch.myId;
-
-          const prevFlipCardDatas = prevCardDatas as FlipCardDatas;
-
-          const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
-
-          const boxPosition = getBoxPosition(myMatch, positions);
-
-          const cardFlipDelay =
-            discardDuration + (numDiscards - 1) * secondDiscardDelay;
-
-          let countDiscards = 0;
-          const getDiscardToBoxCardData = (
-            boxPosition: Box,
-            prevCardData: FlipCardData,
-            onComplete?: OnComplete | undefined
-          ) => {
-            const newCardData = { ...prevCardData };
-            newCardData.animationSequence = [
-              getDiscardToBoxZIndexStartSegment(myMatch, countDiscards),
-              getDiscardToBoxSegment(
-                boxPosition,
-                discardDuration,
-                countDiscards * secondDiscardDelay,
-                undefined,
-                onComplete
-              ),
-            ];
-            return newCardData;
-          };
-
-          const getCutCardAnimationData = (
-            prevCardData: FlipCardData,
-            isJack: boolean,
-            cutCard: PlayingCard
-          ) => {
-            const newCardData = { ...prevCardData };
-            newCardData.playingCard = cutCard;
-            const flipAnimation: FlipAnimation = {
-              flip: true,
-              duration: cardFlipDuration,
-              at: cardFlipDelay + (iDiscarded ? cardFlipDuration : 0),
-              onComplete: () => {
-                let requiresCompletion = true;
-                if (isJack) {
-                  const nibs = "nibs";
-                  enqueueSnackbar(`Two for his ${nibs} !`, {
-                    variant: "success",
-                    key: playMatchSnackbarKey,
-                  });
-                  requiresCompletion = false;
-                  setCribBoardState({
-                    colouredScores: getColouredScores(myMatch.scores),
-                    onComplete() {
-                      complete();
-                    },
-                  });
-                }
-                if (requiresCompletion) {
-                  complete();
-                }
-              },
-            };
-            newCardData.animationSequence = [flipAnimation];
-            return newCardData;
-          };
-
-          let newFlipCardDatas: FlipCardDatas;
-
-          if (iDiscarded) {
-            removeMyDiscardSelection();
-            newFlipCardDatas = {
-              ...prevFlipCardDatas,
-              myCards: prevFlipCardDatas.myCards.map((prevCardData) => {
-                const playingCard = prevCardData.playingCard as PlayingCard;
-                if (
-                  !myMatch.myCards.some((myCard) => {
-                    return cardMatch(myCard, playingCard);
-                  })
-                ) {
-                  countDiscards++;
-                  const discardToBoxCardData = getDiscardToBoxCardData(
-                    boxPosition,
-                    prevCardData,
-                    countDiscards === numDiscards && !myMatch.cutCard
-                      ? complete
-                      : undefined
-                  );
-                  const flipAnimation: FlipAnimation = {
-                    flip: true,
-                    duration: cardFlipDuration,
-                  };
-                  (
-                    discardToBoxCardData.animationSequence as FlipCardAnimationSequence
-                  ).unshift(flipAnimation);
-                  return discardToBoxCardData;
-                } else {
-                  return prevCardData;
-                }
-              }),
-            };
-          } else {
-            const discardedIndex = myMatch.otherPlayers.findIndex(
-              (otherPlayer) => otherPlayer.id === playerId
-            );
-            const prevOtherPlayerCardDatas =
-              prevFlipCardDatas.otherPlayersCards[discardedIndex];
-
-            const newDiscarderCardDatas = prevOtherPlayerCardDatas.map(
-              (prevCardData) => {
-                if (countDiscards < numDiscards) {
-                  countDiscards++;
-                  const newData = getDiscardToBoxCardData(
-                    boxPosition,
-                    prevCardData,
-                    countDiscards === numDiscards && !myMatch.cutCard
-                      ? complete
-                      : undefined
-                  );
-                  return newData;
-                }
-                return prevCardData;
-              }
-            );
-
-            const newOtherPlayersCards =
-              prevFlipCardDatas.otherPlayersCards.map((otherPlayerCards, i) => {
-                if (i === discardedIndex) {
-                  return newDiscarderCardDatas;
-                }
-                return otherPlayerCards;
-              });
-
-            newFlipCardDatas = {
-              ...prevFlipCardDatas,
-              otherPlayersCards: newOtherPlayersCards,
-            };
-          }
-
-          if (myMatch.cutCard) {
-            newFlipCardDatas.cutCard = getCutCardAnimationData(
-              prevFlipCardDatas.cutCard,
-              myMatch.cutCard.pips === Pips.Jack,
-              myMatch.cutCard
-            );
-          }
-          return newFlipCardDatas;
-        }
-
+          updateLocalMatch(newLocalMatch);
+        };
         animationManager.current.animate(
-          (animationCompleteCallback, prevFlipCardDatas) => {
-            scoresRef.current = myMatch.scores;
-            setGameState(myMatch.gameState);
-            return getNew(
-              prevFlipCardDatas as FlipCardDatas,
+          getSignalRDiscardAnimationProvider(
+            {
               discardDuration,
-              0,
-              flipDuration,
-              animationCompleteCallback
-            );
-          }
+              secondDiscardDelay: 0,
+              cardFlipDuration: flipDuration,
+            },
+            myMatch,
+            playerId,
+            getPositions,
+            scoresRef,
+            removeMyDiscardSelection,
+            setGameState,
+            setCribBoardState,
+            enqueueSnackbar,
+            syncChangeHistories
+          )
         );
       },
       peg(playerId, peggedPlayingCard, myMatch) {
-        const getPositions = () => positions;
         animationManager.current.animate(
           getSignalRPeggingAnimationProvider(
             myMatch,

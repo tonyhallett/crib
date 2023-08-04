@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CSSProperties } from "react";
 import { getSVG } from "./getSVG";
-import { Size } from "../PlayMatch/matchLayoutManager";
+import { Size } from "../PlayMatch/layout/matchLayoutManager";
 import { PlayingCard } from "../generatedTypes";
 
 export enum CardFlip {

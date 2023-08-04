@@ -1,15 +1,15 @@
 import { Point } from "framer-motion";
-import { FlipAnimation } from "../FlipCard/FlipCard";
-import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { MyMatch, PlayingCard } from "../generatedTypes";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
-import { getMoveRotateSegment } from "./animationSegments";
+import { FlipAnimation } from "../../../FlipCard/FlipCard";
+import { OnComplete } from "../../../fixAnimationSequence/common-motion-types";
+import { MyMatch, PlayingCard } from "../../../generatedTypes";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "../../PlayMatchTypes";
+import { getMoveRotateSegment } from "../../animation/animationSegments";
 import {
   createZIndexAnimationSegment,
   instantAnimationDuration,
-} from "./animationSegments";
-import { cardMatch } from "./playingCardUtilities";
-import { Positions } from "./matchLayoutManager";
+} from "../../animation/animationSegments";
+import { cardMatch } from "../../playingCardUtilities";
+import { Positions } from "../../layout/matchLayoutManager";
 
 const addFlipMoveToTurnedOverPositionAnimationSequence = (
   flipCardData: FlipCardData,

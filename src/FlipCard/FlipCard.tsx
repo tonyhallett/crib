@@ -4,7 +4,7 @@ import {
   StyleKeyframesDefinition,
   motion,
 } from "framer-motion";
-import { Point, Size } from "../PlayMatch/matchLayoutManager";
+import { Point, Size } from "../PlayMatch/layout/matchLayoutManager";
 import {
   DOMSegment,
   DOMSegmentWithTransition,

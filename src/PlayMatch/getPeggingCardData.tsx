@@ -5,7 +5,7 @@ import {
   PeggingPositions,
   PlayerPositions,
   Positions,
-} from "./matchLayoutManager";
+} from "./layout/matchLayoutManager";
 import { getPlayerPositions } from "./getPlayerPositions";
 import { getNonPlayerCardDatas } from "./getNonPlayerCardDatas";
 import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";

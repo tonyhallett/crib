@@ -7,7 +7,7 @@ import {
   FlipAnimation,
   DomSegmentOptionalElementOrSelectorWithOptions,
 } from "./FlipCard";
-import { Size } from "../PlayMatch/matchLayoutManager";
+import { Size } from "../PlayMatch/layout/matchLayoutManager";
 import {
   Button,
   Checkbox,

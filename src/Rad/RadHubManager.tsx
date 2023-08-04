@@ -7,12 +7,9 @@ import {
   CribGameState,
   PlayingCard,
   PlayerScoringHistory,
-  ShowScoring,
   PegScoring,
   Pips,
   Suit,
-  FourOfAKind,
-  ThreeOfAKind,
   ShowScore,
 } from "../generatedTypes";
 import { motion } from "framer-motion";
@@ -70,10 +67,31 @@ const score19: ShowScore = {
   runs: [],
   pairs: [],
   flush: [],
-  fourOfAKind: undefined as unknown as FourOfAKind,
-  threeOfAKind: undefined as unknown as ThreeOfAKind,
-  oneForHisKnob: undefined as unknown as PlayingCard,
   score: 0,
+};
+
+const zeroPegScoring: PegScoring = {
+  is15: false,
+  is31: false,
+  isLastGo: false,
+  numCardsInRun: 0,
+  numOfAKind: 0,
+  score: 0,
+};
+
+const noScoringHistory: PlayerScoringHistory = {
+  boxHistory: {
+    numScores: 0,
+    totalScore: 0,
+  },
+  handAndBoxHistory: {
+    numScores: 0,
+    totalScore: 0,
+  },
+  handHistory: {
+    numScores: 0,
+    totalScore: 0,
+  },
 };
 
 const matches: ActionMyMatch[] = [
@@ -101,7 +119,6 @@ const matches: ActionMyMatch[] = [
               AceClubs,
               AceDiamonds,
             ],
-            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
             scores: [
               { games: 1, frontPeg: 22, backPeg: 9 },
               { games: 2, frontPeg: 12, backPeg: 4 },
@@ -121,16 +138,15 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -154,7 +170,6 @@ const matches: ActionMyMatch[] = [
       AceClubs,
       AceDiamonds,
     ],
-    cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
       { games: 2, frontPeg: 12, backPeg: 4 },
@@ -174,16 +189,15 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: false,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
     actions: [
@@ -202,7 +216,7 @@ const matches: ActionMyMatch[] = [
             gameState: CribGameState.Pegging,
             box: [],
             myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
-            cutCard: JackSpades,
+            cutCard: JackDiamonds,
             scores: [
               { games: 1, frontPeg: 22, backPeg: 9 },
               { games: 2, frontPeg: 14, backPeg: 12 },
@@ -222,16 +236,15 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -248,7 +261,6 @@ const matches: ActionMyMatch[] = [
     gameState: CribGameState.Discard,
     box: [],
     myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
-    cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
       { games: 2, frontPeg: 12, backPeg: 4 },
@@ -268,16 +280,106 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: false,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
+  },
+  {
+    actions: [
+      {
+        methodName: "discard",
+        args: [
+          "Player2",
+          {
+            id: "I discarded (Jack cut wins)",
+            changeHistory: {
+              lastChangeDate: new Date("20 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 2,
+            },
+            title: "I discarded (Jack cut wins)",
+            gameState: CribGameState.GameWon,
+            box: [],
+            myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
+            cutCard: JackDiamonds,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 3, frontPeg: 0, backPeg: 0 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: noScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    currentAction: 0,
+
+    id: "I discarded (Jack cut wins)",
+    changeHistory: {
+      lastChangeDate: new Date("19 May 2023 09:00"),
+      matchCreationDate: new Date("20 December 2022 14:48"),
+      numberOfActions: 1,
+    },
+    title: "I discarded (Jack cut wins)",
+    gameState: CribGameState.Discard,
+    box: [],
+    myCards: [AceSpades, QueenSpades, KingSpades, JackSpades],
+    scores: [
+      { games: 1, frontPeg: 22, backPeg: 9 },
+      { games: 2, frontPeg: 120, backPeg: 119 },
+    ],
+    pegging: {
+      turnedOverCards: [],
+      inPlayCards: [],
+      goHistory: [],
+      nextPlayer: "Player2",
+      cannotGoes: [false],
+      myCannotGo: false,
+    },
+    myId: "Me",
+    dealerDetails: {
+      first: "Me",
+      current: "Player2",
+    },
+    myReady: false,
+    matchWinDeterminant: "BestOf_3",
+    myScoringHistory: noScoringHistory,
+    otherPlayers: [
+      {
+        id: "Player2",
+        discarded: false,
+        playerScoringHistory: noScoringHistory,
+        ready: false,
+      },
+    ],
   },
   {
     currentAction: 0,
@@ -303,7 +405,6 @@ const matches: ActionMyMatch[] = [
               JackSpades,
               TwoSpades,
             ],
-            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
             scores: [
               { games: 1, frontPeg: 22, backPeg: 9 },
               { games: 2, frontPeg: 12, backPeg: 4 },
@@ -324,22 +425,21 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
               {
                 id: "Player3",
                 discarded: false,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -364,7 +464,6 @@ const matches: ActionMyMatch[] = [
               JackSpades,
               TwoSpades,
             ],
-            cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
             scores: [
               { games: 1, frontPeg: 22, backPeg: 9 },
               { games: 2, frontPeg: 12, backPeg: 4 },
@@ -385,22 +484,21 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
               {
                 id: "Player3",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -415,7 +513,6 @@ const matches: ActionMyMatch[] = [
     gameState: CribGameState.Discard,
     box: [],
     myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
-    cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
       { games: 2, frontPeg: 12, backPeg: 4 },
@@ -436,22 +533,21 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: false,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
       {
         id: "Player3",
         discarded: false,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
 
   {
@@ -467,7 +563,6 @@ const matches: ActionMyMatch[] = [
     gameState: CribGameState.Discard,
     box: [],
     myCards: [AceSpades, QueenSpades, KingSpades, JackSpades, TwoSpades],
-    cutCard: undefined as unknown as PlayingCard, //todo generation should be optional
     scores: [
       { games: 1, frontPeg: 22, backPeg: 9 },
       { games: 2, frontPeg: 12, backPeg: 4 },
@@ -488,22 +583,21 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
       {
         id: "Player3",
         discarded: false,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
 
   {
@@ -564,16 +658,15 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           } as MyMatch,
         ],
       },
@@ -642,16 +735,15 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           } as MyMatch,
         ],
       },
@@ -687,16 +779,15 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
 
   {
@@ -774,16 +865,15 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           } as MyMatch,
         ],
       },
@@ -844,16 +934,15 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
 
   {
@@ -886,52 +975,52 @@ const matches: ActionMyMatch[] = [
                 {
                   owner: "Me",
                   playingCard: AceSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: AceHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: AceDiamonds,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: AceClubs,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: TwoSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: TwoClubs,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: TwoHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: TwoDiamonds,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: ThreeSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: ThreeDiamonds,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
@@ -958,22 +1047,21 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
               {
                 id: "Player3",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -1001,52 +1089,52 @@ const matches: ActionMyMatch[] = [
         {
           owner: "Me",
           playingCard: AceSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: AceHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: AceDiamonds,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: AceClubs,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: TwoSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: TwoClubs,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: TwoHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: TwoDiamonds,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: ThreeSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: ThreeDiamonds,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       goHistory: [],
@@ -1061,22 +1149,21 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
       {
         id: "Player3",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
     actions: [
@@ -1107,22 +1194,22 @@ const matches: ActionMyMatch[] = [
                 {
                   owner: "Me",
                   playingCard: KingSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: QueenSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: EightSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: TwoHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
@@ -1150,22 +1237,21 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
               {
                 id: "Player3",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -1193,22 +1279,22 @@ const matches: ActionMyMatch[] = [
         {
           owner: "Me",
           playingCard: KingSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: QueenSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: EightSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: TwoHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       goHistory: [],
@@ -1223,22 +1309,21 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
       {
         id: "Player3",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
     actions: [
@@ -1269,38 +1354,38 @@ const matches: ActionMyMatch[] = [
                 {
                   owner: "Me",
                   playingCard: KingHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: QueenHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: EightHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
 
                 {
                   owner: "Me",
                   playingCard: KingSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: QueenSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player3",
                   playingCard: EightSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: TwoHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
@@ -1328,22 +1413,21 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
               {
                 id: "Player3",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
-            showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
           },
         ],
       },
@@ -1370,39 +1454,39 @@ const matches: ActionMyMatch[] = [
         {
           owner: "Me",
           playingCard: KingHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: QueenHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: EightHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       inPlayCards: [
         {
           owner: "Me",
           playingCard: KingSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: QueenSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player3",
           playingCard: EightSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: TwoHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       goHistory: [],
@@ -1417,22 +1501,21 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
       {
         id: "Player3",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
     actions: [
@@ -1462,39 +1545,39 @@ const matches: ActionMyMatch[] = [
                 {
                   owner: "Me",
                   playingCard: KingSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: QueenSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: JackSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: AceSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
               ],
               inPlayCards: [
                 {
                   owner: "Me",
                   playingCard: TwoSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: ThreeSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: ThreeHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
@@ -1521,12 +1604,12 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
@@ -1536,8 +1619,6 @@ const matches: ActionMyMatch[] = [
                 runs: [],
                 pairs: [],
                 flush: [],
-                fourOfAKind: undefined as unknown as FourOfAKind,
-                threeOfAKind: undefined as unknown as ThreeOfAKind,
                 oneForHisKnob: JackDiamonds,
                 score: 1,
               },
@@ -1560,9 +1641,6 @@ const matches: ActionMyMatch[] = [
                       },
                     ],
                     flush: [],
-                    fourOfAKind: undefined as unknown as FourOfAKind,
-                    threeOfAKind: undefined as unknown as ThreeOfAKind,
-                    oneForHisKnob: undefined as unknown as PlayingCard,
                     score: 12,
                   },
                 },
@@ -1583,9 +1661,6 @@ const matches: ActionMyMatch[] = [
                       },
                     ],
                     flush: [],
-                    fourOfAKind: undefined as unknown as FourOfAKind,
-                    threeOfAKind: undefined as unknown as ThreeOfAKind,
-                    oneForHisKnob: undefined as unknown as PlayingCard,
                     score: 10,
                   },
                 },
@@ -1616,39 +1691,39 @@ const matches: ActionMyMatch[] = [
         {
           owner: "Me",
           playingCard: KingSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: QueenSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: JackSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: AceSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       inPlayCards: [
         {
           owner: "Me",
           playingCard: TwoSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: ThreeSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: ThreeHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       goHistory: [],
@@ -1663,16 +1738,15 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
   {
     actions: [
@@ -1702,39 +1776,39 @@ const matches: ActionMyMatch[] = [
                 {
                   owner: "Me",
                   playingCard: KingSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: QueenSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: JackSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: AceSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
               ],
               inPlayCards: [
                 {
                   owner: "Me",
                   playingCard: TwoSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
                   playingCard: ThreeSpades,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Me",
                   playingCard: ThreeHearts,
-                  peggingScore: null as unknown as PegScoring,
+                  peggingScore: zeroPegScoring,
                 },
                 {
                   owner: "Player2",
@@ -1761,12 +1835,12 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: null as unknown as PlayerScoringHistory,
+            myScoringHistory: noScoringHistory,
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: null as unknown as PlayerScoringHistory,
+                playerScoringHistory: noScoringHistory,
                 ready: false,
               },
             ],
@@ -1790,9 +1864,6 @@ const matches: ActionMyMatch[] = [
                       },
                     ],
                     flush: [],
-                    fourOfAKind: undefined as unknown as FourOfAKind,
-                    threeOfAKind: undefined as unknown as ThreeOfAKind,
-                    oneForHisKnob: undefined as unknown as PlayingCard,
                     score: 12,
                   },
                 },
@@ -1823,39 +1894,39 @@ const matches: ActionMyMatch[] = [
         {
           owner: "Me",
           playingCard: KingSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: QueenSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: JackSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: AceSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       inPlayCards: [
         {
           owner: "Me",
           playingCard: TwoSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Player2",
           playingCard: ThreeSpades,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
         {
           owner: "Me",
           playingCard: ThreeHearts,
-          peggingScore: null as unknown as PegScoring,
+          peggingScore: zeroPegScoring,
         },
       ],
       goHistory: [],
@@ -1870,16 +1941,15 @@ const matches: ActionMyMatch[] = [
     },
     myReady: false,
     matchWinDeterminant: "BestOf_3",
-    myScoringHistory: null as unknown as PlayerScoringHistory,
+    myScoringHistory: noScoringHistory,
     otherPlayers: [
       {
         id: "Player2",
         discarded: true,
-        playerScoringHistory: null as unknown as PlayerScoringHistory,
+        playerScoringHistory: noScoringHistory,
         ready: false,
       },
     ],
-    showScoring: undefined as unknown as ShowScoring, //  //todo generation should be optional
   },
 ];
 

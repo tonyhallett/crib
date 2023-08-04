@@ -1,13 +1,13 @@
-import { Box, Point } from "./matchLayoutManager";
-import { OnComplete } from "../fixAnimationSequence/common-motion-types";
+import { Box, DeckPosition, Point } from "../layout/matchLayoutManager";
+import { OnComplete } from "../../fixAnimationSequence/common-motion-types";
 import {
   DomSegmentOptionalElementOrSelectorWithOptions,
   FlipAnimation,
   FlipCardAnimationSequence,
-} from "../FlipCard/FlipCard";
+} from "../../FlipCard/FlipCard";
 import { DOMKeyframesDefinition, DynamicOption, Target } from "framer-motion";
-import { FlipCardData } from "./PlayMatchTypes";
-import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../fixAnimationSequence/createAnimationsFromSegments";
+import { Duration, FlipCardData } from "../PlayMatchTypes";
+import { SegmentAnimationOptionsWithTransitionEndAndAt } from "../../fixAnimationSequence/createAnimationsFromSegments";
 
 export function getDiscardToBoxSegment(
   boxPosition: Box,
@@ -100,3 +100,27 @@ export const instantFlipAnimation: FlipAnimation = {
   flip: true,
   duration: instantAnimationDuration,
 };
+
+export function createDiscardZIndexAnimationSegment(discardNumber: number) {
+  return createZIndexAnimationSegment(5 + discardNumber, {});
+}
+
+export function moveCardsToDeckWithoutFlipping(
+  cards: FlipCardData[],
+  zIndex: number,
+  currentDeckPosition: DeckPosition,
+  at: number | undefined,
+  duration: number
+): Duration {
+  cards.forEach((card) => {
+    setOrAddToAnimationSequence(card, [
+      createZIndexAnimationSegment(zIndex, { at }),
+      getMoveRotateSegment(
+        currentDeckPosition.isHorizontal,
+        currentDeckPosition.position,
+        duration
+      ),
+    ]);
+  });
+  return duration;
+}

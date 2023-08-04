@@ -1,5 +1,5 @@
 import { OtherPlayer } from "../generatedTypes";
-import { PlayerPositions } from "./matchLayoutManager";
+import { PlayerPositions } from "./layout/matchLayoutManager";
 
 export const getPlayerPositionIndex = (
   playerId: string,

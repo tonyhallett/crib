@@ -1,4 +1,4 @@
-import { splitPeggingShowScores } from "../src/PlayMatch/splitPeggingShowScores";
+import { splitPeggingShowScores } from "../src/PlayMatch/scoring/splitPeggingShowScores";
 import {
   PeggedCard,
   PlayerScoringHistory,

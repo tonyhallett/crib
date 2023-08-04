@@ -1,6 +1,6 @@
 import { CSSProperties, useMemo } from "react";
 import { MyMatch } from "../generatedTypes";
-import { Size, matchLayoutManager } from "./matchLayoutManager";
+import { Size, matchLayoutManager } from "./layout/matchLayoutManager";
 
 function getSize(isLandscape: boolean, cribBoardWidth: number) {
   if (isLandscape) {

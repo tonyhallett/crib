@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
-import { CribGameState, PlayingCard } from "../generatedTypes";
-import { Size } from "./matchLayoutManager";
-import { FlipCard, classNameFromPlayingCard } from "../FlipCard/FlipCard";
+import { CribGameState, PlayingCard } from "../../generatedTypes";
+import { Size } from "../layout/matchLayoutManager";
+import { FlipCard, classNameFromPlayingCard } from "../../FlipCard/FlipCard";
 import { useDrag } from "@use-gesture/react";
-import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
-import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
+import { useAnimateSegments } from "../../fixAnimationSequence/useAnimateSegments";
+import { FlipCardData, FlipCardState } from "../PlayMatchTypes";
 import { getCardsUnderPointWithState } from "./getCardsUnderPoint";
 
 const maximizePeggingOverlayCardSize = (

@@ -26,7 +26,7 @@ import {
   instantAnimationDuration,
   instantFlipAnimation,
   setOrAddToAnimationSequence,
-} from "./animationSegments";
+} from "./animation/animationSegments";
 import {
   numPeggingInPlayCards,
   setPlayableCardsState,
@@ -35,11 +35,11 @@ import {
   DiscardPositions,
   PeggingPositions,
   Point,
-} from "./matchLayoutManager";
-import { peggingScored } from "./peggingScored";
+} from "./layout/matchLayoutManager";
+import { peggingScored } from "./signalr/pegging/peggingScored";
 import { cardMatch, getCardValue } from "./playingCardUtilities";
-import { getOfAKindScore } from "./scoringUtilities";
-import { getAppendMessage } from "./stringUtilities";
+import { getOfAKindScore } from "./scoring/scoring-utilities";
+import { getAppendMessage } from "../utilities/stringUtilities";
 
 export const setTurnedOver = (flipCardDatas: FlipCardDatas): FlipCardDatas => {
   return setPlayableCardsState(flipCardDatas, FlipCardState.PeggingTurnedOver);

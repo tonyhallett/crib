@@ -5,28 +5,28 @@ import {
   useRef,
   useState,
 } from "react";
-import { CribGameState, PlayingCard } from "../generatedTypes";
-import { useAnimateSegments } from "../fixAnimationSequence/useAnimateSegments";
+import { CribGameState, PlayingCard } from "../../generatedTypes";
+import { useAnimateSegments } from "../../fixAnimationSequence/useAnimateSegments";
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
-import { SequenceTime } from "../FlipCard/motion-types";
+import { SequenceTime } from "../../FlipCard/motion-types";
 import {
   SegmentAnimationOptionsWithTransitionEndAndAt,
   SegmentsAnimationOptions,
   SmartAnimationSequence,
   SmartDomSegmentWithTransition,
   SmartSegment,
-} from "../fixAnimationSequence/createAnimationsFromSegments";
-import { FlipCardData, FlipCardDatas, FlipCardState } from "./PlayMatchTypes";
+} from "../../fixAnimationSequence/createAnimationsFromSegments";
+import { FlipCardData, FlipCardDatas, FlipCardState } from "../PlayMatchTypes";
 import {
   getCardsUnderPoint,
   getCardsUnderPointWithState,
 } from "./getCardsUnderPoint";
-import { classNameFromPlayingCard } from "../FlipCard/FlipCard";
+import { classNameFromPlayingCard } from "../../FlipCard/FlipCard";
 import { DOMKeyframesDefinition } from "framer-motion";
 import { useSnackbar } from "notistack";
-import { noop } from "./noop";
-import { getCardValue } from "./playingCardUtilities";
-import { playMatchSnackbarKey } from "../App";
+import { noop } from "../../utilities/noop";
+import { getCardValue } from "../playingCardUtilities";
+import { playMatchSnackbarKey } from "../../App";
 
 type Animate = (
   sequence: SmartAnimationSequence,

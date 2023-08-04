@@ -1,6 +1,6 @@
 import { PlayingCard } from "../generatedTypes";
 import { FlipCardData, FlipCardState } from "./PlayMatchTypes";
-import { Box, DeckPosition } from "./matchLayoutManager";
+import { Box, DeckPosition } from "./layout/matchLayoutManager";
 
 export function getNonPlayerCardDatas(
   box: Box,

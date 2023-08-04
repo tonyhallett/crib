@@ -1,5 +1,5 @@
-import { MyMatch } from "../generatedTypes";
-import { fill } from "../utilities/arrayHelpers";
+import { MyMatch } from "../../generatedTypes";
+import { fill } from "../../utilities/arrayHelpers";
 
 export interface Size {
   width: number;
@@ -979,7 +979,7 @@ function getSizes(
   };
 }
 export type NumPlayers = 2 | 3 | 4;
-export function positioning(
+function positioning(
   width: number,
   height: number,
   options: MatchPositionsOptions,

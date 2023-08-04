@@ -1,9 +1,9 @@
-import { PeggedCard, Score } from "../generatedTypes";
-import { getPeggedScoreMessage } from "./signalRPeg";
+import { PeggedCard, Score } from "../../../generatedTypes";
+import { getPeggedScoreMessage } from "../../signalRPeg";
 import { EnqueueSnackbar } from "notistack";
-import { getColouredScores } from "./getColouredScores";
-import { SetCribboardState } from "./PlayMatchTypes";
-import { playMatchSnackbarKey } from "../App";
+import { getColouredScores } from "../../getColouredScores";
+import { SetCribboardState } from "../../PlayMatchTypes";
+import { playMatchSnackbarKey } from "../../../App";
 
 export function peggingScored(
   peggedCard: PeggedCard,

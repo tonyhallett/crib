@@ -2,46 +2,30 @@ import {
   CribGameState,
   MyMatch,
   PeggedCard,
-  PlayingCard,
   Score,
   ShowScoring,
 } from "../../../generatedTypes";
-import { DeckPosition, Point, Positions } from "../../matchLayoutManager";
-import { AnimationProvider } from "../../AnimationManager";
+import {
+  Positions,
+} from "../../layout/matchLayoutManager";
+import { AnimationProvider } from "../../animation/AnimationManager";
 import { getLastPeggedCard } from "../../signalRPeg";
 import { DelayEnqueueSnackbar } from "../../../hooks/useSnackbarWithDelay";
 import { EnqueueSnackbar } from "notistack";
 import { addShowAnimation } from "../../theShow";
 import {
-  CardsAndOwner,
-  CardsAndOwners,
   getCardsWithOwners,
 } from "../../getCardsWithOwners";
-import { splitPeggingShowScores } from "../../splitPeggingShowScores";
 import {
-  Duration,
-  FlipCardData,
   FlipCardDatas,
-  FlipCardState,
   SetCribboardState,
 } from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
-import { discardDuration, flipDuration } from "../../animationDurations";
+import { discardDuration, flipDuration } from "../../animation/animationDurations";
 import { MutableRefObject } from "react";
-import { moveCardsToDeckWithoutFlipping } from "../../moveCardsToDeckWithoutFlipping";
-import {
-  createHideShowSegment,
-  createZIndexAnimationSegment,
-  getMoveRotateSegment,
-  instantAnimationDuration,
-  setOrAddToAnimationSequence,
-} from "../../animationSegments";
-import {
-  FlipAnimation,
-  FlipCardAnimationSequence,
-} from "../../../FlipCard/FlipCard";
-import { getDeckPosition } from "../../positions";
-import { cardMatch } from "../../playingCardUtilities";
+import { getDeckPosition } from "../../layout/positions-utilities";
+import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
+import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -149,7 +133,7 @@ export function getSignalRPeggingAnimationProvider(
     if (
       shouldClearUpAfterPeggingWon(myMatch.gameState, pegShowScoring.length > 0)
     ) {
-      clearUpAfterPeggingWon(
+      clearUpAfterWon(
         newFlipCardDatas.cutCard,
         cardsWithOwners,
         deckPosition,
@@ -157,7 +141,9 @@ export function getSignalRPeggingAnimationProvider(
         discardDuration,
         flipDuration,
         myMatch.pegging.inPlayCards,
-        positions.peggingPositions.inPlay[0]
+        positions.peggingPositions.inPlay[0],
+        myMatch,
+        positions.playerPositions
       );
     }
 
@@ -193,141 +179,6 @@ export function getSignalRPeggingAnimationProvider(
   return animationProvider;
 }
 
-function getCardsWithState(
-  playerCardsAndOwners: CardsAndOwner[],
-  state: FlipCardState
-) {
-  return playerCardsAndOwners
-    .map((playerCards) => playerCards.cards)
-    .flat()
-    .filter((card) => card.state === state);
-}
 
-function clearUpAfterPeggingWon(
-  cutCard: FlipCardData,
-  cardsWithOwners: CardsAndOwners,
-  currentDeckPosition: DeckPosition,
-  at: number,
-  moveToDeckDuration: number,
-  flipDuration: number,
-  inPlayCards: PeggedCard[],
-  firstPeggingPosition: Point
-) {
-  flipCutCard(cutCard, flipDuration, at);
-  at += flipDuration;
-  const turnedOverCards = getCardsWithState(
-    cardsWithOwners.playerCards,
-    FlipCardState.PeggingTurnedOver
-  );
-  let currentDeckCount = 3;
-  if (turnedOverCards.length > 0) {
-    at += moveCardsToDeckWithoutFlipping(
-      turnedOverCards,
-      currentDeckCount,
-      currentDeckPosition,
-      at,
-      moveToDeckDuration
-    ); // need to change the file name
-    currentDeckCount += turnedOverCards.length;
-  }
-  const inPlayCardDatas = getCardsWithState(
-    cardsWithOwners.playerCards,
-    FlipCardState.PeggingInPlay
-  );
-  inPlayCardDatas.sort((a, b) => {
-    const aPlayingCard = a.playingCard as PlayingCard;
-    const bPlayingCard = b.playingCard as PlayingCard;
-    const aIndex = inPlayCards.findIndex((inPlayCard) =>
-      cardMatch(inPlayCard.playingCard, aPlayingCard)
-    );
-    const bIndex = inPlayCards.findIndex((inPlayCard) =>
-      cardMatch(inPlayCard.playingCard, bPlayingCard)
-    );
-    return aIndex - bIndex; // tbd
-  });
 
-  at += flipAndMoveCardsInPlayToDeck(
-    inPlayCardDatas,
-    flipDuration,
-    moveToDeckDuration,
-    moveToDeckDuration,
-    currentDeckCount,
-    currentDeckPosition,
-    firstPeggingPosition,
-    at
-  );
-  currentDeckCount += inPlayCardDatas.length + 1;
-  /* 
-  
-  
-  possiblyFlipAndMovePlayerCardsToDeck(cardsWithOwners.playerCards);
-  
-   */
-  currentDeckCount += cardsWithOwners.playerCards.length * 4;
-  moveCardsToDeckWithoutFlipping(
-    cardsWithOwners.boxCards,
-    currentDeckCount,
-    currentDeckPosition,
-    at,
-    moveToDeckDuration
-  );
-}
 
-function flipCutCard(cutCard: FlipCardData, flipDuration: number, at: number) {
-  const flipAnimation: FlipAnimation = {
-    flip: true,
-    duration: flipDuration,
-    at,
-  };
-  setOrAddToAnimationSequence(cutCard, [flipAnimation]);
-}
-
-function flipAndMoveCardsInPlayToDeck(
-  inPlayCards: FlipCardData[],
-  flipDuration: number,
-  moveOverDuration: number,
-  moveToDeckDuration: number,
-  currentDeckCount: number,
-  deckPosition: DeckPosition,
-  firstPeggingPosition: Point,
-  at: number
-): Duration {
-  flipDuration = 2;
-  moveOverDuration = 2;
-  moveToDeckDuration = 2;
-  inPlayCards.forEach((inPlayCard, i) => {
-    const isTop = i === inPlayCards.length - 1;
-    const flipAnimation: FlipAnimation = {
-      duration: flipDuration,
-      flip: true,
-    };
-    const animationSequence: FlipCardAnimationSequence = [
-      getMoveRotateSegment(
-        false,
-        firstPeggingPosition,
-        moveOverDuration,
-        undefined,
-        at
-      ),
-      createHideShowSegment(!isTop),
-      createZIndexAnimationSegment(currentDeckCount + 1, {}),
-      flipAnimation,
-      getMoveRotateSegment(
-        deckPosition.isHorizontal,
-        deckPosition.position,
-        moveToDeckDuration
-      ),
-    ];
-    setOrAddToAnimationSequence(inPlayCard, animationSequence);
-  });
-  return (
-    moveOverDuration +
-    instantAnimationDuration * 2 +
-    flipDuration +
-    moveToDeckDuration
-  );
-}
-
-function possiblyFlipAndMovePlayerCardsToDeck(cardsAndOwners: CardsAndOwner[]) {
-  // will need to check the state
-}
