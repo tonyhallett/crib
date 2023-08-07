@@ -28,6 +28,7 @@ import {
   discardDuration,
   flipDuration,
 } from "../../animation/animationDurations";
+import { LastToCompleteFactory } from "./getSignalRPeggingAnimationProvider";
 
 const ensurePeggingState = (cardData: FlipCardData) => {
   if (cardData.state !== FlipCardState.PeggingTurnedOver) {
@@ -117,7 +118,7 @@ export function performPegging(
   myMatch: MyMatch,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  onComplete: () => void
+  lastToCompleteFactory: LastToCompleteFactory
 ) {
   const peggedPlayingCard = peggedCard.playingCard;
   const playerId = peggedCard.owner;
@@ -134,7 +135,7 @@ export function performPegging(
       discardDuration,
       setCribBoardState,
       enqueueSnackbar,
-      onComplete
+      lastToCompleteFactory()
     );
 
   let pegDelay = pegDuration;
@@ -163,7 +164,7 @@ export function performPegging(
       prevFlipCardDatas,
       newFlipCardDatas,
       pegDelay,
-      onComplete,
+      lastToCompleteFactory(),
       myMatch,
       peggingPositions,
       discardDuration,

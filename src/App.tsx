@@ -272,38 +272,6 @@ export default function App() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         discard(playerId, myMatch) {
           gameAction("discard", myMatch, [playerId, myMatch]);
-          /* const matchDetails = matchDetailsRef.current;
-          const matchDetail = matchDetails.find((matchDetail) => matchDetail.match.id === myMatch.id);
-          if(matchDetail === undefined){
-            // tbd
-            throw new Error("Discard but no match");
-          }
-          const newMatchDetail:MatchDetail = {
-            ...matchDetail,
-            match: myMatch
-          }
-          const newLocalMatch = removeDealIndicator(matchDetail.localMatch);
-          if (newLocalMatch) {
-            cribStorage.setMatch(newLocalMatch);
-            newMatchDetail.localMatch = newLocalMatch;
-          }
-
-          const playMatchId = playMatchIdRef.current;
-          if (playMatchId === myMatch.id) {
-            playMatchCribClientRef.current?.discard(playerId, myMatch);
-          }else{
-            enqueueMatchesSnackbar(myMatch.id,myMatch.title,"Discard");
-          }
-
-          setMatchDetailsAndRef(
-            matchDetails.map((matchDetail) => {
-              if (matchDetail.match.id === myMatch.id) {
-                return newMatchDetail;
-              }
-              return matchDetail;
-            })
-          );
-          playMatchContext.playMatch(newMatchDetail); */
         },
 
         // common code for removing deal indicator
@@ -329,28 +297,10 @@ export default function App() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         peg(playerId, peggedCard, myMatch) {
           gameAction("peg", myMatch, [playerId, peggedCard, myMatch]);
-          /* const matchWithChange = matches.find((m) => m.id === matchId);
-          if(matchWithChange){
-            if(selectedMenuItem !== "Matches"){
-              enqueueSnackbar('There has been match action !', { variant:"info" });
-            }
-            
-            setMatches(matches.map(match => {
-              if(match === matchWithChange){
-                return myMatch;
-              }
-              return match;
-            }))
-          } */
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ready(playerId, myMatch) {
-          /* const match = matches.find((m) => m.id === matchId);
-          if(match){
-            if(selectedMenuItem !== "Matches"){
-              enqueueSnackbar('There has been match action !', { variant:"info" });
-            }
-          } */
+          gameAction("ready", myMatch, [playerId, myMatch]);
         },
       });
       cribConnectionRef.current = cribConnection;

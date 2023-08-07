@@ -25,6 +25,7 @@ import { getPlayerPositionIndex } from "./getPlayerPositions";
 import { DeckPosition, PlayerPositions } from "./layout/matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
 import { ShowAndScoreAnimationOptions, showAndScore } from "./showAndScore";
+import { LastToCompleteFactory } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
 
 export interface FlipCardDataLookup {
   [playingCard: string]: FlipCardData;
@@ -581,8 +582,13 @@ export const returnInPlayCardsToPlayers = (
   return numCardsReturned * returnDuration;
 };
 
-type ShowAnimationOptions = ReturnCardsToPlayersAnimationOptions &
-  ShowAndScoreAnimationOptions;
+type ShowAnimationOptions = Omit<
+  ReturnCardsToPlayersAnimationOptions,
+  "onComplete"
+> &
+  ShowAndScoreAnimationOptions & {
+    lastToCompleteFactory: LastToCompleteFactory;
+  };
 
 export type OwnerReturnedCards = FlipCardData[][];
 
@@ -618,7 +624,10 @@ export const addShowAnimation = (
     showAnimationOptions.at,
     playerPositions,
     cardsWithOwners,
-    { ...showAnimationOptions },
+    {
+      ...showAnimationOptions,
+      onComplete: showAnimationOptions.lastToCompleteFactory(),
+    },
     ownerReturnedCards
   );
 

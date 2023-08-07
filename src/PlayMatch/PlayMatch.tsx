@@ -53,17 +53,15 @@ function PlayMatchInner({
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
-  const [readyState, setReadyState] = useState<ReadyProps>(
-    {
-      gameState:CribGameState.Discard,
-      meReady:{
-        id:"me",
-        ready:false
-      },
-      otherPlayersReady:[]
-    }
-  )
-  
+  const [readyState, setReadyState] = useState<ReadyProps>({
+    gameState: CribGameState.Discard,
+    meReady: {
+      id: "me",
+      ready: false,
+    },
+    otherPlayersReady: [],
+  });
+
   // todo - used for my discard behaviour - will need to fully consider setGameState
   const [gameState, setGameState] = useState<CribGameState>(
     matchDetail.match.gameState
@@ -205,9 +203,10 @@ function PlayMatchInner({
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ready(playerId,myMatch) {
+      ready(playerId, myMatch) {
         setReadyState(getReadyState(myMatch));
-        if(myMatch.gameState === CribGameState.Discard){
+        if (myMatch.gameState === CribGameState.Discard) {
+          alert("lets move on to the next game");
           // will animate the deck to the new position if necessary
           // deal !
           // board ?
@@ -223,7 +222,7 @@ function PlayMatchInner({
     enqueueSnackbar,
     allowPegging,
     delayEnqueueSnackbar,
-    playMatchCribHub.ready
+    playMatchCribHub.ready,
   ]);
   const staticRender = useCallback(() => {
     const myMatch = matchDetail.match;
@@ -231,7 +230,7 @@ function PlayMatchInner({
     switch (myMatch.gameState) {
       case CribGameState.Discard:
         setCardDatasAndRef(getDiscardCardDatas(myMatch, positions));
-        
+
         break;
       case CribGameState.Pegging:
         setCardDatasAndRef(getPeggingCardDatas(myMatch, positions));
@@ -281,7 +280,7 @@ function PlayMatchInner({
 
   return (
     <>
-      <Ready {...readyState}/>
+      <Ready {...readyState} />
       <div style={styles.cribBoardStyle}>
         <AnimatedCribBoard
           cribBoardUrl={cribBoardWoodUrl}

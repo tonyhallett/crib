@@ -234,7 +234,8 @@ export function clearUpAfterWon(
   inPlayCards: PeggedCard[],
   firstPeggingPosition: Point,
   myMatch: MyMatch,
-  playerPositions: PlayerPositions[]
+  playerPositions: PlayerPositions[],
+  onComplete?: () => void
 ) {
   let totalDuration = 0;
   let deckZIndex = 10;
@@ -248,8 +249,7 @@ export function clearUpAfterWon(
     FlipCardState.PeggingTurnedOver
   );
   if (turnedOverCards.length > 0) {
-    
-    const moveCardsToDeckDuration =  moveCardsToDeckWithoutFlipping(
+    const moveCardsToDeckDuration = moveCardsToDeckWithoutFlipping(
       turnedOverCards,
       deckZIndex, // all cards are at this zIndex
       currentDeckPosition,
@@ -257,12 +257,12 @@ export function clearUpAfterWon(
       moveToDeckDuration
     );
     totalDuration += moveCardsToDeckDuration;
-    at += moveCardsToDeckDuration
+    at += moveCardsToDeckDuration;
   }
 
   const inPlayCardDatas = getOrderedInPlayCards(cardsWithOwners, inPlayCards);
   if (inPlayCards.length > 0) {
-    const moveInPlayToDeckDuration =  flipAndMoveCardsInPlayToDeck(
+    const moveInPlayToDeckDuration = flipAndMoveCardsInPlayToDeck(
       inPlayCardDatas,
       flipDuration,
       moveToDeckDuration,
@@ -276,7 +276,7 @@ export function clearUpAfterWon(
     at += moveInPlayToDeckDuration;
   }
 
-  const movePlayerCardsToDeckDuration =  movePlayerCardsToDeck(
+  const movePlayerCardsToDeckDuration = movePlayerCardsToDeck(
     cardsWithOwners.playerCards,
     deckZIndex, // the current top zIndex - each player has all of their cards at the same zIndex - one more than the previous
     currentDeckPosition,
@@ -296,7 +296,8 @@ export function clearUpAfterWon(
     deckZIndex,
     currentDeckPosition,
     at,
-    moveToDeckDuration
+    moveToDeckDuration,
+    onComplete
   );
   return totalDuration;
 }

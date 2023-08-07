@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { RadHubConnectionInstance } from "./RadHubConnection";
 import {
@@ -39,6 +40,8 @@ import {
   KingClubs,
   ThreeClubs,
   QueenDiamonds,
+  FourHearts,
+  FiveHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -870,6 +873,143 @@ const matches: ActionMyMatch[] = [
               {
                 id: "Player2",
                 discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+            ],
+          } as MyMatch,
+        ],
+      },
+      {
+        methodName: "ready",
+        args: [
+          "Player2",
+          {
+            id: "Peg action wins",
+            changeHistory: {
+              lastChangeDate: new Date("21 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 9,
+            },
+            title: "Peg action wins",
+            gameState: CribGameState.GameWon,
+            box: [],
+            myCards: [AceSpades, KingSpades, JackSpades],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 0, backPeg: 0 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [
+                {
+                  owner: "Player2",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 0,
+                    score: 0,
+                  },
+                  playingCard: QueenHearts,
+                },
+                {
+                  owner: "Me",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 2,
+                    score: 2,
+                  },
+                  playingCard: QueenSpades,
+                },
+                {
+                  owner: "Player2",
+                  peggingScore: {
+                    is15: false,
+                    is31: false,
+                    isLastGo: false,
+                    numCardsInRun: 0,
+                    numOfAKind: 3,
+                    score: 6,
+                  },
+                  playingCard: QueenDiamonds,
+                },
+              ],
+              goHistory: [],
+              nextPlayer: "Player2",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: noScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: true,
+              },
+            ],
+          } as MyMatch,
+        ],
+      },
+      {
+        methodName: "ready",
+        args: [
+          "Me",
+          {
+            id: "Peg action wins",
+            changeHistory: {
+              lastChangeDate: new Date("21 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 9,
+            },
+            title: "Peg action wins",
+            gameState: CribGameState.Discard,
+            box: [],
+            myCards: [
+              AceHearts,
+              TwoHearts,
+              ThreeHearts,
+              FourHearts,
+              FiveHearts,
+            ],
+            cutCard: undefined,
+            scores: [
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 0, backPeg: 0 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [],
+              goHistory: [],
+              nextPlayer: "Me",
+              cannotGoes: [false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Player2",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: noScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: false,
                 playerScoringHistory: noScoringHistory,
                 ready: false,
               },
@@ -1982,7 +2122,18 @@ export function RadHubManager() {
 
   useEffect(() => {
     if (!subscribedRef.current) {
+      // eslint-disable-next-line complexity
       RadHubConnectionInstance.interceptSend((methodName, ...args) => {
+        switch (methodName) {
+          case "Discard":
+            break;
+          case "Peg":
+            break;
+          case "Ready":
+            //const match = (playMatchRef.current as MatchDetail).match;
+            // it is me
+            break;
+        }
         if (methodName === "Discard") {
           // 0 is the matchId
           const discard1 = args[1] as PlayingCard;

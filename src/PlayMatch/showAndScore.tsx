@@ -28,15 +28,19 @@ import {
   setOrAddToAnimationSequence,
 } from "./animation/animationSegments";
 import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
+import { LastToCompleteFactory } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
 
-export interface ShowAndScoreAnimationOptions
-  extends MoveHandToDeckAnimationOptions {
+export type ShowAndScoreAnimationOptions = Omit<
+  MoveHandToDeckAnimationOptions,
+  "onComplete"
+> & {
   at: number;
   moveCutCardDuration: number;
   scoreMessageDuration: number;
   flipBoxDuration: number;
   moveBoxDuration: number;
-}
+  lastToCompleteFactory: LastToCompleteFactory;
+};
 
 type FlipAnimationAt = FlipAnimation & { at: number };
 
@@ -186,7 +190,10 @@ export function showAndScore(
       handPositions,
       at,
       1 + i * 4,
-      animationOptions
+      {
+        ...animationOptions,
+        onComplete: animationOptions.lastToCompleteFactory(),
+      }
     );
   });
 
@@ -238,7 +245,9 @@ function returnRemainingCardsToDeck(
   playerScorings: PlayerScoring[],
   currentDeckPosition: DeckPosition,
   at: number,
-  animationOptions: MoveHandToDeckAnimationOptions,
+  animationOptions: MoveHandToDeckAnimationOptions & {
+    lastToCompleteFactory: LastToCompleteFactory;
+  },
   myMatch: MyMatch,
   playerPositions: PlayerPositions[]
 ) {
@@ -287,7 +296,8 @@ function returnRemainingCardsToDeck(
       animationOptions.moveToDeckFlipDuration,
       at,
       currentDeckCount,
-      currentDeckPosition
+      currentDeckPosition,
+      animationOptions.lastToCompleteFactory()
     );
   }
 }
@@ -298,7 +308,8 @@ function moveCutCardToDeck(
   flipDuration: number,
   at: number,
   currentDeckCount: number,
-  currentDeckPosition: DeckPosition
+  currentDeckPosition: DeckPosition,
+  onComplete: () => void
 ) {
   const flipAnimation: FlipAnimation = {
     duration: flipDuration,
@@ -311,7 +322,10 @@ function moveCutCardToDeck(
     getMoveRotateSegment(
       currentDeckPosition.isHorizontal,
       currentDeckPosition.position,
-      moveDuration
+      moveDuration,
+      undefined,
+      undefined,
+      onComplete
     ),
   ];
   setOrAddToAnimationSequence(cutCard, flipCardAnimationSequence);
@@ -357,6 +371,7 @@ interface MoveHandToDeckAnimationOptions {
   moveToDeckMoveToFirstDuration: number;
   moveToDeckFlipDuration: number;
   moveToDeckMoveToDeckDuration: number;
+  onComplete?: () => void;
 }
 
 function moveHandToDeck(
@@ -404,7 +419,12 @@ function moveHandToDeck(
       getMoveRotateSegment(
         deckPosition.isHorizontal,
         deckPosition.position,
-        moveToDeckMoveToDeckDuration
+        moveToDeckMoveToDeckDuration,
+        undefined,
+        undefined,
+        positionIndex === lastCardIndex
+          ? animationOptions.onComplete
+          : undefined
       )
     );
 

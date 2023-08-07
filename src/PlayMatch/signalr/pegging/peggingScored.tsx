@@ -11,7 +11,7 @@ export function peggingScored(
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   peggingScoreSnackbarDurationSeconds: number,
-  cribBoardAnimationOnComplete: () => void
+  cribBoardAnimationOnComplete: (() => void) | undefined
 ) {
   enqueueSnackbar(
     getPeggedScoreMessage(peggedCard.peggingScore, peggedCard.playingCard.pips),

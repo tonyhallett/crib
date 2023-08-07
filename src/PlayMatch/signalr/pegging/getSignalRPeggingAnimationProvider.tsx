@@ -31,32 +31,36 @@ const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   );
 };
 
-const createOnComplete = (
-  additionalAnimation: boolean,
-  animationCompleteCallback: () => void
-) => {
-  const numCompletesToComplete = additionalAnimation ? 2 : 1;
-  let numCompleted = 0;
-  return () => {
-    numCompleted++;
-    if (numCompleted === numCompletesToComplete) {
-      animationCompleteCallback();
-    }
-  };
-};
-
-
-
-const peggingWon = (
-  gameState: CribGameState,
-  hasShowScores: boolean
-) => {
+const didPeggingWin = (gameState: CribGameState, hasShowScores: boolean) => {
   return (
     (gameState === CribGameState.GameWon ||
       gameState === CribGameState.MatchWon) &&
     !hasShowScores
   );
 };
+
+export type LastToCompleteFactory = () => () => void;
+function createLastCompleteFactory(
+  lastCompleted: () => void
+): LastToCompleteFactory {
+  let numCompleted = 0;
+  let numToComplete = 0;
+  let completed = false;
+  const complete = () => {
+    numCompleted++;
+    if (numCompleted === numToComplete) {
+      completed = true;
+      lastCompleted();
+    }
+  };
+  return () => {
+    if (completed) {
+      throw new Error("Have already completed");
+    }
+    numToComplete++;
+    return complete;
+  };
+}
 
 export function getSignalRPeggingAnimationProvider(
   myMatch: MyMatch,
@@ -68,8 +72,8 @@ export function getSignalRPeggingAnimationProvider(
     delayEnqueueSnackbar: DelayEnqueueSnackbar;
   },
   setCribBoardState: SetCribboardState,
-  setReadyState:(readyState:ReadyProps) => void,
-  cribHubReady:() => void,
+  setReadyState: (readyState: ReadyProps) => void,
+  cribHubReady: () => void,
   scoresRef: MutableRefObject<Score[]> // assumption is that when access current will be current
 ): AnimationProvider {
   // eslint-disable-next-line complexity
@@ -92,11 +96,16 @@ export function getSignalRPeggingAnimationProvider(
     );
 
     const didTurnOver = getDidTurnOver(peggedCard, myMatch);
+    const hasShow = pegShowScoring.length > 1;
+    const peggingWon = didPeggingWin(myMatch.gameState, hasShow);
 
-    const onComplete = createOnComplete(
-      didTurnOver || myMatch.gameState === CribGameState.Show,
-      animationCompleteCallback
-    );
+    const lastToCompleteFactory = createLastCompleteFactory(() => {
+      setReadyState(getReadyState(myMatch));
+      if (peggingWon) {
+        cribHubReady();
+      }
+      animationCompleteCallback();
+    });
 
     const { pegDelay, newFlipCardDatas } = performPegging(
       didTurnOver,
@@ -107,7 +116,7 @@ export function getSignalRPeggingAnimationProvider(
       myMatch,
       setCribBoardState,
       snackBarMethods.enqueueSnackbar,
-      onComplete
+      lastToCompleteFactory
     );
 
     const cardsWithOwners = getCardsWithOwners(
@@ -120,9 +129,7 @@ export function getSignalRPeggingAnimationProvider(
 
     const deckPosition = getDeckPosition(myMatch, positions);
 
-    if (
-      peggingWon(myMatch.gameState, pegShowScoring.length > 0)
-    ) {
+    if (peggingWon) {
       clearUpAfterWon(
         newFlipCardDatas.cutCard,
         cardsWithOwners,
@@ -133,11 +140,12 @@ export function getSignalRPeggingAnimationProvider(
         myMatch.pegging.inPlayCards,
         positions.peggingPositions.inPlay[0],
         myMatch,
-        positions.playerPositions
+        positions.playerPositions,
+        lastToCompleteFactory()
       );
     }
 
-    if (pegShowScoring.length > 0) {
+    if (hasShow) {
       addShowAnimation(
         prevFlipCardDatas,
         newFlipCardDatas,
@@ -146,7 +154,7 @@ export function getSignalRPeggingAnimationProvider(
           returnDuration: discardDuration,
           moveCutCardDuration: discardDuration,
           flipDuration,
-          onComplete,
+          lastToCompleteFactory,
           flipBoxDuration: discardDuration,
           moveBoxDuration: discardDuration,
           scoreMessageDuration: 2,
@@ -164,10 +172,6 @@ export function getSignalRPeggingAnimationProvider(
       );
     }
 
-    if(myMatch.gameState === CribGameState.GameWon || myMatch.gameState === CribGameState.MatchWon || myMatch.gameState === CribGameState.Show){
-      // need above to provide an animation time or drop this into animation completed
-      setReadyState(getReadyState(myMatch));
-    }
     scoresRef.current = myMatch.scores;
     return newFlipCardDatas;
   };

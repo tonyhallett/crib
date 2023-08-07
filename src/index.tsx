@@ -39,4 +39,3 @@ root.render(
     </Auth0Provider>
   </ThemeProvider>
 );
-

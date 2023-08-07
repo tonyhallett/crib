@@ -71,7 +71,7 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   discardDuration: number,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
-  animationCompleteCallback: () => void,
+  animationCompleteCallback: (() => void) | undefined,
   peggingScoreSnackbarDurationSeconds = 5
 ): [FlipCardAnimationSequence, Duration] => {
   const scored = peggedCard.peggingScore.score > 0;
@@ -95,7 +95,7 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
             animationCompleteCallback
           );
         } else {
-          animationCompleteCallback();
+          animationCompleteCallback?.();
         }
       }
     );
@@ -193,7 +193,7 @@ export const addTurnOverTogetherAnimation = (
   prevFlipCardDatas: FlipCardDatas,
   newFlipCardDatas: FlipCardDatas,
   delay: number,
-  onComplete: () => void,
+  onComplete: (() => void) | undefined,
   myMatch: MyMatch,
   peggingPositions: PeggingPositions,
   discardDuration: number,

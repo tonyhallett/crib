@@ -22,10 +22,10 @@ import {
 } from "../../layout/positions-utilities";
 import { cardMatch } from "../../playingCardUtilities";
 import {
-  CribBoardState,
   FlipCardData,
   FlipCardDatas,
   FlipCardState,
+  SetCribboardState,
 } from "../../PlayMatchTypes";
 import { flipDuration } from "../../animation/animationDurations";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
@@ -41,11 +41,53 @@ export interface SignalRDiscardAnimationOptions {
   cardFlipDuration: number;
 }
 
-function cutCardWon(gameState: CribGameState) {
+function didCutCardWin(gameState: CribGameState) {
   return (
     gameState === CribGameState.GameWon || gameState === CribGameState.MatchWon
   );
 }
+
+const getCutCardAnimationData = (
+  prevCardData: FlipCardData,
+  isJack: boolean,
+  cutCard: PlayingCard,
+  cardFlipDuration: number,
+  cutCardAt: number,
+  enqueueSnackbar: EnqueueSnackbar,
+  myMatch: MyMatch,
+  setCribBoardState: SetCribboardState,
+  complete: (() => void) | undefined
+) => {
+  const newCardData = { ...prevCardData };
+  newCardData.playingCard = cutCard;
+  const flipAnimation: FlipAnimation = {
+    flip: true,
+    duration: cardFlipDuration,
+    at: cutCardAt,
+    onComplete: () => {
+      let requiresCompletion = true;
+      if (isJack) {
+        const nibs = "nibs";
+        enqueueSnackbar(`Two for his ${nibs} !`, {
+          variant: "success",
+          key: playMatchSnackbarKey,
+        });
+        requiresCompletion = false;
+        setCribBoardState({
+          colouredScores: getColouredScores(getDiscardScores(myMatch)),
+          onComplete() {
+            complete?.();
+          },
+        });
+      }
+      if (requiresCompletion) {
+        complete?.();
+      }
+    },
+  };
+  newCardData.animationSequence = [flipAnimation];
+  return newCardData;
+};
 
 export function getSignalRDiscardAnimationProvider(
   animationOptions: SignalRDiscardAnimationOptions,
@@ -55,11 +97,11 @@ export function getSignalRDiscardAnimationProvider(
   scoresRef: React.MutableRefObject<Score[]>,
   removeMyDiscardSelection: () => void,
   setGameState: (gameState: CribGameState) => void,
-  setReadyState : (readyState:ReadyProps) => void,
-  setCribBoardState: (cribBoardState: CribBoardState) => void,
+  setReadyState: (readyState: ReadyProps) => void,
+  setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   syncChangeHistories: () => void,
-  ready:() => void
+  ready: () => void
 ): AnimationProvider {
   const { cardFlipDuration, discardDuration, secondDiscardDelay } =
     animationOptions;
@@ -69,14 +111,20 @@ export function getSignalRDiscardAnimationProvider(
     prevFlipCardDatas
   ) => {
     setGameState(myMatch.gameState);
-    
+
     const positions = getPositions();
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
+    const cutCardWon = didCutCardWin(myMatch.gameState);
 
     const complete = () => {
       animationCompleteCallback && animationCompleteCallback();
       syncChangeHistories();
+      setReadyState(getReadyState(myMatch));
+      if (cutCardWon) {
+        ready();
+      }
     };
+    const discardOrCutCardComplete = cutCardWon ? undefined : complete;
 
     const iDiscarded = discarderId === myMatch.myId;
     const numDiscards = myMatch.otherPlayers.length + 1 === 2 ? 2 : 1;
@@ -107,42 +155,6 @@ export function getSignalRDiscardAnimationProvider(
       return newCardData;
     };
     const cutCardAt = cutCardDelay + (iDiscarded ? cardFlipDuration : 0);
-    const getCutCardAnimationData = (
-      prevCardData: FlipCardData,
-      isJack: boolean,
-      cutCard: PlayingCard
-    ) => {
-      const newCardData = { ...prevCardData };
-      newCardData.playingCard = cutCard;
-      const flipAnimation: FlipAnimation = {
-        flip: true,
-        duration: cardFlipDuration,
-        at: cutCardAt,
-        onComplete: () => {
-          let requiresCompletion = true;
-          if (isJack) {
-            const nibs = "nibs";
-            enqueueSnackbar(`Two for his ${nibs} !`, {
-              variant: "success",
-              key: playMatchSnackbarKey,
-            });
-            requiresCompletion = false;
-            setCribBoardState({
-              colouredScores: getColouredScores(getDiscardScores(myMatch)),
-              onComplete() {
-                complete();
-              },
-            });
-          }
-          if (requiresCompletion) {
-            complete();
-          }
-        },
-      };
-      newCardData.animationSequence = [flipAnimation];
-      return newCardData;
-    };
-
     let newFlipCardDatas: FlipCardDatas;
 
     if (iDiscarded) {
@@ -161,7 +173,7 @@ export function getSignalRDiscardAnimationProvider(
               boxPosition,
               prevCardData,
               countDiscards === numDiscards && !myMatch.cutCard
-                ? complete
+                ? discardOrCutCardComplete
                 : undefined
             );
             const flipAnimation: FlipAnimation = {
@@ -192,7 +204,7 @@ export function getSignalRDiscardAnimationProvider(
               boxPosition,
               prevCardData,
               countDiscards === numDiscards && !myMatch.cutCard
-                ? complete
+                ? discardOrCutCardComplete
                 : undefined
             );
             return newData;
@@ -220,13 +232,19 @@ export function getSignalRDiscardAnimationProvider(
       newFlipCardDatas.cutCard = getCutCardAnimationData(
         prevFlipCardDatas.cutCard,
         myMatch.cutCard.pips === Pips.Jack,
-        myMatch.cutCard
+        myMatch.cutCard,
+        cardFlipDuration,
+        cutCardAt,
+        enqueueSnackbar,
+        myMatch,
+        setCribBoardState,
+        discardOrCutCardComplete
       );
     }
 
-    if (cutCardWon(myMatch.gameState)) {
+    if (cutCardWon) {
       const at = cutCardAt + cardFlipDuration + 5; // 5 as currently using the default snackbar which is greater than the crib board duration.
-      const clearUpDuration = clearUpAfterWon(
+      clearUpAfterWon(
         newFlipCardDatas.cutCard,
         getCardsWithOwners(
           newFlipCardDatas,
@@ -242,15 +260,9 @@ export function getSignalRDiscardAnimationProvider(
         [],
         { x: 0, y: 0 },
         myMatch,
-        positions.playerPositions
+        positions.playerPositions,
+        complete
       );
-      const cleanedUpAt = (at + clearUpDuration) * 1000;
-      window.setTimeout(() => {
-        setReadyState(getReadyState(myMatch));
-        ready();
-      },cleanedUpAt)
-    }else{
-      setReadyState(getReadyState(myMatch));
     }
     scoresRef.current = myMatch.scores;
     return newFlipCardDatas;

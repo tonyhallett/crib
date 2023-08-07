@@ -110,15 +110,20 @@ export function moveCardsToDeckWithoutFlipping(
   zIndex: number,
   currentDeckPosition: DeckPosition,
   at: number | undefined,
-  duration: number
+  duration: number,
+  onComplete?: () => void
 ): Duration {
-  cards.forEach((card) => {
+  cards.forEach((card, index) => {
+    const isLast = index === cards.length - 1;
     setOrAddToAnimationSequence(card, [
       createZIndexAnimationSegment(zIndex, { at }),
       getMoveRotateSegment(
         currentDeckPosition.isHorizontal,
         currentDeckPosition.position,
-        duration
+        duration,
+        undefined,
+        undefined,
+        isLast ? onComplete : undefined
       ),
     ]);
   });
