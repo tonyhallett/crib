@@ -32,6 +32,8 @@ import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { getCardsWithOwners } from "../../getCardsWithOwners";
 import { getDiscardScores } from "./getDiscardScores";
 import { EnqueueSnackbar } from "notistack";
+import { ReadyProps } from "../../Ready";
+import { getReadyState } from "../../getReadyState";
 
 export interface SignalRDiscardAnimationOptions {
   discardDuration: number;
@@ -53,9 +55,11 @@ export function getSignalRDiscardAnimationProvider(
   scoresRef: React.MutableRefObject<Score[]>,
   removeMyDiscardSelection: () => void,
   setGameState: (gameState: CribGameState) => void,
+  setReadyState : (readyState:ReadyProps) => void,
   setCribBoardState: (cribBoardState: CribBoardState) => void,
   enqueueSnackbar: EnqueueSnackbar,
-  syncChangeHistories: () => void
+  syncChangeHistories: () => void,
+  ready:() => void
 ): AnimationProvider {
   const { cardFlipDuration, discardDuration, secondDiscardDelay } =
     animationOptions;
@@ -65,6 +69,7 @@ export function getSignalRDiscardAnimationProvider(
     prevFlipCardDatas
   ) => {
     setGameState(myMatch.gameState);
+    
     const positions = getPositions();
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
 
@@ -221,7 +226,7 @@ export function getSignalRDiscardAnimationProvider(
 
     if (cutCardWon(myMatch.gameState)) {
       const at = cutCardAt + cardFlipDuration + 5; // 5 as currently using the default snackbar which is greater than the crib board duration.
-      clearUpAfterWon(
+      const clearUpDuration = clearUpAfterWon(
         newFlipCardDatas.cutCard,
         getCardsWithOwners(
           newFlipCardDatas,
@@ -239,6 +244,13 @@ export function getSignalRDiscardAnimationProvider(
         myMatch,
         positions.playerPositions
       );
+      const cleanedUpAt = (at + clearUpDuration) * 1000;
+      window.setTimeout(() => {
+        setReadyState(getReadyState(myMatch));
+        ready();
+      },cleanedUpAt)
+    }else{
+      setReadyState(getReadyState(myMatch));
     }
     scoresRef.current = myMatch.scores;
     return newFlipCardDatas;

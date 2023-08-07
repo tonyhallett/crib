@@ -236,9 +236,11 @@ export function clearUpAfterWon(
   myMatch: MyMatch,
   playerPositions: PlayerPositions[]
 ) {
+  let totalDuration = 0;
   let deckZIndex = 10;
 
   flipCutCard(cutCard, flipDuration, at);
+  totalDuration += flipDuration;
   at += flipDuration;
 
   const turnedOverCards = getCardsWithState(
@@ -246,18 +248,21 @@ export function clearUpAfterWon(
     FlipCardState.PeggingTurnedOver
   );
   if (turnedOverCards.length > 0) {
-    at += moveCardsToDeckWithoutFlipping(
+    
+    const moveCardsToDeckDuration =  moveCardsToDeckWithoutFlipping(
       turnedOverCards,
       deckZIndex, // all cards are at this zIndex
       currentDeckPosition,
       at,
       moveToDeckDuration
     );
+    totalDuration += moveCardsToDeckDuration;
+    at += moveCardsToDeckDuration
   }
 
   const inPlayCardDatas = getOrderedInPlayCards(cardsWithOwners, inPlayCards);
   if (inPlayCards.length > 0) {
-    at += flipAndMoveCardsInPlayToDeck(
+    const moveInPlayToDeckDuration =  flipAndMoveCardsInPlayToDeck(
       inPlayCardDatas,
       flipDuration,
       moveToDeckDuration,
@@ -267,9 +272,11 @@ export function clearUpAfterWon(
       firstPeggingPosition,
       at
     );
+    totalDuration += moveInPlayToDeckDuration;
+    at += moveInPlayToDeckDuration;
   }
 
-  at += movePlayerCardsToDeck(
+  const movePlayerCardsToDeckDuration =  movePlayerCardsToDeck(
     cardsWithOwners.playerCards,
     deckZIndex, // the current top zIndex - each player has all of their cards at the same zIndex - one more than the previous
     currentDeckPosition,
@@ -280,13 +287,16 @@ export function clearUpAfterWon(
     myMatch,
     playerPositions
   );
+  totalDuration += movePlayerCardsToDeckDuration;
+  at += movePlayerCardsToDeckDuration;
   deckZIndex += cardsWithOwners.playerCards.length;
 
-  moveCardsToDeckWithoutFlipping(
+  totalDuration += moveCardsToDeckWithoutFlipping(
     cardsWithOwners.boxCards,
     deckZIndex,
     currentDeckPosition,
     at,
     moveToDeckDuration
   );
+  return totalDuration;
 }

@@ -22,6 +22,8 @@ import { MutableRefObject } from "react";
 import { getDeckPosition } from "../../layout/positions-utilities";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
+import { ReadyProps } from "../../Ready";
+import { getReadyState } from "../../getReadyState";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -43,19 +45,9 @@ const createOnComplete = (
   };
 };
 
-const shouldShow = (gameState: CribGameState, numScores: number) => {
-  if (numScores === 0) {
-    return false;
-  }
-  const states: CribGameState[] = [
-    CribGameState.GameWon,
-    CribGameState.MatchWon,
-    CribGameState.Show,
-  ];
-  return states.includes(gameState);
-};
 
-const shouldClearUpAfterPeggingWon = (
+
+const peggingWon = (
   gameState: CribGameState,
   hasShowScores: boolean
 ) => {
@@ -76,6 +68,8 @@ export function getSignalRPeggingAnimationProvider(
     delayEnqueueSnackbar: DelayEnqueueSnackbar;
   },
   setCribBoardState: SetCribboardState,
+  setReadyState:(readyState:ReadyProps) => void,
+  cribHubReady:() => void,
   scoresRef: MutableRefObject<Score[]> // assumption is that when access current will be current
 ): AnimationProvider {
   // eslint-disable-next-line complexity
@@ -127,7 +121,7 @@ export function getSignalRPeggingAnimationProvider(
     const deckPosition = getDeckPosition(myMatch, positions);
 
     if (
-      shouldClearUpAfterPeggingWon(myMatch.gameState, pegShowScoring.length > 0)
+      peggingWon(myMatch.gameState, pegShowScoring.length > 0)
     ) {
       clearUpAfterWon(
         newFlipCardDatas.cutCard,
@@ -143,7 +137,7 @@ export function getSignalRPeggingAnimationProvider(
       );
     }
 
-    if (shouldShow(myMatch.gameState, pegShowScoring.length)) {
+    if (pegShowScoring.length > 0) {
       addShowAnimation(
         prevFlipCardDatas,
         newFlipCardDatas,
@@ -168,6 +162,11 @@ export function getSignalRPeggingAnimationProvider(
         cardsWithOwners,
         deckPosition
       );
+    }
+
+    if(myMatch.gameState === CribGameState.GameWon || myMatch.gameState === CribGameState.MatchWon || myMatch.gameState === CribGameState.Show){
+      // need above to provide an animation time or drop this into animation completed
+      setReadyState(getReadyState(myMatch));
     }
     scoresRef.current = myMatch.scores;
     return newFlipCardDatas;

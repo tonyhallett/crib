@@ -7,7 +7,6 @@ import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Auth0Provider, Component } from "./Rad/getRad";
-import { WordGrid } from "./wordsearch";
 
 const rootNode = document.getElementById("app");
 
@@ -40,3 +39,4 @@ root.render(
     </Auth0Provider>
   </ThemeProvider>
 );
+

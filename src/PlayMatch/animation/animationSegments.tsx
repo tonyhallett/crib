@@ -122,5 +122,5 @@ export function moveCardsToDeckWithoutFlipping(
       ),
     ]);
   });
-  return duration;
+  return duration + instantAnimationDuration;
 }

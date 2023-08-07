@@ -28,6 +28,8 @@ import { getSignalRPeggingAnimationProvider } from "./signalr/pegging/getSignalR
 import { discardDuration, flipDuration } from "./animation/animationDurations";
 import { getSignalRDiscardAnimationProvider } from "./signalr/discard/getSignalRDiscardAnimationProvider";
 import { usePeggingOverlay } from "./ui-hooks/usePeggingOverlay";
+import { Ready, ReadyProps } from "./Ready";
+import { getReadyState } from "./getReadyState";
 
 function noNewActions(matchDetail: MatchDetail) {
   return (
@@ -51,6 +53,17 @@ function PlayMatchInner({
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
+  const [readyState, setReadyState] = useState<ReadyProps>(
+    {
+      gameState:CribGameState.Discard,
+      meReady:{
+        id:"me",
+        ready:false
+      },
+      otherPlayersReady:[]
+    }
+  )
+  
   // todo - used for my discard behaviour - will need to fully consider setGameState
   const [gameState, setGameState] = useState<CribGameState>(
     matchDetail.match.gameState
@@ -165,9 +178,11 @@ function PlayMatchInner({
             scoresRef,
             removeMyDiscardSelection,
             setGameState,
+            setReadyState,
             setCribBoardState,
             enqueueSnackbar,
-            syncChangeHistories
+            syncChangeHistories,
+            playMatchCribHub.ready
           )
         );
       },
@@ -183,13 +198,20 @@ function PlayMatchInner({
               delayEnqueueSnackbar,
             },
             setCribBoardState,
+            setReadyState,
+            playMatchCribHub.ready,
             scoresRef
           )
         );
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ready(playerId) {
-        //
+      ready(playerId,myMatch) {
+        setReadyState(getReadyState(myMatch));
+        if(myMatch.gameState === CribGameState.Discard){
+          // will animate the deck to the new position if necessary
+          // deal !
+          // board ?
+        }
       },
     });
   }, [
@@ -201,6 +223,7 @@ function PlayMatchInner({
     enqueueSnackbar,
     allowPegging,
     delayEnqueueSnackbar,
+    playMatchCribHub.ready
   ]);
   const staticRender = useCallback(() => {
     const myMatch = matchDetail.match;
@@ -208,6 +231,7 @@ function PlayMatchInner({
     switch (myMatch.gameState) {
       case CribGameState.Discard:
         setCardDatasAndRef(getDiscardCardDatas(myMatch, positions));
+        
         break;
       case CribGameState.Pegging:
         setCardDatasAndRef(getPeggingCardDatas(myMatch, positions));
@@ -215,7 +239,11 @@ function PlayMatchInner({
       default:
         throw new Error("Not implemented !");
     }
-  }, [matchDetail, positions, setCardDatasAndRef]);
+    const readyState = getReadyState(myMatch, () => {
+      playMatchCribHub.ready();
+    });
+    setReadyState(readyState);
+  }, [matchDetail.match, playMatchCribHub, positions, setCardDatasAndRef]);
 
   useEffect(() => {
     // need to prevent re-renders from setting state in here causing a loop
@@ -253,6 +281,7 @@ function PlayMatchInner({
 
   return (
     <>
+      <Ready {...readyState}/>
       <div style={styles.cribBoardStyle}>
         <AnimatedCribBoard
           cribBoardUrl={cribBoardWoodUrl}
