@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { CribGameState } from "../generatedTypes";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+//import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 
 interface PlayerReady {
   id: string;
@@ -23,21 +23,26 @@ interface MeReady extends PlayerReady {
   readyClickHandler?: () => void;
 }
 
-interface ReadyDisplayProps {
+interface ReadyBackdropProps {
   meReady: MeReady;
   otherPlayersReady: PlayerReady[];
+  zIndex: number;
 }
 
-export interface ReadyProps extends ReadyDisplayProps {
+export interface ReadyProps extends ReadyBackdropProps {
   gameState: CribGameState;
 }
 
 export function Ready(props: ReadyProps) {
-  const { gameState, meReady, otherPlayersReady } = props;
+  const { gameState, meReady, otherPlayersReady, zIndex } = props;
   // todo MatchWon
   if (gameState === CribGameState.Show || gameState === CribGameState.GameWon) {
     return (
-      <ReadyDisplay meReady={meReady} otherPlayersReady={otherPlayersReady} />
+      <ReadyBackdrop
+        zIndex={zIndex}
+        meReady={meReady}
+        otherPlayersReady={otherPlayersReady}
+      />
     );
   }
   return null;
@@ -47,17 +52,16 @@ function OtherPlayerReadyRow({ playerReady }: { playerReady: PlayerReady }) {
   return (
     <TableRow>
       <TableCell>{playerReady.id}</TableCell>
-      <TableCell align="right">{getReadyIcon(playerReady.ready)}</TableCell>
+      <TableCell align="right">{getReadyDisplay(playerReady.ready)}</TableCell>
     </TableRow>
   );
 }
-function getReadyIcon(ready: boolean) {
-  //return ready ? <CheckBoxIcon/> : <CheckBoxOutlineBlankIcon/>
-  return ready ? <CheckBoxIcon /> : <CircularProgress />;
+function getReadyDisplay(ready: boolean) {
+  return ready ? <CheckBoxIcon color="success" /> : <CircularProgress />;
 }
 
-export function ReadyDisplay(props: ReadyDisplayProps) {
-  const myIcon = getReadyIcon(props.meReady.ready);
+export function ReadyBackdrop(props: ReadyBackdropProps) {
+  const myIcon = getReadyDisplay(props.meReady.ready);
   const iconOrButton =
     !props.meReady.ready && props.meReady.readyClickHandler ? (
       <IconButton onClick={props.meReady.readyClickHandler}>
@@ -67,7 +71,7 @@ export function ReadyDisplay(props: ReadyDisplayProps) {
       myIcon
     );
   return (
-    <Backdrop open sx={{ zIndex: 1000 }}>
+    <Backdrop open sx={{ zIndex: props.zIndex }}>
       <Card>
         <CardContent>
           <Box

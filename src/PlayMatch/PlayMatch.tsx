@@ -9,7 +9,7 @@ import { AnimationManager } from "./animation/AnimationManager";
 import { AnimatedCribBoard } from "../crib-board/AnimatedCribBoard";
 import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
-import { MatchDetail } from "../App";
+import { MatchDetail, moreButtonZIndex } from "../App";
 import { useControlMyCards } from "./ui-hooks/useControlMyCards";
 import { getPeggingCount } from "./signalRPeg";
 
@@ -37,7 +37,7 @@ function noNewActions(matchDetail: MatchDetail) {
     matchDetail.match.changeHistory.numberOfActions
   );
 }
-
+export type ReadyState = Omit<ReadyProps, "zIndex">;
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -53,7 +53,7 @@ function PlayMatchInner({
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
     undefined
   );
-  const [readyState, setReadyState] = useState<ReadyProps>({
+  const [readyState, setReadyState] = useState<ReadyState>({
     gameState: CribGameState.Discard,
     meReady: {
       id: "me",
@@ -280,7 +280,7 @@ function PlayMatchInner({
 
   return (
     <>
-      <Ready {...readyState} />
+      <Ready {...readyState} zIndex={moreButtonZIndex - 1} />
       <div style={styles.cribBoardStyle}>
         <AnimatedCribBoard
           cribBoardUrl={cribBoardWoodUrl}

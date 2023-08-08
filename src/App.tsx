@@ -47,6 +47,8 @@ import { useSnackbarWithDelay } from "./hooks/useSnackbarWithDelay";
 
 type MenuItem = "Friends" | "Matches";
 
+export const moreButtonZIndex = 1000;
+
 export interface MatchDetail {
   localMatch: LocalMatch;
   match: MyMatch;
@@ -421,7 +423,7 @@ export default function App() {
       )}
       {!!playMatchId && (
         <IconButton
-          style={{ position: "absolute", zIndex: 1000, bottom: 0 }}
+          style={{ position: "absolute", zIndex: moreButtonZIndex, bottom: 0 }}
           size="small"
           color="primary"
           onClick={() => setPlayMatchIdAndRef(undefined)}
