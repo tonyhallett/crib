@@ -19,6 +19,7 @@ import {
   CribBoardState,
   FlipCardDatas,
   PlayMatchProps,
+  ReadyState,
 } from "./PlayMatchTypes";
 import {
   useMemoedOrientationDependentValues,
@@ -28,7 +29,7 @@ import { getSignalRPeggingAnimationProvider } from "./signalr/pegging/getSignalR
 import { discardDuration, flipDuration } from "./animation/animationDurations";
 import { getSignalRDiscardAnimationProvider } from "./signalr/discard/getSignalRDiscardAnimationProvider";
 import { usePeggingOverlay } from "./ui-hooks/usePeggingOverlay";
-import { Ready, ReadyProps } from "./Ready";
+import { Ready } from "./Ready";
 import { getReadyState } from "./getReadyState";
 
 function noNewActions(matchDetail: MatchDetail) {
@@ -37,7 +38,7 @@ function noNewActions(matchDetail: MatchDetail) {
     matchDetail.match.changeHistory.numberOfActions
   );
 }
-export type ReadyState = Omit<ReadyProps, "zIndex">;
+
 function PlayMatchInner({
   matchDetail,
   playMatchCribHub,
@@ -204,13 +205,23 @@ function PlayMatchInner({
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ready(playerId, myMatch) {
-        setReadyState(getReadyState(myMatch));
-        if (myMatch.gameState === CribGameState.Discard) {
-          alert("lets move on to the next game");
-          // will animate the deck to the new position if necessary
-          // deal !
-          // board ?
-        }
+        animationManager.current.animate(
+          (animationCompleteCallback, prevFlipCardDatas) => {
+            setReadyState(getReadyState(myMatch));
+            if (myMatch.gameState === CribGameState.Discard) {
+              setCribBoardState({
+                colouredScores: getColouredScores(myMatch.scores),
+                onComplete: animationCompleteCallback,
+              });
+              // will animate the deck to the new position if necessary
+              // deal !
+              // board ?
+            } else {
+              animationCompleteCallback();
+            }
+            return prevFlipCardDatas as FlipCardDatas; // todo
+          }
+        );
       },
     });
   }, [

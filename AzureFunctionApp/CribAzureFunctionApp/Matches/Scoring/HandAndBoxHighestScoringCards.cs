@@ -26,7 +26,7 @@ namespace CribAzureFunctionApp.Matches.Scoring
         public int HandScore { get; }
         public int BoxScore { get; }
         public List<PlayingCard> Hand { get; }
-        public List<PlayingCard>? Box { get; set; }
+        public List<PlayingCard> Box { get; set; }
         public PlayingCard CutCard { get; }
     }
 }

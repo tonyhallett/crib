@@ -5,6 +5,7 @@ import { LocalMatch } from "../localMatch";
 import { ColouredScores } from "../crib-board/CribBoard";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { CribClient, CribHub } from "../generatedTypes";
+import { ReadyProps } from "./Ready";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
@@ -29,6 +30,8 @@ export type PlayMatchCribHub = {
     ? (...args: P) => void
     : never;
 };
+
+export type ReadyState = Omit<ReadyProps, "zIndex">;
 
 export enum FlipCardState {
   Box,

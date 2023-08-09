@@ -1,10 +1,9 @@
 import { MyMatch } from "../generatedTypes";
-import { ReadyProps } from "./Ready";
-
+import { ReadyState } from "./PlayMatchTypes";
 export function getReadyState(
   myMatch: MyMatch,
   meReadyClickHandler?: () => void
-): ReadyProps {
+): ReadyState {
   return {
     gameState: myMatch.gameState,
     meReady: {

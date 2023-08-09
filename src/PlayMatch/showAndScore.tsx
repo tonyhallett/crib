@@ -1,4 +1,4 @@
-import { MyMatch, Score, ShowScoring } from "../generatedTypes";
+import { MyMatch, PlayingCard, Score, ShowScoring } from "../generatedTypes";
 import {
   DeckPosition,
   DiscardPositions,
@@ -29,6 +29,10 @@ import {
 } from "./animation/animationSegments";
 import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
 import { LastToCompleteFactory } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
+import {
+  HighestScoringShow,
+  HighestScoringShowResult,
+} from "./signalr/pegging/HighestScoringShow";
 
 export type ShowAndScoreAnimationOptions = Omit<
   MoveHandToDeckAnimationOptions,
@@ -88,6 +92,58 @@ function flipBoxAndMoveToPlayerHand(
   return 2 * pause + flipDuration + 4 * moveDuration;
 }
 
+class HighestScoringShower {
+  private highestScoringShow: HighestScoringShow;
+  //enqueueSnackbar
+  constructor(
+    private myMatch: MyMatch,
+    private showAndWaitForSnackbar: (msg: string, variant: VariantType) => void
+  ) {
+    this.highestScoringShow = new HighestScoringShow(myMatch);
+  }
+  showIfHighestScoring(cards: PlayingCard[], playerId: string, isBox: boolean) {
+    const highestScoringResult = this.highestScoringShow.isHighestScoring(
+      cards,
+      playerId,
+      isBox
+    );
+    if (isBox) {
+      this.boxShow(highestScoringResult);
+    } else {
+      if (highestScoringResult.handOrBox) {
+        const ofAllOrNot = highestScoringResult.highestHandOrBoxOfAll
+          ? " of all"
+          : "";
+        this.showAndWaitForSnackbar(
+          `Highest scoring hand ${ofAllOrNot} - ${highestScoringResult.score} !`,
+          "success"
+        );
+      }
+    }
+  }
+
+  private boxShow(highestScoringResult: HighestScoringShowResult) {
+    if (highestScoringResult.handOrBox) {
+      const ofAllOrNot = highestScoringResult.highestHandOrBoxOfAll
+        ? " of all"
+        : "";
+      this.showAndWaitForSnackbar(
+        `Highest scoring box ${ofAllOrNot} - ${highestScoringResult.score} !`,
+        "success"
+      );
+    }
+    if (highestScoringResult.handAndBox) {
+      const ofAllOrNot = highestScoringResult.highestHandAndBoxOfAll
+        ? " of all"
+        : "";
+      this.showAndWaitForSnackbar(
+        `Highest scoring hand and box ${ofAllOrNot} - ${highestScoringResult.handAndBoxScore} !`,
+        "success"
+      );
+    }
+  }
+}
+
 export function showAndScore(
   showScoring: ShowScoring,
   cardsAndOwners: CardsAndOwners,
@@ -111,6 +167,10 @@ export function showAndScore(
     });
     at += scoreMessageDuration;
   };
+  const highestScoringShower = new HighestScoringShower(
+    myMatch,
+    showAndWaitForSnackbar
+  );
   const showAnimator = getShowAnimator();
   const playerScorings = getPlayerScorings(
     showScoring,
@@ -169,6 +229,11 @@ export function showAndScore(
     const showScoring = pegShowScoring.shift() as Score[];
     if (showScoreParts.length !== 0) {
       at += showAnimator.finalize(at, playerScoring.showCardDatas);
+      highestScoringShower.showIfHighestScoring(
+        playerScoring.showCardDatas.map((d) => d.playingCard as PlayingCard),
+        playerScoring.playerId,
+        isBox
+      );
       setTimeout(() => {
         setCribBoardState({
           colouredScores: getColouredScores(showScoring),

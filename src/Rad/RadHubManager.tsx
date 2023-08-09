@@ -42,6 +42,17 @@ import {
   QueenDiamonds,
   FourHearts,
   FiveHearts,
+  JackHearts,
+  FiveClubs,
+  FiveDiamonds,
+  FiveSpades,
+  SevenClubs,
+  EightClubs,
+  NineClubs,
+  QueenClubs,
+  FourClubs,
+  FourSpades,
+  TenHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -987,7 +998,7 @@ const matches: ActionMyMatch[] = [
             ],
             cutCard: undefined,
             scores: [
-              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 0, backPeg: 0 },
               { games: 2, frontPeg: 0, backPeg: 0 },
             ],
             pegging: {
@@ -1744,12 +1755,86 @@ const matches: ActionMyMatch[] = [
             },
             myReady: false,
             matchWinDeterminant: "BestOf_3",
-            myScoringHistory: noScoringHistory,
+            myScoringHistory: {
+              handHistory: {
+                // not correct values
+                numScores: 10,
+                totalScore: 100,
+
+                highestScoringCards: {
+                  cutCard: FiveHearts,
+                  handOrBox: [JackHearts, FiveClubs, FiveDiamonds, FiveSpades],
+                  score: 29,
+                },
+              },
+              boxHistory: {
+                numScores: 10,
+                totalScore: 1,
+                highestScoringCards: {
+                  cutCard: TwoDiamonds,
+                  handOrBox: [
+                    AceDiamonds,
+                    TenDiamonds,
+                    JackDiamonds,
+                    KingClubs,
+                  ],
+                  score: 1,
+                },
+              },
+              handAndBoxHistory: {
+                numScores: 10,
+                totalScore: 100,
+                highestScoringCards: {
+                  cutCard: FiveHearts,
+                  hand: [JackHearts, FiveClubs, FiveDiamonds, FiveSpades],
+                  handScore: 29,
+                  boxScore: 2,
+                  box: [SevenClubs, EightClubs, AceDiamonds, TwoDiamonds],
+                  score: 31,
+                },
+              },
+            },
             otherPlayers: [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: noScoringHistory,
+                playerScoringHistory: {
+                  boxHistory: {
+                    numScores: 10,
+                    totalScore: 100,
+                    highestScoringCards: {
+                      cutCard: TwoHearts,
+                      handOrBox: [NineClubs, JackHearts, QueenClubs, KingClubs],
+                      score: 1,
+                    },
+                  },
+                  handHistory: {
+                    numScores: 10,
+                    totalScore: 100,
+                    highestScoringCards: {
+                      cutCard: TwoDiamonds,
+                      handOrBox: [
+                        TwoHearts,
+                        FourClubs,
+                        FourSpades,
+                        TenDiamonds,
+                      ],
+                      score: 4,
+                    },
+                  },
+                  handAndBoxHistory: {
+                    numScores: 10,
+                    totalScore: 100,
+                    highestScoringCards: {
+                      cutCard: TwoDiamonds,
+                      hand: [TwoHearts, FourClubs, FourSpades, TenDiamonds],
+                      handScore: 4,
+                      box: [NineClubs, TenHearts, QueenClubs, KingClubs],
+                      boxScore: 0,
+                      score: 4,
+                    },
+                  },
+                },
                 ready: false,
               },
             ],
@@ -1980,7 +2065,30 @@ const matches: ActionMyMatch[] = [
               {
                 id: "Player2",
                 discarded: true,
-                playerScoringHistory: noScoringHistory,
+                playerScoringHistory: {
+                  handHistory: {
+                    numScores: 0,
+                    totalScore: 0,
+                    highestScoringCards: {
+                      cutCard: TwoDiamonds,
+                      score: 12,
+                      handOrBox: [
+                        ThreeSpades,
+                        ThreeClubs,
+                        QueenSpades,
+                        AceSpades,
+                      ],
+                    },
+                  },
+                  boxHistory: {
+                    numScores: 0,
+                    totalScore: 0,
+                  },
+                  handAndBoxHistory: {
+                    numScores: 0,
+                    totalScore: 0,
+                  },
+                },
                 ready: false,
               },
             ],

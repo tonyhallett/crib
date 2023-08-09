@@ -12,7 +12,11 @@ import { DelayEnqueueSnackbar } from "../../../hooks/useSnackbarWithDelay";
 import { EnqueueSnackbar } from "notistack";
 import { addShowAnimation } from "../../theShow";
 import { getCardsWithOwners } from "../../getCardsWithOwners";
-import { FlipCardDatas, SetCribboardState } from "../../PlayMatchTypes";
+import {
+  FlipCardDatas,
+  SetCribboardState,
+  ReadyState,
+} from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
 import {
   discardDuration,
@@ -22,7 +26,6 @@ import { MutableRefObject } from "react";
 import { getDeckPosition } from "../../layout/positions-utilities";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
-import { ReadyProps } from "../../Ready";
 import { getReadyState } from "../../getReadyState";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
@@ -72,7 +75,7 @@ export function getSignalRPeggingAnimationProvider(
     delayEnqueueSnackbar: DelayEnqueueSnackbar;
   },
   setCribBoardState: SetCribboardState,
-  setReadyState: (readyState: ReadyProps) => void,
+  setReadyState: (readyState: ReadyState) => void,
   cribHubReady: () => void,
   scoresRef: MutableRefObject<Score[]> // assumption is that when access current will be current
 ): AnimationProvider {

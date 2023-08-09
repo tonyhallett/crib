@@ -276,7 +276,7 @@ export const getPlayerScorings = (
     return playerScoring;
   });
 
-  const showBoxCards = [...cardsAndOwners.boxCards, cutCard];
+  const showBoxCards = [cutCard, ...cardsAndOwners.boxCards];
   if (showScoring.boxScore) {
     playerScorings.push({
       isBox: true,

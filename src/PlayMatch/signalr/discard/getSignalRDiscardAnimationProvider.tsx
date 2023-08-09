@@ -26,13 +26,13 @@ import {
   FlipCardDatas,
   FlipCardState,
   SetCribboardState,
+  ReadyState,
 } from "../../PlayMatchTypes";
 import { flipDuration } from "../../animation/animationDurations";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { getCardsWithOwners } from "../../getCardsWithOwners";
 import { getDiscardScores } from "./getDiscardScores";
 import { EnqueueSnackbar } from "notistack";
-import { ReadyProps } from "../../Ready";
 import { getReadyState } from "../../getReadyState";
 
 export interface SignalRDiscardAnimationOptions {
@@ -97,7 +97,7 @@ export function getSignalRDiscardAnimationProvider(
   scoresRef: React.MutableRefObject<Score[]>,
   removeMyDiscardSelection: () => void,
   setGameState: (gameState: CribGameState) => void,
-  setReadyState: (readyState: ReadyProps) => void,
+  setReadyState: (readyState: ReadyState) => void,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   syncChangeHistories: () => void,

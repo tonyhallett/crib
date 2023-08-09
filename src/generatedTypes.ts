@@ -156,7 +156,7 @@ export type HandAndBoxHighestScoringCards = {
   handScore: number;
   boxScore: number;
   hand: PlayingCard[];
-  box?: null | PlayingCard[];
+  box: PlayingCard[];
   cutCard: PlayingCard;
 };
 export type Pair = {

@@ -18,6 +18,7 @@ const stages: ReadyProps[] = [
         ready: false,
       },
     ],
+    zIndex: 1000,
   },
   {
     gameState: CribGameState.Show,
@@ -28,6 +29,7 @@ const stages: ReadyProps[] = [
         ready: false,
       },
     ],
+    zIndex: 1000,
   },
   {
     gameState: CribGameState.Discard,
@@ -38,6 +40,7 @@ const stages: ReadyProps[] = [
         ready: false,
       },
     ],
+    zIndex: 1000,
   },
 ];
 export function ReadyDemo() {
@@ -50,6 +53,7 @@ export function ReadyDemo() {
         ready: false,
       },
     ],
+    zIndex: 1000,
   });
   return (
     <>
