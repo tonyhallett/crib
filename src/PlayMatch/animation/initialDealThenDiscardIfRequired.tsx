@@ -167,21 +167,24 @@ function getNumberOfDiscards(match: MyMatch, discardCount: number) {
 }
 
 const createCompletionCallbacks = (
-  localMatch: LocalMatch,
-  updateLocalMatch: UpdateLocalMatch,
+  localMatch: LocalMatch | undefined,
+  updateLocalMatch: UpdateLocalMatch|undefined,
   numberOfDiscards: number,
   numberOfMatchActions: number,
   animationCompleteCallback: () => void
 ) => {
   const lastDealtCompleteCallback: OnComplete = () => {
-    const newLocalMatch: LocalMatch = {
-      ...localMatch,
-      changeHistory: {
-        ...localMatch.changeHistory,
-        numberOfActions: numberOfMatchActions - numberOfDiscards,
-      },
-    };
-    updateLocalMatch(newLocalMatch);
+    if(localMatch){
+      const newLocalMatch: LocalMatch = {
+        ...localMatch,
+        changeHistory: {
+          ...localMatch.changeHistory,
+          numberOfActions: numberOfMatchActions - numberOfDiscards,
+        },
+      };
+      updateLocalMatch?.(newLocalMatch);
+    }
+    
 
     if (numberOfDiscards === 0) {
       animationCompleteCallback && animationCompleteCallback();
@@ -189,16 +192,19 @@ const createCompletionCallbacks = (
   };
 
   const lastDiscardCompleteCallback: OnComplete = () => {
-    const newLocalMatch: LocalMatch = {
-      ...localMatch,
-      changeHistory: {
-        matchCreationDate: localMatch.changeHistory.matchCreationDate,
-        numberOfActions: numberOfMatchActions,
-        lastChangeDate: new Date(),
-      },
-    };
-
-    updateLocalMatch(newLocalMatch);
+    if(localMatch){
+      const newLocalMatch: LocalMatch = {
+        ...localMatch,
+        changeHistory: {
+          matchCreationDate: localMatch.changeHistory.matchCreationDate,
+          numberOfActions: numberOfMatchActions,
+          lastChangeDate: new Date(),
+        },
+      };
+  
+      updateLocalMatch?.(newLocalMatch);
+    }
+    
     animationCompleteCallback && animationCompleteCallback();
   };
 
@@ -239,13 +245,13 @@ function isOtherPlayerDiscarded(
 
 function doDealPlayerCardsAndPossiblyDiscard(
   match: MyMatch,
-  localMatch: LocalMatch,
+  localMatch: LocalMatch | undefined,
   dealPositions: DealPosition[],
   playerDealAnimationParameters: PlayerDealAnimationParameters,
   playerDealPositions: PlayerDealPositions,
   myCards: FlipCardData[],
   otherPlayersCards: FlipCardData[][],
-  updateLocalMatch: UpdateLocalMatch,
+  updateLocalMatch: UpdateLocalMatch | undefined,
   animationCompleteCallback: () => void
 ): void {
   const numPlayers = otherPlayersCards.length + 1;
@@ -340,10 +346,10 @@ function isLastDealtCard(
 
 function dealPlayerCardsAndPossiblyDiscard(
   match: MyMatch,
-  localMatch: LocalMatch,
+  localMatch: LocalMatch | undefined,
   playerDealPositions: PlayerDealPositions,
   playerDealAnimationParameters: PlayerDealAnimationParameters,
-  updateLocalMatch: UpdateLocalMatch,
+  updateLocalMatch: UpdateLocalMatch | undefined,
   animationCompleteCallback: () => void
 ): MyCardsOtherPlayersCards {
   const dealPositions = getDealPositions(
@@ -396,14 +402,13 @@ function getPlayerCardDealDiscardNumbers(numPlayers: number): {
 }
 
 export function dealThenDiscardIfRequired(
-  matchDetail: MatchDetail,
+  match:MyMatch,
+  localMatch:LocalMatch | undefined,
   positions: Positions,
-  updateLocalMatch: UpdateLocalMatch,
+  updateLocalMatch: UpdateLocalMatch | undefined,
   dealFlipDurations: DealFlipDiscardDurations,
   animationCompleteCallback: () => void
 ): FlipCardDatas {
-  const match = matchDetail.match;
-  const localMatch = matchDetail.localMatch;
   const playerPositions = positions.playerPositions;
   const numCardsToDeal = getNumCardsToDeal(match);
   // for cut card and box

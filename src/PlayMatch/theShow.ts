@@ -8,6 +8,7 @@ import {
   ShowScoring,
 } from "../generatedTypes";
 import { DelayEnqueueSnackbar } from "../hooks/useSnackbarWithDelay";
+import { GameWonProps } from "./GameWon";
 import {
   FlipCardData,
   FlipCardDatas,
@@ -610,6 +611,7 @@ export const addShowAnimation = (
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
   setCribBoardState: SetCribboardState,
+  setGameWonState: (gameWonState: GameWonProps) => void,
   delayEnqueueSnackbar: DelayEnqueueSnackbar,
   cardsWithOwners: CardsAndOwners,
   deckPosition: DeckPosition
@@ -641,6 +643,7 @@ export const addShowAnimation = (
       at: returnInPlayAt + duration,
     },
     setCribBoardState,
+    setGameWonState,
     delayEnqueueSnackbar,
     myMatch,
     playerPositions,

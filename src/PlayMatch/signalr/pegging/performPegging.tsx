@@ -29,6 +29,8 @@ import {
   flipDuration,
 } from "../../animation/animationDurations";
 import { LastToCompleteFactory } from "./getSignalRPeggingAnimationProvider";
+import { GameWonProps } from "../../GameWon";
+import { getGameWonState } from "../discard/getGameWonState";
 
 const ensurePeggingState = (cardData: FlipCardData) => {
   if (cardData.state !== FlipCardState.PeggingTurnedOver) {
@@ -117,6 +119,8 @@ export function performPegging(
   peggingPositions: PeggingPositions,
   myMatch: MyMatch,
   setCribBoardState: SetCribboardState,
+  setGameWonState: (gameWonProps: GameWonProps) => void,
+  peggingWon:boolean,
   enqueueSnackbar: EnqueueSnackbar,
   lastToCompleteFactory: LastToCompleteFactory
 ) {
@@ -126,6 +130,7 @@ export function performPegging(
     ? setTurnedOver(prevFlipCardDatas)
     : { ...prevFlipCardDatas };
 
+  const peggingCompleted = lastToCompleteFactory();
   const [moveToPeggingPositionAnimationSequence, pegDuration] =
     getMoveToPeggingPositionAnimationSequenceAndScore(
       getPeggedCardPositionIndex(prevFlipCardDatas),
@@ -135,7 +140,13 @@ export function performPegging(
       discardDuration,
       setCribBoardState,
       enqueueSnackbar,
-      lastToCompleteFactory()
+      () => {
+        if(peggingWon){
+          setGameWonState(getGameWonState(myMatch));
+        }
+        peggingCompleted();
+      }
+      
     );
 
   let pegDelay = pegDuration;

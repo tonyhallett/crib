@@ -19,6 +19,7 @@ import {
   CribBoardState,
   FlipCardDatas,
   PlayMatchProps,
+  CannotGoes,
   ReadyState,
 } from "./PlayMatchTypes";
 import {
@@ -31,12 +32,22 @@ import { getSignalRDiscardAnimationProvider } from "./signalr/discard/getSignalR
 import { usePeggingOverlay } from "./ui-hooks/usePeggingOverlay";
 import { Ready } from "./Ready";
 import { getReadyState } from "./getReadyState";
+import { GameWon, GameWonProps } from "./GameWon";
+import { noop } from "../utilities/noop";
 
 function noNewActions(matchDetail: MatchDetail) {
   return (
     matchDetail.localMatch.changeHistory.numberOfActions ===
     matchDetail.match.changeHistory.numberOfActions
   );
+}
+
+
+function getCannotGoes(myMatch:MyMatch):CannotGoes{
+  return {
+    me:myMatch.pegging.myCannotGo,
+    otherPlayers:myMatch.pegging.cannotGoes
+  }
 }
 
 function PlayMatchInner({
@@ -47,8 +58,11 @@ function PlayMatchInner({
   landscape,
   hasRenderedAMatch,
 }: PlayMatchProps) {
+  const dealNumberRef = useRef(0);
+  
   const scoresRef = useRef(matchDetail.match.scores);
   const myMatch = matchDetail.match;
+  const previousCannotGoesRef = useRef<CannotGoes>(getCannotGoes(myMatch));
   const { enqueueSnackbar, delayEnqueueSnackbar } = useSnackbarWithDelay();
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
@@ -67,6 +81,7 @@ function PlayMatchInner({
   const [gameState, setGameState] = useState<CribGameState>(
     matchDetail.match.gameState
   );
+  const [gameWonState, setGameWonState] = useState<GameWonProps | undefined>();
   const [nextPlayer, setNextPlayer] = useState<string | undefined>(
     matchDetail.match.pegging.nextPlayer
   );
@@ -118,7 +133,7 @@ function PlayMatchInner({
 
   const flipCards = useMemo(() => {
     return mappedFlipCardDatas.map((cardData, i) => (
-      <FlipCard key={i} {...cardData} size={cardSize} />
+      <FlipCard key={`${i}_${dealNumberRef.current}`} {...cardData} size={cardSize} />
     ));
   }, [cardSize, mappedFlipCardDatas]);
 
@@ -178,6 +193,7 @@ function PlayMatchInner({
             removeMyDiscardSelection,
             setGameState,
             setReadyState,
+            setGameWonState,
             setCribBoardState,
             enqueueSnackbar,
             syncChangeHistories,
@@ -198,6 +214,7 @@ function PlayMatchInner({
             },
             setCribBoardState,
             setReadyState,
+            setGameWonState,
             playMatchCribHub.ready,
             scoresRef
           )
@@ -208,14 +225,25 @@ function PlayMatchInner({
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
             setReadyState(getReadyState(myMatch));
+            setGameState(myMatch.gameState);
             if (myMatch.gameState === CribGameState.Discard) {
               setCribBoardState({
                 colouredScores: getColouredScores(myMatch.scores),
                 onComplete: animationCompleteCallback,
               });
-              // will animate the deck to the new position if necessary
-              // deal !
-              // board ?
+              setGameWonState(undefined);
+              // todo if allow the deck position to follow the player
+              // if(requiresMovingDeck) - move deck and wait before dealThenDiscardIfRequired
+              const newFlipCardDatas = dealThenDiscardIfRequired(
+                myMatch,
+                undefined,
+                positions,
+                undefined,
+                { dealDuration: 0.5, flipDuration, discardDuration },
+                animationCompleteCallback
+              );
+              dealNumberRef.current++;
+              return newFlipCardDatas;
             } else {
               animationCompleteCallback();
             }
@@ -263,7 +291,8 @@ function PlayMatchInner({
           () => {
             animationManager.current.animate((animationCompleteCallback) => {
               return dealThenDiscardIfRequired(
-                matchDetail,
+                matchDetail.match,
+                matchDetail.localMatch,
                 positions,
                 updateLocalMatch,
                 { dealDuration: 0.5, flipDuration, discardDuration },
@@ -291,6 +320,7 @@ function PlayMatchInner({
 
   return (
     <>
+      {gameWonState && <GameWon {...gameWonState}/>}
       <Ready {...readyState} zIndex={moreButtonZIndex - 1} />
       <div style={styles.cribBoardStyle}>
         <AnimatedCribBoard

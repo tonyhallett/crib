@@ -34,6 +34,8 @@ import { getCardsWithOwners } from "../../getCardsWithOwners";
 import { getDiscardScores } from "./getDiscardScores";
 import { EnqueueSnackbar } from "notistack";
 import { getReadyState } from "../../getReadyState";
+import { GameWonProps } from "../../GameWon";
+import { getGameWonState } from "./getGameWonState";
 
 export interface SignalRDiscardAnimationOptions {
   discardDuration: number;
@@ -56,6 +58,7 @@ const getCutCardAnimationData = (
   enqueueSnackbar: EnqueueSnackbar,
   myMatch: MyMatch,
   setCribBoardState: SetCribboardState,
+  gameWonCallback: (() => void) | undefined,
   complete: (() => void) | undefined
 ) => {
   const newCardData = { ...prevCardData };
@@ -76,6 +79,7 @@ const getCutCardAnimationData = (
         setCribBoardState({
           colouredScores: getColouredScores(getDiscardScores(myMatch)),
           onComplete() {
+            gameWonCallback?.();
             complete?.();
           },
         });
@@ -98,6 +102,7 @@ export function getSignalRDiscardAnimationProvider(
   removeMyDiscardSelection: () => void,
   setGameState: (gameState: CribGameState) => void,
   setReadyState: (readyState: ReadyState) => void,
+  setGameWonState:(gameWonState:GameWonProps) => void,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   syncChangeHistories: () => void,
@@ -238,7 +243,8 @@ export function getSignalRDiscardAnimationProvider(
         enqueueSnackbar,
         myMatch,
         setCribBoardState,
-        discardOrCutCardComplete
+        discardOrCutCardComplete,
+        cutCardWon ? () => setGameWonState(getGameWonState(myMatch)) : undefined,
       );
     }
 

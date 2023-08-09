@@ -27,6 +27,7 @@ import { getDeckPosition } from "../../layout/positions-utilities";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
 import { getReadyState } from "../../getReadyState";
+import { GameWonProps } from "../../GameWon";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -76,6 +77,7 @@ export function getSignalRPeggingAnimationProvider(
   },
   setCribBoardState: SetCribboardState,
   setReadyState: (readyState: ReadyState) => void,
+  setGameWonState: (gameWonProps: GameWonProps) => void,
   cribHubReady: () => void,
   scoresRef: MutableRefObject<Score[]> // assumption is that when access current will be current
 ): AnimationProvider {
@@ -118,6 +120,8 @@ export function getSignalRPeggingAnimationProvider(
       positions.peggingPositions,
       myMatch,
       setCribBoardState,
+      setGameWonState,
+      peggingWon,
       snackBarMethods.enqueueSnackbar,
       lastToCompleteFactory
     );
@@ -169,6 +173,7 @@ export function getSignalRPeggingAnimationProvider(
         myMatch,
         positions.playerPositions,
         setCribBoardState,
+        setGameWonState,
         snackBarMethods.delayEnqueueSnackbar,
         cardsWithOwners,
         deckPosition

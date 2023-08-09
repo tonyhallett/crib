@@ -33,6 +33,8 @@ import {
   HighestScoringShow,
   HighestScoringShowResult,
 } from "./signalr/pegging/HighestScoringShow";
+import { GameWonProps } from "./GameWon";
+import { getGameWonState } from "./signalr/discard/getGameWonState";
 
 export type ShowAndScoreAnimationOptions = Omit<
   MoveHandToDeckAnimationOptions,
@@ -151,6 +153,7 @@ export function showAndScore(
   pegShowScoring: Score[][],
   animationOptions: ShowAndScoreAnimationOptions,
   setCribBoardState: SetCribboardState,
+  setGameWonState: (gameWonProps: GameWonProps) => void,
   delayEnqueueSnackbar: DelayEnqueueSnackbar,
   myMatch: MyMatch,
   playerPositions: PlayerPositions[],
@@ -237,6 +240,11 @@ export function showAndScore(
       setTimeout(() => {
         setCribBoardState({
           colouredScores: getColouredScores(showScoring),
+          onComplete:() => {
+            if((myMatch.gameState === "GameWon" || myMatch.gameState === "MatchWon") && pegShowScoring.length === 0) {
+              setGameWonState(getGameWonState(myMatch));
+            }
+          }
         });
       }, at * 1000);
       at += defaultCribBoardDuration;

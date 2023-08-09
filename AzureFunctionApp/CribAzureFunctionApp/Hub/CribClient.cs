@@ -15,6 +15,7 @@ namespace CribAzureFunctionApp.Hub
     {
         Task discard(string playerId, MyMatch myMatch);
         Task ready(string playerId, MyMatch myMatch);
+        Task go(string playerId, MyMatch myMatch);
         Task peg(string playerId, PlayingCard peggedCard, MyMatch myMatch);
         Task friendRequest(Friendship friendship);
         Task friendRequestAccepted(Friendship inviterFriendship);

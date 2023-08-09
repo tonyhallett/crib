@@ -53,6 +53,7 @@ import {
   FourClubs,
   FourSpades,
   TenHearts,
+  SixHearts,
 } from "../../test-helpers/cards";
 import { PlayMatchContext } from "../PlayMatchContext";
 import { MatchDetail } from "../App";
@@ -984,7 +985,7 @@ const matches: ActionMyMatch[] = [
             changeHistory: {
               lastChangeDate: new Date("21 May 2023 09:00"),
               matchCreationDate: new Date("20 December 2022 14:48"),
-              numberOfActions: 9,
+              numberOfActions: 10,
             },
             title: "Peg action wins",
             gameState: CribGameState.Discard,
@@ -995,6 +996,7 @@ const matches: ActionMyMatch[] = [
               ThreeHearts,
               FourHearts,
               FiveHearts,
+              SixHearts
             ],
             cutCard: undefined,
             scores: [

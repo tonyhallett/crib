@@ -236,6 +236,27 @@ namespace CribAzureFunctionApp.Hub
             // tbd what send back
         }
 
+        [FunctionName(nameof(Go))]
+        public async Task Go(
+            [SignalRTrigger] InvocationContext invocationContext,
+            [CosmosDB(Connection = "CosmosConnectionString")] CosmosClient cosmosClient,
+            string matchId)
+        {
+            var playerId = invocationContext.UserId;
+
+            // will crib cosmos throw like cosmosclient apparently does
+            var match = await cribCosmos.ReadMatchAsync(cosmosClient, matchId);
+            matchLogic.Go(match, playerId);
+            await cribCosmos.ReplaceMatchAsync(cosmosClient, match); // concurrency todo
+
+            foreach (var player in match.GetPlayers().Select(p => p.Id))
+            {
+                await Clients.User(player).go(playerId, myMatchFactory.ToMyMatch(match, player));
+            }
+        }
+
+
+
 
         private static void VerifyCreateMatchPlayers(List<string> otherPlayers, string thisPlayer)
         {

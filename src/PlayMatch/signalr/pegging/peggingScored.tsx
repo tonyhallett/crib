@@ -23,6 +23,6 @@ export function peggingScored(
   );
   setCribBoardState({
     colouredScores: getColouredScores(pegScoring),
-    onComplete: cribBoardAnimationOnComplete,
+    onComplete: cribBoardAnimationOnComplete
   });
 }

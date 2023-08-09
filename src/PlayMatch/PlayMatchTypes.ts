@@ -33,6 +33,11 @@ export type PlayMatchCribHub = {
 
 export type ReadyState = Omit<ReadyProps, "zIndex">;
 
+export interface CannotGoes{
+  me:boolean,
+  otherPlayers:boolean[]
+}
+
 export enum FlipCardState {
   Box,
   CutCard,

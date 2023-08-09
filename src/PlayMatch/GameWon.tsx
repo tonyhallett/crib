@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@mui/material";
 import { motion, useAnimate } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 export interface GameWonProps {
   winner: string; // You won / They won / Other id won
 }
 
-export function GameWon(props: GameWonProps) {
+export function GameWonInner(props: GameWonProps) {
   const lastPropsRef = useRef<GameWonProps | undefined>();
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -76,3 +76,7 @@ export function GameWon(props: GameWonProps) {
     </motion.div>
   );
 }
+
+export const GameWon = memo(GameWonInner,(prev, next) => {
+  return prev.winner === next.winner;
+});
