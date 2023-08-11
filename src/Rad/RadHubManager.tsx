@@ -996,7 +996,7 @@ const matches: ActionMyMatch[] = [
               ThreeHearts,
               FourHearts,
               FiveHearts,
-              SixHearts
+              SixHearts,
             ],
             cutCard: undefined,
             scores: [
@@ -1318,6 +1318,320 @@ const matches: ActionMyMatch[] = [
       },
     ],
   },
+
+  {
+    actions: [
+      {
+        methodName: "go",
+        args: [
+          "Player2",
+          {
+            id: "3 player go action",
+            changeHistory: {
+              lastChangeDate: new Date("19 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 15,
+            },
+            title: "3 player go action",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 1, frontPeg: 22, backPeg: 9 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [
+                {
+                  owner: "Me",
+                  playingCard: AceSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceHearts,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: AceDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: AceClubs,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: TwoClubs,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: TwoHearts,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: ThreeSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: ThreeDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+              ],
+              goHistory: [], // this would be filled in
+              nextPlayer: "Me",
+              cannotGoes: [true, false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: noScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        methodName: "go",
+        args: [
+          "Player3",
+          {
+            id: "3 player go action",
+            changeHistory: {
+              lastChangeDate: new Date("19 May 2023 09:00"),
+              matchCreationDate: new Date("20 December 2022 14:48"),
+              numberOfActions: 16,
+            },
+            title: "3 player go action",
+            gameState: CribGameState.Pegging,
+            box: [],
+            myCards: [],
+            cutCard: TwoSpades,
+            scores: [
+              { games: 1, frontPeg: 23, backPeg: 22 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+              { games: 2, frontPeg: 12, backPeg: 4 },
+            ],
+            pegging: {
+              turnedOverCards: [],
+              inPlayCards: [
+                {
+                  owner: "Me",
+                  playingCard: AceSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: AceHearts,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: AceDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: AceClubs,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: TwoClubs,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: TwoHearts,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player2",
+                  playingCard: TwoDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Player3",
+                  playingCard: ThreeSpades,
+                  peggingScore: zeroPegScoring,
+                },
+                {
+                  owner: "Me",
+                  playingCard: ThreeDiamonds,
+                  peggingScore: zeroPegScoring,
+                },
+              ],
+              goHistory: [], // this would be filled in
+              nextPlayer: "Player2",
+              cannotGoes: [false, false],
+              myCannotGo: false,
+            },
+            myId: "Me",
+            dealerDetails: {
+              first: "Me",
+              current: "Me",
+            },
+            myReady: false,
+            matchWinDeterminant: "BestOf_3",
+            myScoringHistory: noScoringHistory,
+            otherPlayers: [
+              {
+                id: "Player2",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+              {
+                id: "Player3",
+                discarded: true,
+                playerScoringHistory: noScoringHistory,
+                ready: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    currentAction: 0,
+    id: "3 player go action",
+    changeHistory: {
+      lastChangeDate: new Date("19 May 2023 09:00"),
+      matchCreationDate: new Date("20 December 2022 14:48"),
+      numberOfActions: 14,
+    },
+    title: "3 player go action",
+    gameState: CribGameState.Pegging,
+    box: [],
+    myCards: [],
+    cutCard: TwoSpades,
+    scores: [
+      { games: 1, frontPeg: 22, backPeg: 9 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+      { games: 2, frontPeg: 12, backPeg: 4 },
+    ],
+    pegging: {
+      turnedOverCards: [],
+      inPlayCards: [
+        {
+          owner: "Me",
+          playingCard: AceSpades,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: AceHearts,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: AceDiamonds,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: AceClubs,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: TwoSpades,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: TwoClubs,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: TwoHearts,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player2",
+          playingCard: TwoDiamonds,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Player3",
+          playingCard: ThreeSpades,
+          peggingScore: zeroPegScoring,
+        },
+        {
+          owner: "Me",
+          playingCard: ThreeDiamonds,
+          peggingScore: zeroPegScoring,
+        },
+      ],
+      goHistory: [],
+      nextPlayer: "Player2",
+      cannotGoes: [false, false],
+      myCannotGo: false,
+    },
+    myId: "Me",
+    dealerDetails: {
+      first: "Me",
+      current: "Me",
+    },
+    myReady: false,
+    matchWinDeterminant: "BestOf_3",
+    myScoringHistory: noScoringHistory,
+    otherPlayers: [
+      {
+        id: "Player2",
+        discarded: true,
+        playerScoringHistory: noScoringHistory,
+        ready: false,
+      },
+      {
+        id: "Player3",
+        discarded: true,
+        playerScoringHistory: noScoringHistory,
+        ready: false,
+      },
+    ],
+  },
+
   {
     actions: [
       {

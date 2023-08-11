@@ -304,6 +304,9 @@ export default function App() {
         ready(playerId, myMatch) {
           gameAction("ready", myMatch, [playerId, myMatch]);
         },
+        go(playerId, myMatch) {
+          gameAction("go", myMatch, [playerId, myMatch]);
+        },
       });
       cribConnectionRef.current = cribConnection;
 

@@ -41,6 +41,7 @@ export type MyMatch = {
 export interface CribClient {
   discard(playerId: string, myMatch: MyMatch): void;
   ready(playerId: string, myMatch: MyMatch): void;
+  go(playerId: string, myMatch: MyMatch): void;
   peg(playerId: string, peggedCard: PlayingCard, myMatch: MyMatch): void;
   friendRequest(friendship: Friendship): void;
   friendRequestAccepted(inviterFriendship: Friendship): void;
@@ -201,6 +202,7 @@ export const hubFactory = {
       peg: (matchId: string, peggedCard: PlayingCard) =>
         connection.send("Peg", matchId, peggedCard),
       ready: (matchId: string) => connection.send("Ready", matchId),
+      go: (matchId: string) => connection.send("Go", matchId),
     };
   },
 };
@@ -273,6 +275,10 @@ export const clientFactory = {
 
       ready(playerId: string, myMatch: MyMatch) {
         return client.ready(playerId, myMatch);
+      },
+
+      go(playerId: string, myMatch: MyMatch) {
+        return client.go(playerId, myMatch);
       },
 
       peg(playerId: string, peggedCard: PlayingCard, myMatch: MyMatch) {

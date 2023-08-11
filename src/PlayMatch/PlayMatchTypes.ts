@@ -9,7 +9,7 @@ import { ReadyProps } from "./Ready";
 
 export type PlayMatchCribClientMethods = Pick<
   CribClient,
-  "discard" | "ready" | "peg"
+  "discard" | "ready" | "peg" | "go"
 >;
 // mapped type from PlayMatchCribClientMethods that omits the 'matchId' parameter
 export type PlayMatchCribClient = {
@@ -33,9 +33,9 @@ export type PlayMatchCribHub = {
 
 export type ReadyState = Omit<ReadyProps, "zIndex">;
 
-export interface CannotGoes{
-  me:boolean,
-  otherPlayers:boolean[]
+export interface CannotGoes {
+  me: boolean;
+  otherPlayers: boolean[];
 }
 
 export enum FlipCardState {

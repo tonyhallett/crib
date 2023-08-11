@@ -77,6 +77,6 @@ export function GameWonInner(props: GameWonProps) {
   );
 }
 
-export const GameWon = memo(GameWonInner,(prev, next) => {
+export const GameWon = memo(GameWonInner, (prev, next) => {
   return prev.winner === next.winner;
 });

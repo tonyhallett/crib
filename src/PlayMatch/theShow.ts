@@ -21,12 +21,12 @@ import {
   getMoveRotateSegment,
   setOrAddToAnimationSequence,
 } from "./animation/animationSegments";
+import { LastToCompleteFactory } from "./animation/createLastCompleteFactory";
 import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
 import { getPlayerPositionIndex } from "./getPlayerPositions";
 import { DeckPosition, PlayerPositions } from "./layout/matchLayoutManager";
 import { getCardValue, cardMatch } from "./playingCardUtilities";
 import { ShowAndScoreAnimationOptions, showAndScore } from "./showAndScore";
-import { LastToCompleteFactory } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
 
 export interface FlipCardDataLookup {
   [playingCard: string]: FlipCardData;

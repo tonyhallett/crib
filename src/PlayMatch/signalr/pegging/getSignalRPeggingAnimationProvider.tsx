@@ -28,6 +28,7 @@ import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
 import { getReadyState } from "../../getReadyState";
 import { GameWonProps } from "../../GameWon";
+import { createLastCompleteFactory } from "../../animation/createLastCompleteFactory";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -42,29 +43,6 @@ const didPeggingWin = (gameState: CribGameState, hasShowScores: boolean) => {
     !hasShowScores
   );
 };
-
-export type LastToCompleteFactory = () => () => void;
-function createLastCompleteFactory(
-  lastCompleted: () => void
-): LastToCompleteFactory {
-  let numCompleted = 0;
-  let numToComplete = 0;
-  let completed = false;
-  const complete = () => {
-    numCompleted++;
-    if (numCompleted === numToComplete) {
-      completed = true;
-      lastCompleted();
-    }
-  };
-  return () => {
-    if (completed) {
-      throw new Error("Have already completed");
-    }
-    numToComplete++;
-    return complete;
-  };
-}
 
 export function getSignalRPeggingAnimationProvider(
   myMatch: MyMatch,

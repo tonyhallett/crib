@@ -102,7 +102,7 @@ export function getSignalRDiscardAnimationProvider(
   removeMyDiscardSelection: () => void,
   setGameState: (gameState: CribGameState) => void,
   setReadyState: (readyState: ReadyState) => void,
-  setGameWonState:(gameWonState:GameWonProps) => void,
+  setGameWonState: (gameWonState: GameWonProps) => void,
   setCribBoardState: SetCribboardState,
   enqueueSnackbar: EnqueueSnackbar,
   syncChangeHistories: () => void,
@@ -244,7 +244,7 @@ export function getSignalRDiscardAnimationProvider(
         myMatch,
         setCribBoardState,
         discardOrCutCardComplete,
-        cutCardWon ? () => setGameWonState(getGameWonState(myMatch)) : undefined,
+        cutCardWon ? () => setGameWonState(getGameWonState(myMatch)) : undefined
       );
     }
 

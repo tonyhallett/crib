@@ -1,6 +1,7 @@
 import { Box, DeckPosition, Point } from "../layout/matchLayoutManager";
 import { OnComplete } from "../../fixAnimationSequence/common-motion-types";
 import {
+  CardSegment,
   DomSegmentOptionalElementOrSelectorWithOptions,
   FlipAnimation,
   FlipCardAnimationSequence,
@@ -129,3 +130,44 @@ export function moveCardsToDeckWithoutFlipping(
   });
   return duration + instantAnimationDuration;
 }
+
+export function getSepiaAnimationSegment(
+  sepiaAmount: number,
+  options: SegmentAnimationOptionsWithTransitionEndAndAt
+): DomSegmentOptionalElementOrSelectorWithOptions {
+  return getCSSFilterAnimationSegment("sepia", sepiaAmount.toString(), options);
+}
+
+function getCSSFilterAnimationSegment(
+  filterName: string,
+  filterAmount: string,
+  options: SegmentAnimationOptionsWithTransitionEndAndAt
+): DomSegmentOptionalElementOrSelectorWithOptions {
+  return [
+    undefined,
+    {
+      filter: `${filterName}(${filterAmount})`,
+    },
+    options,
+  ];
+}
+
+/*
+  const animateGo = (flipCardData:FlipCardData,go:boolean,duration:number, onComplete?:OnComplete) => {
+          const sepiaAmount = go ? 1 : 0;
+          flipCardData.animationSequence = [
+            [
+              undefined,
+              {
+                filter:`sepia(${sepiaAmount})`
+              },
+              {
+                duration,
+                onComplete
+              }
+            ]
+            
+          ]
+        }
+
+*/

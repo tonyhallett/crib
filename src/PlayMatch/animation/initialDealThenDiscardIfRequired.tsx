@@ -27,7 +27,6 @@ import {
 import { arrayOfEmptyArrays } from "../../utilities/arrayHelpers";
 import { LocalMatch } from "../../localMatch";
 import { OnComplete } from "../../fixAnimationSequence/common-motion-types";
-import { MatchDetail } from "../../App";
 
 interface DealPosition {
   playerPositions: PlayerPositions;
@@ -168,13 +167,13 @@ function getNumberOfDiscards(match: MyMatch, discardCount: number) {
 
 const createCompletionCallbacks = (
   localMatch: LocalMatch | undefined,
-  updateLocalMatch: UpdateLocalMatch|undefined,
+  updateLocalMatch: UpdateLocalMatch | undefined,
   numberOfDiscards: number,
   numberOfMatchActions: number,
   animationCompleteCallback: () => void
 ) => {
   const lastDealtCompleteCallback: OnComplete = () => {
-    if(localMatch){
+    if (localMatch) {
       const newLocalMatch: LocalMatch = {
         ...localMatch,
         changeHistory: {
@@ -184,7 +183,6 @@ const createCompletionCallbacks = (
       };
       updateLocalMatch?.(newLocalMatch);
     }
-    
 
     if (numberOfDiscards === 0) {
       animationCompleteCallback && animationCompleteCallback();
@@ -192,7 +190,7 @@ const createCompletionCallbacks = (
   };
 
   const lastDiscardCompleteCallback: OnComplete = () => {
-    if(localMatch){
+    if (localMatch) {
       const newLocalMatch: LocalMatch = {
         ...localMatch,
         changeHistory: {
@@ -201,10 +199,10 @@ const createCompletionCallbacks = (
           lastChangeDate: new Date(),
         },
       };
-  
+
       updateLocalMatch?.(newLocalMatch);
     }
-    
+
     animationCompleteCallback && animationCompleteCallback();
   };
 
@@ -402,8 +400,8 @@ function getPlayerCardDealDiscardNumbers(numPlayers: number): {
 }
 
 export function dealThenDiscardIfRequired(
-  match:MyMatch,
-  localMatch:LocalMatch | undefined,
+  match: MyMatch,
+  localMatch: LocalMatch | undefined,
   positions: Positions,
   updateLocalMatch: UpdateLocalMatch | undefined,
   dealFlipDurations: DealFlipDiscardDurations,

@@ -15,7 +15,6 @@ export function getGameWonState(myMatch: MyMatch): GameWonProps {
     }
   }
   return {
-    winner
+    winner,
   };
-
 }

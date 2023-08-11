@@ -36,7 +36,7 @@ class SingleValueAnimation implements IAnimationWithParameters {
   constructor(
     private filter: string,
     private filterSuffix = "",
-    private initialAmount: number = 0
+    initialAmount = 0
   ) {
     this.description = filter;
     this.parameters = [

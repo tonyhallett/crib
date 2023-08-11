@@ -28,13 +28,13 @@ import {
   setOrAddToAnimationSequence,
 } from "./animation/animationSegments";
 import { CardsAndOwner, CardsAndOwners } from "./getCardsWithOwners";
-import { LastToCompleteFactory } from "./signalr/pegging/getSignalRPeggingAnimationProvider";
 import {
   HighestScoringShow,
   HighestScoringShowResult,
 } from "./signalr/pegging/HighestScoringShow";
 import { GameWonProps } from "./GameWon";
 import { getGameWonState } from "./signalr/discard/getGameWonState";
+import { LastToCompleteFactory } from "./animation/createLastCompleteFactory";
 
 export type ShowAndScoreAnimationOptions = Omit<
   MoveHandToDeckAnimationOptions,
@@ -240,11 +240,15 @@ export function showAndScore(
       setTimeout(() => {
         setCribBoardState({
           colouredScores: getColouredScores(showScoring),
-          onComplete:() => {
-            if((myMatch.gameState === "GameWon" || myMatch.gameState === "MatchWon") && pegShowScoring.length === 0) {
+          onComplete: () => {
+            if (
+              (myMatch.gameState === "GameWon" ||
+                myMatch.gameState === "MatchWon") &&
+              pegShowScoring.length === 0
+            ) {
               setGameWonState(getGameWonState(myMatch));
             }
-          }
+          },
         });
       }, at * 1000);
       at += defaultCribBoardDuration;
