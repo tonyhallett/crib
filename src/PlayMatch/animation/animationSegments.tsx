@@ -151,23 +151,3 @@ function getCSSFilterAnimationSegment(
     options,
   ];
 }
-
-/*
-  const animateGo = (flipCardData:FlipCardData,go:boolean,duration:number, onComplete?:OnComplete) => {
-          const sepiaAmount = go ? 1 : 0;
-          flipCardData.animationSequence = [
-            [
-              undefined,
-              {
-                filter:`sepia(${sepiaAmount})`
-              },
-              {
-                duration,
-                onComplete
-              }
-            ]
-            
-          ]
-        }
-
-*/

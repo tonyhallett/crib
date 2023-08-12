@@ -7,6 +7,8 @@ using CribAzureFunctionApp.Matches.Scoring.Match;
 using CribAzureFunctionApp.Matches.Scoring;
 using CribAzureTest.TestHelpers;
 using CribAzureFunctionApp.Matches.Deal;
+using CribAzureFunctionApp.Matches.Card;
+using System.Runtime.CompilerServices;
 
 namespace CribAzureTest.Matches.Change
 {
@@ -42,9 +44,10 @@ namespace CribAzureTest.Matches.Change
             mockMatchVerifier.Verify(verifier => verifier.VerifyGo(match, ""));
         }
 
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Should_Score_Go_When_All_Called_Go(bool allCalledGo)
+        [TestCase(true, false, true)]
+        [TestCase(false, false, true)]
+        [TestCase(false, true, false)]
+        public void Should_Score_Go_When_All_Called_Go_That_Have_Cards_To_Play(bool p2CannotGo, bool p2HasCardsToPeg, bool expectedShouldScoreGo)
         {
             var mockCribMatchScorer = new Mock<ICribMatchScorer>();
             var matchLogic = new MatchLogic(
@@ -54,26 +57,25 @@ namespace CribAzureTest.Matches.Change
                 new Mock<ICribDealer>().Object,
                 new Mock<IDate>().Object
                 );
-
+            var p2Cards = p2HasCardsToPeg ? new List<PlayingCard> { new PlayingCard(Suit.Clubs, Pips.Jack) } : Empty.Cards;
             var match = new CribMatch(
                 Empty.MatchPlayer("p1"),
-                Empty.MatchPlayer("p2"),
+                new MatchPlayer("p2", p2Cards, false, Empty.HandAndBoxScoringHistory),
                 null,
                 null,
                 CribGameState.Pegging,
                 Cards.AceClubs,
                 Empty.Cards,
                 Empty.DealerDetails,
-                new Pegging(Empty.PeggedCards, Empty.PeggedCards, "p1", new List<bool> { false, allCalledGo }, Empty.GoHistory),
+                new Pegging(Empty.PeggedCards, Empty.PeggedCards, "p1", new List<bool> { false, p2CannotGo }, Empty.GoHistory),
                 Empty.Scores,
                 "3", "id", Empty.ChangeHistory, "", null
             );
             matchLogic.Go(match, "p1");
 
-            mockCribMatchScorer.Verify(cribMatchScorer => cribMatchScorer.ScoreGo(match, "p1"), Times.Exactly(allCalledGo ? 1 : 0));
-
+            mockCribMatchScorer.Verify(cribMatchScorer => cribMatchScorer.ScoreGo(match, "p1"), Times.Exactly(expectedShouldScoreGo ? 1 : 0));
         }
-
+        
         [TestCase(true)]
         [TestCase(false)]
         public void Should_Move_To_GameWon_State_When_Score_Go_And_Game_Won_And_Not_Match_Won(bool gameWon)
@@ -145,24 +147,31 @@ namespace CribAzureTest.Matches.Change
 
         }
 
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Should_Turn_Over_Cards_When_All_Called_Go(bool allCalledGo)
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, false)]
+        public void Should_Turn_Over_Cards_When_All_Called_Go_And_Not_Won(bool allCalledGo, bool gameWon)
         {
+            var mockCribMatchScorer = new Mock<ICribMatchScorer>();
+            mockCribMatchScorer.Setup(cribMatchScorer => cribMatchScorer.ScoreGo(It.IsAny<CribMatch>(), "p1")).Returns(gameWon);
             var matchLogic = new MatchLogic(
                 new Mock<IMatchVerifier>().Object,
-                new Mock<ICribMatchScorer>().Object,
+                mockCribMatchScorer.Object,
                 new Mock<INextPlayer>().Object,
                 new Mock<ICribDealer>().Object,
                 new Mock<IDate>().Object);
+
             var pegging = new Pegging(
                 new List<PeggedCard> {
                     new PeggedCard("p1", Cards.AceDiamonds, Empty.PegScoring)
                 },
-                new List<PeggedCard> { new PeggedCard("p2", Cards.AceSpades, Empty.PegScoring) }, "p1", new List<bool> { false, allCalledGo }, Empty.GoHistory);
+                new List<PeggedCard> { new PeggedCard("p2", Cards.AceSpades, Empty.PegScoring) }, "p1", 
+                new List<bool> { false, allCalledGo }, Empty.GoHistory
+            );
+
             var match = new CribMatch(
                 Empty.MatchPlayer("p1"),
-                Empty.MatchPlayer("p2"),
+                new MatchPlayer("p2", new List<PlayingCard> { new PlayingCard(Suit.Clubs, Pips.Jack)},false,Empty.HandAndBoxScoringHistory),
                 null,
                 null,
                 CribGameState.Pegging,
@@ -171,12 +180,12 @@ namespace CribAzureTest.Matches.Change
                 Empty.DealerDetails,
                 pegging,
                 Empty.Scores,
-                "3", "id", Empty.ChangeHistory, "", null
+                "BestOf_3", "id", Empty.ChangeHistory, "", null
             );
+
             matchLogic.Go(match, "p1");
 
-
-            if (allCalledGo)
+            if (allCalledGo && !gameWon)
             {
                 Assert.Multiple(() =>
                 {
@@ -230,8 +239,8 @@ namespace CribAzureTest.Matches.Change
             , new Mock<IDate>().Object);
             var pegging = new Pegging(Empty.PeggedCards, Empty.PeggedCards, playerThatCallsGo, new List<bool> { false, false }, Empty.GoHistory);
             var match = new CribMatch(
-                Empty.MatchPlayer("p1"),
-                Empty.MatchPlayer("p2"),
+                new MatchPlayer("p1", new List<PlayingCard> { new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p2", new List<PlayingCard> { new PlayingCard(Suit.Hearts, Pips.Ace) }, false, Empty.HandAndBoxScoringHistory),
                 null,
                 null,
                 CribGameState.Pegging,
@@ -252,11 +261,14 @@ namespace CribAzureTest.Matches.Change
         [TestCase(false)]
         public void Should_Set_The_Next_Player(bool isPlayer1)
         {
+            var player1 = Empty.MatchPlayer("p1");
+            var player2 = Empty.MatchPlayer("p2");
+
             var cannotGoPlayer = isPlayer1 ? "p1" : "p2";
             var pegging = new Pegging(Empty.PeggedCards, Empty.PeggedCards, cannotGoPlayer, new List<bool> { false, false }, Empty.GoHistory);
 
             var mockNextPlayer = new Mock<INextPlayer>();
-            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get(cannotGoPlayer, new List<string> { "p1", "p2" }, It.Is<List<bool>>(cannotGoes => cannotGoes == pegging.CannotGoes))).Returns("nextplayer");
+            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get(cannotGoPlayer, new List<MatchPlayer> { player1, player2 }, It.Is<List<bool>>(cannotGoes => cannotGoes == pegging.CannotGoes))).Returns("nextplayer");
 
             var matchLogic = new MatchLogic(
                 new Mock<IMatchVerifier>().Object,
@@ -267,8 +279,8 @@ namespace CribAzureTest.Matches.Change
             );
 
             var match = new CribMatch(
-                Empty.MatchPlayer("p1"),
-                Empty.MatchPlayer("p2"),
+                player1,
+                player2,
                 null,
                 null,
                 CribGameState.Pegging,

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using CribAzureFunctionApp.Cosmos;
 using CribAzureFunctionApp.Matches.Card;
 using CribAzureFunctionApp.Matches.Deal;
 using CribAzureFunctionApp.Matches.Scoring;
@@ -9,6 +10,8 @@ using CribAzureFunctionApp.Matches.Utilities;
 using CribAzureFunctionApp.Utilities;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace CribAzureFunctionApp.Matches.Change
 {
@@ -110,7 +113,7 @@ namespace CribAzureFunctionApp.Matches.Change
             }
         }
 
-        private void PeggingDoesNotWinGame(CribMatch match, bool is31, List<string> playerIds)
+        private void PeggingDoesNotWinGame(CribMatch match, bool is31, List<MatchPlayer> players)
         {
             if (match.IsPeggingCompleted())
             {
@@ -122,7 +125,7 @@ namespace CribAzureFunctionApp.Matches.Change
                 {
                     TurnOverCardsResetAllCanGo(match.Pegging);
                 }
-                match.Pegging.NextPlayer = nextPlayer.Get(match.Pegging.NextPlayer, playerIds, match.Pegging.CannotGoes);
+                match.Pegging.NextPlayer = nextPlayer.Get(match.Pegging.NextPlayer, players, match.Pegging.CannotGoes);
             }
         }
 
@@ -134,10 +137,8 @@ namespace CribAzureFunctionApp.Matches.Change
 
             var players = match.GetPlayers();
             var player = players.First(p => p.Id == playerId);
-            var cards = player.Cards;
-            var playerIds = players.Select(p => p.Id).ToList();
-
-            cards.Remove(peggedCard);
+            player.Cards.Remove(peggedCard);
+            
             var isPeggingCompleted = match.IsPeggingCompleted();
             var peggedCards = match.Pegging.InPlayCards.Select(peggedCard => peggedCard.PlayingCard).Append(peggedCard).ToList();
 
@@ -151,10 +152,8 @@ namespace CribAzureFunctionApp.Matches.Change
             }
             else
             {
-                PeggingDoesNotWinGame(match, peggingResult == PeggingResult.ThirtyOne, playerIds);
+                PeggingDoesNotWinGame(match, peggingResult == PeggingResult.ThirtyOne, players);
             }
-
-
         }
 
         private void MoveToShowState(CribMatch match)
@@ -164,17 +163,16 @@ namespace CribAzureFunctionApp.Matches.Change
             PossiblyAdvanceToWinState(gameWon, match);
         }
 
-        //private static void MovePeggedCardToInPlayCards(List<PlayingCard> hand, List<PeggedCard> inPlayCards, PlayingCard peggedCard, string playerId)
-        //{
-        //    hand.Remove(peggedCard);
-        //    inPlayCards.Add(new PeggedCard(playerId, peggedCard));
-        //}
-
         private static void TurnOverCardsResetAllCanGo(Pegging pegging)
+        {
+            TurnOverCards(pegging);
+            SetAllCanGo(pegging.CannotGoes);
+        }
+
+        private static void TurnOverCards(Pegging pegging)
         {
             pegging.TurnedOverCards.AddRange(pegging.InPlayCards);
             pegging.InPlayCards.Clear();
-            SetAllCanGo(pegging.CannotGoes);
         }
 
         private static void SetAllCanGo(List<bool> cannotGoes)
@@ -185,6 +183,17 @@ namespace CribAzureFunctionApp.Matches.Change
             }
         }
 
+        private static bool AllCalledGo(List<MatchPlayer> players, string goPlayerId, List<bool> cannotGoes)
+        {
+            return players.All((player, i) =>
+            {
+                var isPlayer = player.Id == goPlayerId;
+                if (isPlayer) return true;
+                return cannotGoes[i] || player.Cards.Count == 0;
+            });
+
+        }
+
         public void Go(CribMatch match, string playerId)
         {
             matchVerifier.VerifyGo(match, playerId);
@@ -192,19 +201,19 @@ namespace CribAzureFunctionApp.Matches.Change
             var players = match.GetPlayers();
             var playersCards = players.Select(p => p.Cards);
             var playerIndex = players.FindIndex(p => p.Id == playerId);
-            var allCalledGo = players.All((player, i) =>
-            {
-                var isPlayer = player.Id == playerId;
-                if (isPlayer) return true;
-                return match.Pegging.CannotGoes[i];
-            });
+            var allCalledGo = AllCalledGo(players, playerId, match.Pegging.CannotGoes);
 
             AddToGoHistory(match.Pegging, playerId);
 
             if (allCalledGo)
             {
                 var gameWon = cribMatchScorer.ScoreGo(match, playerId);
-                TurnOverCardsResetAllCanGo(match.Pegging);
+                SetAllCanGo(match.Pegging.CannotGoes);
+                if (!gameWon)
+                {
+                    TurnOverCards(match.Pegging);
+                }
+                
                 PossiblyAdvanceToWinState(gameWon, match);
             }
             else
@@ -213,7 +222,7 @@ namespace CribAzureFunctionApp.Matches.Change
             }
 
 
-            var nextPlayerId = nextPlayer.Get(playerId, players.Select(p => p.Id).ToList(), match.Pegging.CannotGoes);
+            var nextPlayerId = nextPlayer.Get(playerId, players, match.Pegging.CannotGoes);
             match.Pegging.NextPlayer = nextPlayerId;
 
             UpdateChangeHistory(match);

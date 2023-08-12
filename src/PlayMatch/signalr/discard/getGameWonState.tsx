@@ -1,5 +1,5 @@
 import { MyMatch } from "../../../generatedTypes";
-import { getWinningScoreIndex } from "./getDiscardScores";
+import { getWinningScoreIndex } from "../getWinningScoreIndex";
 import { GameWonProps } from "../../GameWon";
 
 export function getGameWonState(myMatch: MyMatch): GameWonProps {

@@ -42,7 +42,11 @@ import { getOfAKindScore } from "./scoring/scoring-utilities";
 import { getAppendMessage } from "../utilities/stringUtilities";
 
 export const setTurnedOver = (flipCardDatas: FlipCardDatas): FlipCardDatas => {
-  return setPlayableCardsState(flipCardDatas, FlipCardState.PeggingTurnedOver);
+  return setPlayableCardsState(
+    flipCardDatas,
+    FlipCardState.PeggingInPlay,
+    FlipCardState.PeggingTurnedOver
+  );
 };
 
 export const moveCutCardToPlayerHand = (

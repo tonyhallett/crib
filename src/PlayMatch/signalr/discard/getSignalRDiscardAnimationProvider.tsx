@@ -31,7 +31,7 @@ import {
 import { flipDuration } from "../../animation/animationDurations";
 import { clearUpAfterWon } from "../../animation/clearUpAfterWon";
 import { getCardsWithOwners } from "../../getCardsWithOwners";
-import { getDiscardScores } from "./getDiscardScores";
+import { getScoresBeforeWinReset } from "../getScoresBeforeWinReset";
 import { EnqueueSnackbar } from "notistack";
 import { getReadyState } from "../../getReadyState";
 import { GameWonProps } from "../../GameWon";
@@ -77,7 +77,7 @@ const getCutCardAnimationData = (
         });
         requiresCompletion = false;
         setCribBoardState({
-          colouredScores: getColouredScores(getDiscardScores(myMatch)),
+          colouredScores: getColouredScores(getScoresBeforeWinReset(myMatch)),
           onComplete() {
             gameWonCallback?.();
             complete?.();

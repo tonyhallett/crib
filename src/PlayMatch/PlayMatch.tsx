@@ -11,7 +11,11 @@ import cribBoardWoodUrl from "../backgrounds/cribBoardWoodUrl";
 import { useOverflowHidden } from "../hooks/useOverflowHidden";
 import { MatchDetail, moreButtonZIndex } from "../App";
 import { useControlMyCards } from "./ui-hooks/useControlMyCards";
-import { getPeggingCount } from "./signalRPeg";
+import {
+  addTurnOverTogetherAnimation,
+  getPeggingCount,
+  setTurnedOver,
+} from "./signalRPeg";
 
 import { useSnackbarWithDelay } from "../hooks/useSnackbarWithDelay";
 import { getColouredScores } from "./getColouredScores";
@@ -41,6 +45,8 @@ import { getSepiaAnimationSegment } from "./animation/animationSegments";
 import { clearUpAfterWon } from "./animation/clearUpAfterWon";
 import { getCardsWithOwners } from "./getCardsWithOwners";
 import { getDeckPosition } from "./layout/positions-utilities";
+import { getGameWonState } from "./signalr/discard/getGameWonState";
+import { getScoresBeforeWinReset } from "./signalr/getScoresBeforeWinReset";
 
 function noNewActions(matchDetail: MatchDetail) {
   return (
@@ -264,18 +270,21 @@ function PlayMatchInner({
       },
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       go(playerId, myMatch) {
-        const allCalledGoAt = 2; //tbd
         const animateGo = (
           flipCardData: FlipCardData,
           calledGo: boolean,
           allCalledGo: boolean,
           duration: number,
+          allCalledGoAt: number,
           onComplete?: OnComplete
         ) => {
           flipCardData.animationSequence = [];
           if (calledGo) {
             flipCardData.animationSequence.push(
-              getSepiaAnimationSegment(1, { duration, onComplete })
+              getSepiaAnimationSegment(1, {
+                duration,
+                onComplete: allCalledGo ? undefined : onComplete,
+              })
             );
           }
           if (allCalledGo) {
@@ -308,18 +317,30 @@ function PlayMatchInner({
         animationManager.current.animate(
           // eslint-disable-next-line complexity
           (animationCompleteCallback, prevFlipCardDatas) => {
+            prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
             const newFlipCardDatas: FlipCardDatas = {
-              ...(prevFlipCardDatas as FlipCardDatas),
+              ...prevFlipCardDatas,
             };
+
+            const goWon =
+              myMatch.gameState === CribGameState.GameWon ||
+              myMatch.gameState === CribGameState.MatchWon;
+
             const previousCannotGoes = previousCannotGoesRef.current;
             const cannotGoes = getCannotGoes(myMatch);
             const allCalledGo = didAllCallGo(cannotGoes);
             if (allCalledGo) {
               setAllCalledGo(cannotGoes); //facilitates the cannot go animation for the last to call
             }
-            const lastToCompleteFactory = createLastCompleteFactory(
-              animationCompleteCallback
-            );
+            const lastToCompleteFactory = createLastCompleteFactory(() => {
+              animationCompleteCallback();
+              setReadyState(getReadyState(myMatch));
+              if (goWon) {
+                playMatchCribHub.ready();
+              }
+            });
+            const animateGoDuration = 1;
+            const animateAllCalledGoAt = 2;
             //todo - common code refactor
             const iCalledGo = previousCannotGoes.me !== cannotGoes.me;
             if (iCalledGo || allCalledGo) {
@@ -331,7 +352,8 @@ function PlayMatchInner({
                       newCard,
                       iCalledGo,
                       allCalledGo,
-                      1,
+                      animateGoDuration,
+                      animateAllCalledGoAt,
                       lastToCompleteFactory()
                     );
                     return newCard;
@@ -358,7 +380,8 @@ function PlayMatchInner({
                             newCard,
                             otherPlayerCalledGo,
                             allCalledGo,
-                            1,
+                            animateGoDuration,
+                            animateAllCalledGoAt,
                             lastToCompleteFactory()
                           );
                           return newCard;
@@ -369,18 +392,24 @@ function PlayMatchInner({
                 }
               }
             );
+
             if (allCalledGo) {
-              setCribBoardState({
-                colouredScores: getColouredScores(myMatch.scores), // needs animation complete
-                onComplete: lastToCompleteFactory(),
-              });
-              if (
-                myMatch.gameState === CribGameState.GameWon ||
-                myMatch.gameState === CribGameState.MatchWon
-              ) {
-                //use the clean up animation
-                // ready
-                setReadyState(getReadyState(myMatch));
+              const cribBoardLastToComplete = lastToCompleteFactory();
+              window.setTimeout(() => {
+                setCribBoardState({
+                  colouredScores: getColouredScores(
+                    getScoresBeforeWinReset(myMatch)
+                  ),
+                  onComplete: () => {
+                    cribBoardLastToComplete();
+                    if (goWon) {
+                      setGameWonState(getGameWonState(myMatch));
+                    }
+                  },
+                });
+              }, animateGoDuration * 1000);
+
+              if (goWon) {
                 const cardsWithOwners = getCardsWithOwners(
                   newFlipCardDatas,
                   myMatch.myId,
@@ -388,7 +417,9 @@ function PlayMatchInner({
                   newFlipCardDatas.additionalBoxCard,
                   myMatch.box
                 );
-                const clearUpAt = 3; //tbd , durations
+
+                // this should be after the all called go animation back to normal state
+                const clearUpAt = 3;
                 clearUpAfterWon(
                   newFlipCardDatas.cutCard,
                   cardsWithOwners,
@@ -403,7 +434,18 @@ function PlayMatchInner({
                   lastToCompleteFactory()
                 );
               } else {
-                // just turn over cards
+                setTurnedOver(newFlipCardDatas);
+                const turnOverDelay = 3; //tbd
+                addTurnOverTogetherAnimation(
+                  prevFlipCardDatas,
+                  newFlipCardDatas,
+                  turnOverDelay,
+                  lastToCompleteFactory(),
+                  myMatch,
+                  positions.peggingPositions,
+                  0.5,
+                  0.5
+                );
               }
               // game turn over cards and game won
               resetGoes(cannotGoes);
@@ -424,7 +466,7 @@ function PlayMatchInner({
     enqueueSnackbar,
     allowPegging,
     delayEnqueueSnackbar,
-    playMatchCribHub.ready,
+    playMatchCribHub,
   ]);
   const staticRender = useCallback(() => {
     const myMatch = matchDetail.match;

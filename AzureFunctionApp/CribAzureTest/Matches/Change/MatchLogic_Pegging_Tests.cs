@@ -344,16 +344,20 @@ namespace CribAzureTest.Matches.Change
         {
             var cannotGoes = new List<bool> { true, false };
             var pegging = new Pegging(new List<PeggedCard> { }, Empty.PeggedCards, "p1", cannotGoes, Empty.GoHistory);
+
+            var player1 = new MatchPlayer("p1", new List<PlayingCard> { Cards.AceDiamonds }, false, Empty.HandAndBoxScoringHistory);
+            var player2 = new MatchPlayer("p2", new List<PlayingCard> { Cards.FiveDiamonds }, false, Empty.HandAndBoxScoringHistory);
+
             var mockNextPlayer = new Mock<INextPlayer>();
-            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get("p1", new List<string> { "p1", "p2" }, cannotGoes)).Returns("nextplayer!");
+            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get("p1", new List<MatchPlayer> { player1, player2 }, cannotGoes)).Returns("nextplayer!");
             var matchLogic = new MatchLogic(
                 new Mock<IMatchVerifier>().Object, new Mock<ICribMatchScorer>().Object, mockNextPlayer.Object,
                 new Mock<ICribDealer>().Object, new Mock<IDate>().Object);
 
 
             var match = new CribMatch(
-                new MatchPlayer("p1", new List<PlayingCard> { Cards.AceDiamonds }, false, Empty.HandAndBoxScoringHistory),
-                new MatchPlayer("p2", new List<PlayingCard> { Cards.FiveDiamonds }, false, Empty.HandAndBoxScoringHistory),
+                player1,
+                player2,
                 null,
                 null,
                 CribGameState.Pegging,
@@ -376,15 +380,12 @@ namespace CribAzureTest.Matches.Change
         {
             var cannotGoes = new List<bool> { true, false };
             var pegging = new Pegging(new List<PeggedCard> { }, Empty.PeggedCards, "p1", cannotGoes, Empty.GoHistory);
-            var mockNextPlayer = new Mock<INextPlayer>();
-            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get("p1", new List<string> { "p1", "p2" }, cannotGoes)).Returns("nextplayer!");
-
 
             var mockDate = new Mock<IDate>();
             var utcNow = DateTime.UtcNow;
             mockDate.Setup(date => date.UTCNow()).Returns(utcNow);
             var matchLogic = new MatchLogic(
-                new Mock<IMatchVerifier>().Object, new Mock<ICribMatchScorer>().Object, mockNextPlayer.Object,
+                new Mock<IMatchVerifier>().Object, new Mock<ICribMatchScorer>().Object, new Mock<INextPlayer>().Object,
                 new Mock<ICribDealer>().Object, mockDate.Object);
 
             var startDate = DateTime.UtcNow;

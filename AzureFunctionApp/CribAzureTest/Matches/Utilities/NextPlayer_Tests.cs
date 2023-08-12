@@ -1,57 +1,67 @@
-﻿using CribAzureFunctionApp.Matches.State;
+﻿using CribAzureFunctionApp.Matches.Card;
+using CribAzureFunctionApp.Matches.State;
 using CribAzureFunctionApp.Matches.Utilities;
+using CribAzureTest.TestHelpers;
 using System.Collections;
 
 namespace CribAzureTest.Matches.Utilities
 {
     public class NextPlayer_Tests
     {
+        public class NextPlayerTestCase : TestCaseData
+        {
+            public NextPlayerTestCase(string currentPlayer,List<MatchPlayer> matchPlayers, List<bool> cannotGoes, string expectedNextPlayer)
+                : base(currentPlayer, matchPlayers, cannotGoes, expectedNextPlayer)
+            {
+            }
+        }
         public class NextPlayerDataCases : IEnumerable
         {
             private readonly List<bool> fourPlayersAllCanGo = new() { false, false, false, false };
+            private readonly List<MatchPlayer> matchPlayersWithCards = new()
+            {
+                new MatchPlayer("p1", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p2", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p3", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p4", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+            };
+            private readonly List<MatchPlayer> matchPlayersSecondWithoutCards = new()
+            {
+                new MatchPlayer("p1", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p2", new List<PlayingCard>{},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p3", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+                new MatchPlayer("p4", new List<PlayingCard>{ new PlayingCard(Suit.Clubs, Pips.Ace)},false, Empty.HandAndBoxScoringHistory),
+            };
             public IEnumerator GetEnumerator()
             {
-                yield return new TestCaseData(
-                    0, fourPlayersAllCanGo, 1
-                ).SetName("4 players all can go.  0 Moves to next");
-                yield return new TestCaseData(
-                    1, fourPlayersAllCanGo, 2
-                ).SetName("4 players all can go.  1 Moves to next");
-                yield return new TestCaseData(
-                    2, fourPlayersAllCanGo, 3
-                ).SetName("4 players all can go.  2 Moves to next");
-                yield return new TestCaseData(
-                    3, fourPlayersAllCanGo, 0
-                ).SetName("4 players all can go.  3 Moves to first");
+                yield return new NextPlayerTestCase(matchPlayersWithCards[0].Id, matchPlayersWithCards, fourPlayersAllCanGo, matchPlayersWithCards[1].Id)
+                    .SetName("4 players with cards. all can go.  0 Moves to next");
+                yield return new NextPlayerTestCase(matchPlayersWithCards[1].Id, matchPlayersWithCards, fourPlayersAllCanGo, matchPlayersWithCards[2].Id)
+                   .SetName("4 players with cards. all can go.  1 Moves to 2");
+                yield return new NextPlayerTestCase(matchPlayersWithCards[2].Id, matchPlayersWithCards, fourPlayersAllCanGo, matchPlayersWithCards[3].Id)
+                   .SetName("4 players with cards. all can go.  2 Moves to 3");
+                yield return new NextPlayerTestCase(matchPlayersWithCards[3].Id, matchPlayersWithCards, fourPlayersAllCanGo, matchPlayersWithCards[0].Id)
+                   .SetName("4 players with cards. all can go.  3 Moves to first");
 
-                yield return new TestCaseData(
-                    0, new List<bool> { false, true, false, false }, 2
-                ).SetName("4 players next cannot go.  0 Moves to 2");
-                yield return new TestCaseData(
-                    0, new List<bool> { false, true, true, false }, 3
-                ).SetName("4 players next two cannot go.  0 Moves to 3");
-                yield return new TestCaseData(
-                    0, new List<bool> { false, true, true, true }, 0
-                ).SetName("4 players all apart from current cannot go.  Current player does not change");
-                yield return new TestCaseData(
-                    2, new List<bool> { false, false, false, true }, 0
-                ).SetName("Cannot go cycle");
+                yield return new NextPlayerTestCase(matchPlayersWithCards[0].Id, matchPlayersWithCards, new List<bool> { false, true, false, false }, matchPlayersWithCards[2].Id)
+                    .SetName("4 players with cards. Next called go.  0 Moves to 2");
+                
+                yield return new NextPlayerTestCase(matchPlayersSecondWithoutCards[0].Id, matchPlayersSecondWithoutCards, fourPlayersAllCanGo, matchPlayersSecondWithoutCards[2].Id)
+                    .SetName("Skipping player with no cards");
+
+                    
             }
         }
 
 
 
         [TestCaseSource(typeof(NextPlayerDataCases))]
-        public void Should_Return_Next_Player(int currentPlayerIndex, List<bool> cannotGoes, int expectedNextPlayerIndex)
+        public void Should_Return_Next_Player(string currentPlayer, List<MatchPlayer> matchPlayers, List<bool> cannotGoes, string expectedNextPlayer)
         {
-            var playerIds = cannotGoes.Select((_, i) => $"player{i}").ToList();
-            var currentPlayerId = playerIds[currentPlayerIndex];
-
             var nextPlayer = new NextPlayer();
+            var nextPlayerId = nextPlayer.Get(currentPlayer, matchPlayers, cannotGoes);
 
-            var nextPlayerId = nextPlayer.Get(currentPlayerId, playerIds, cannotGoes);
-
-            Assert.That(nextPlayerId, Is.EqualTo(playerIds[expectedNextPlayerIndex]));
+            Assert.That(nextPlayerId, Is.EqualTo(expectedNextPlayer));
         }
 
         public class NextPlayerTurnOrderCases : IEnumerable

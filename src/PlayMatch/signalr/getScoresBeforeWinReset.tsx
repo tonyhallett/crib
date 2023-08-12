@@ -1,11 +1,7 @@
-import { CribGameState, MyMatch, Score } from "../../../generatedTypes";
+import { CribGameState, MyMatch } from "../../generatedTypes";
+import { getWinningScoreIndex } from "./getWinningScoreIndex";
 
-export function getWinningScoreIndex(scores: Score[]) {
-  return scores.findIndex(
-    (score) => score.frontPeg === 0 && score.backPeg === 0
-  );
-}
-export function getDiscardScores(myMatch: MyMatch) {
+export function getScoresBeforeWinReset(myMatch: MyMatch) {
   let scores = myMatch.scores;
   if (
     myMatch.gameState === CribGameState.MatchWon ||

@@ -22,7 +22,11 @@ import {
 } from "./animationSegments";
 import { getPlayerPositions } from "../getPlayerPositions";
 
-function flipStack(cards: FlipCardData[], flipDuration: number): Duration {
+function flipStack(
+  cards: FlipCardData[],
+  flipDuration: number,
+  at: number
+): Duration {
   cards.forEach((card, index) => {
     const isTop = index === cards.length - 1;
     const flipAnimation: FlipAnimation = {
@@ -30,7 +34,7 @@ function flipStack(cards: FlipCardData[], flipDuration: number): Duration {
       flip: true,
     };
     const animationSequence: FlipCardAnimationSequence = [
-      createHideShowSegment(!isTop),
+      createHideShowSegment(!isTop, at),
       // need a pause
       flipAnimation,
     ];
@@ -103,32 +107,33 @@ function movePlayerCardsToDeck(
     ).discard;
     const isMe = cardsAndOwner.owner === myMatch.myId;
     const cards = getCardsInHand(cardsAndOwner.cards);
+    if (cards.length > 0) {
+      const slideOverDuration = slideOver(
+        cards,
+        handPosition,
+        at,
+        moveToFirstDuration
+      );
+      incrementedDuration(slideOverDuration);
 
-    const slideOverDuration = slideOver(
-      cards,
-      handPosition,
-      at,
-      moveToFirstDuration
-    );
-    incrementedDuration(slideOverDuration);
+      if (isMe) {
+        const flipStackDuration = flipStack(cards, flipDuration, at);
+        incrementedDuration(flipStackDuration);
+      }
 
-    if (isMe) {
-      const flipStackDuration = flipStack(cards, flipDuration);
-      incrementedDuration(flipStackDuration);
-    }
+      const moveCardsToDeckDuration = moveCardsToDeckWithoutFlipping(
+        cards,
+        currentTopOfDeckZindex++,
+        deckPosition,
+        at,
+        moveToDeckDuration
+      );
+      incrementedDuration(moveCardsToDeckDuration);
 
-    const moveCardsToDeckDuration = moveCardsToDeckWithoutFlipping(
-      cards,
-      currentTopOfDeckZindex++,
-      deckPosition,
-      undefined,
-      moveToDeckDuration
-    );
-    incrementedDuration(moveCardsToDeckDuration);
-
-    if (isMe) {
-      const showAllCardsDuration = showAllCards(cards);
-      incrementedDuration(showAllCardsDuration);
+      if (isMe) {
+        const showAllCardsDuration = showAllCards(cards);
+        incrementedDuration(showAllCardsDuration);
+      }
     }
   });
   return duration;

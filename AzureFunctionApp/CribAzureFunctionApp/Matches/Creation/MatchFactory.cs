@@ -33,14 +33,6 @@ namespace CribAzureFunctionApp.Matches.Creation
             this.date = date;
         }
 
-        private string GetNextPlayerForPegging(string dealer, string creator, List<string> otherPlayers)
-        {
-            var allPlayers = new List<string> { creator };
-            allPlayers.AddRange(otherPlayers);
-
-            return nextPlayer.Get(dealer, allPlayers, Pegging.AllCanGo(allPlayers.Count));
-        }
-
         private static ScoringHistory<HighestScoringCards> NeverScored => new(0, 0, null);
 
         private static PlayerScoringHistory NeverScoredScoringHistory => new(NeverScored, NeverScored, new ScoringHistory<HandAndBoxHighestScoringCards>(0, 0, null));
@@ -62,8 +54,14 @@ namespace CribAzureFunctionApp.Matches.Creation
             var cribPlayingCards = cribDealer.Deal(1 + options.OtherPlayers.Count);
 
             var initialDealer = randomDealer.Get(otherPlayers, creator);
-            
-            return new CribMatch(
+            var pegging = new Pegging(
+                    new List<PeggedCard>(),
+                    new List<PeggedCard>(),
+                    "",
+                    Pegging.AllCanGo(otherPlayers.Count + 1),
+                    new List<Go>()
+                );
+            var cribMatch = new CribMatch(
                 CreateMatchPlayer(creator, cribPlayingCards.Player1Cards),
                 CreateMatchPlayer(otherPlayers[0], cribPlayingCards.Player2Cards),
                 otherPlayers.Count > 1 ? CreateMatchPlayer(otherPlayers[1], cribPlayingCards.Player3Cards) : null,
@@ -72,20 +70,18 @@ namespace CribAzureFunctionApp.Matches.Creation
                 cribPlayingCards.CutCard,
                 cribPlayingCards.Box,
                 new DealerDetails(initialDealer, initialDealer),
-                new Pegging(
-                    new List<PeggedCard>(), 
-                    new List<PeggedCard>(), 
-                    GetNextPlayerForPegging(initialDealer, creator, otherPlayers),
-                    Pegging.AllCanGo(otherPlayers.Count + 1), 
-                    new List<Go>()
-                ),
+                pegging,
                 GetInitialScores(otherPlayers.Count + 1),
                 options.MatchWinDeterminant,
                 idFactory.Get(),
                 InitialChangeHistory(),
                 options.Title,
                 null
-            ); ;
+            );
+            var players = cribMatch.GetPlayers();
+            pegging.NextPlayer = nextPlayer.Get(initialDealer, players, Pegging.AllCanGo(players.Count));
+
+            return cribMatch;
         }
 
         private static List<Score> GetInitialScores(int numPlayers)

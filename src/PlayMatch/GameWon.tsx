@@ -67,6 +67,7 @@ export function GameWonInner(props: GameWonProps) {
         left: window.innerWidth,
         position: "fixed",
         width: "max-content",
+        zIndex: 100,
       }}
       ref={scope}
     >

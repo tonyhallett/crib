@@ -5,6 +5,7 @@ using CribAzureFunctionApp.Matches.Scoring;
 using CribAzureFunctionApp.Matches.State;
 using CribAzureFunctionApp.Matches.Utilities;
 using CribAzureFunctionApp.Utilities;
+using CribAzureTest.TestHelpers;
 using Moq;
 using System.Collections;
 namespace CribAzureTest.Matches.Creation
@@ -262,19 +263,23 @@ namespace CribAzureTest.Matches.Creation
         public void MatchFactory_Should_Create_Match_With_Pegging_Next_Player_After_Dealer()
         {
             var mockDealer = new Mock<ICribDealer>();
-            var mockDealtCards = new Mock<ICribPlayingCards<PlayingCard>>();
-            mockDealer.Setup(dealer => dealer.Deal(4)).Returns(mockDealtCards.Object);
+            var cribPlayingCards = new CribPlayingCards<PlayingCard>(new PlayingCard(Suit.Clubs, Pips.King));
+            cribPlayingCards.Player1Cards.Add(new PlayingCard(Suit.Clubs, Pips.Ace));
+            cribPlayingCards.Player2Cards.Add(new PlayingCard(Suit.Hearts, Pips.Ace));
+            cribPlayingCards.Player3Cards.Add(new PlayingCard(Suit.Diamonds, Pips.Ace));
+            cribPlayingCards.Player4Cards.Add(new PlayingCard(Suit.Spades, Pips.Ace));
+            mockDealer.Setup(dealer => dealer.Deal(4)).Returns(cribPlayingCards);
 
             var mockRandomDealer = new Mock<IRandomDealer>();
             var otherPlayers = new List<string> { "1", "2", "3" };
-            mockRandomDealer.Setup(randomDealer => randomDealer.Get(otherPlayers, "creator")).Returns("random");
+            mockRandomDealer.Setup(randomDealer => randomDealer.Get(otherPlayers, "creator")).Returns("2");
 
-            var mockNextPlayer = new Mock<INextPlayer>();
-            mockNextPlayer.Setup(nextPlayer => nextPlayer.Get("random", new List<string> { "creator", "1", "2", "3" }, new List<bool> { false, false, false, false })).Returns("nextplayer");
-            var matchFactory = new MatchFactory(mockDealer.Object, mockRandomDealer.Object, mockNextPlayer.Object, new Mock<IIdFactory>().Object, new Mock<IDate>().Object);
+            
+            var matchFactory = new MatchFactory(mockDealer.Object, mockRandomDealer.Object, new NextPlayer(), new Mock<IIdFactory>().Object, new Mock<IDate>().Object);
             var match = matchFactory.Create(new MatchOptions(otherPlayers, "3", ""), "creator");
 
-            Assert.That(match!.Pegging.NextPlayer, Is.EqualTo("nextplayer"));
+            Assert.That(match.Pegging.NextPlayer, Is.EqualTo("3"));
+
         }
 
 

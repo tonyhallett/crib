@@ -10,10 +10,14 @@ export const numPeggingInPlayCards = (flipCards: FlipCardData[]) => {
 
 export const setPlayableCardsState = (
   flipCardDatas: FlipCardDatas,
+  previousState: FlipCardState,
   flipCardState: FlipCardState
 ): FlipCardDatas => {
   const newFlipCardDatas = { ...flipCardDatas };
   newFlipCardDatas.myCards = newFlipCardDatas.myCards.map((cardData) => {
+    if (cardData.state !== previousState) {
+      return cardData;
+    }
     return {
       ...cardData,
       state: flipCardState,
@@ -22,6 +26,9 @@ export const setPlayableCardsState = (
   newFlipCardDatas.otherPlayersCards = newFlipCardDatas.otherPlayersCards.map(
     (otherPlayerCards) => {
       return otherPlayerCards.map((otherPlayerCard) => {
+        if (otherPlayerCard.state !== previousState) {
+          return otherPlayerCard;
+        }
         return {
           ...otherPlayerCard,
           state: flipCardState,
