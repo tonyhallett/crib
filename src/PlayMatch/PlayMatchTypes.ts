@@ -4,7 +4,7 @@ import { FlipCardProps } from "../FlipCard/FlipCard";
 import { LocalMatch } from "../localMatch";
 import { ColouredScores } from "../crib-board/CribBoard";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
-import { CribClient, CribHub } from "../generatedTypes";
+import { CribClient, CribHub, MyMatch } from "../generatedTypes";
 import { ReadyProps } from "./Ready";
 
 export type PlayMatchCribClientMethods = Pick<
@@ -33,9 +33,36 @@ export type PlayMatchCribHub = {
 
 export type ReadyState = Omit<ReadyProps, "zIndex">;
 
-export interface CannotGoes {
+export class CannotGoes {
   me: boolean;
   otherPlayers: boolean[];
+  allCanGo: boolean;
+  anyCalledGo: boolean;
+  constructor(myMatch: MyMatch) {
+    this.me = myMatch.pegging.myCannotGo;
+    this.otherPlayers = myMatch.pegging.cannotGoes;
+    this.allCanGo = this.getAllCallGo();
+    this.anyCalledGo = this.getAnyCalledGo();
+  }
+
+  private getAllCallGo() {
+    return [this.me, ...this.otherPlayers].every((cannotGo) => !cannotGo);
+  }
+
+  private getAnyCalledGo() {
+    return [this.me, ...this.otherPlayers].some((cannotGo) => cannotGo);
+  }
+
+  private setAll(value: boolean) {
+    this.me = value;
+    this.otherPlayers = this.otherPlayers.map(() => value);
+  }
+  setAllCalledGo() {
+    this.setAll(true);
+  }
+  resetGoes() {
+    this.setAll(false);
+  }
 }
 
 export enum FlipCardState {

@@ -1,7 +1,6 @@
 import { Box, DeckPosition, Point } from "../layout/matchLayoutManager";
 import { OnComplete } from "../../fixAnimationSequence/common-motion-types";
 import {
-  CardSegment,
   DomSegmentOptionalElementOrSelectorWithOptions,
   FlipAnimation,
   FlipCardAnimationSequence,
@@ -151,3 +150,22 @@ function getCSSFilterAnimationSegment(
     options,
   ];
 }
+
+export const addAnimateGo = (
+  flipCardData: FlipCardData,
+  calledGo: boolean,
+  duration: number,
+  at: number | undefined,
+  onComplete?: OnComplete
+) => {
+  const animationSequence: FlipCardAnimationSequence = [];
+  const sepiaAmount = calledGo ? 1 : 0;
+  animationSequence.push(
+    getSepiaAnimationSegment(sepiaAmount, {
+      duration,
+      onComplete,
+      at,
+    })
+  );
+  setOrAddToAnimationSequence(flipCardData, animationSequence);
+};

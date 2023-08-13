@@ -6,17 +6,13 @@ namespace CribAzureFunctionApp.Matches.Scoring.Scorer
     {
         private int GetOfAKindScore()
         {
-            switch (NumOfAKind)
+            return NumOfAKind switch
             {
-                case 2:
-                    return 2;
-                case 3:
-                    return 6;
-                case 4:
-                    return 12;
-                default:
-                    return 0;
-            }
+                2 => 2,
+                3 => 6,
+                4 => 12,
+                _ => 0,
+            };
         }
         public int Score
         {

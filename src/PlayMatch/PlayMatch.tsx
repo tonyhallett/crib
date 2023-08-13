@@ -41,7 +41,10 @@ import { getReadyState } from "./getReadyState";
 import { GameWon, GameWonProps } from "./GameWon";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { createLastCompleteFactory } from "./animation/createLastCompleteFactory";
-import { getSepiaAnimationSegment } from "./animation/animationSegments";
+import {
+  addAnimateGo,
+  getSepiaAnimationSegment,
+} from "./animation/animationSegments";
 import { clearUpAfterWon } from "./animation/clearUpAfterWon";
 import { getCardsWithOwners } from "./getCardsWithOwners";
 import { getDeckPosition } from "./layout/positions-utilities";
@@ -53,13 +56,6 @@ function noNewActions(matchDetail: MatchDetail) {
     matchDetail.localMatch.changeHistory.numberOfActions ===
     matchDetail.match.changeHistory.numberOfActions
   );
-}
-
-function getCannotGoes(myMatch: MyMatch): CannotGoes {
-  return {
-    me: myMatch.pegging.myCannotGo,
-    otherPlayers: myMatch.pegging.cannotGoes,
-  };
 }
 
 function PlayMatchInner({
@@ -74,7 +70,7 @@ function PlayMatchInner({
 
   const scoresRef = useRef(matchDetail.match.scores);
   const myMatch = matchDetail.match;
-  const previousCannotGoesRef = useRef<CannotGoes>(getCannotGoes(myMatch));
+  const previousCannotGoesRef = useRef<CannotGoes>(new CannotGoes(myMatch));
   const { enqueueSnackbar, delayEnqueueSnackbar } = useSnackbarWithDelay();
   const initiallyRendered = useRef(false);
   const [cardDatas, setCardDatas] = useState<FlipCardDatas | undefined>(
@@ -232,7 +228,8 @@ function PlayMatchInner({
             setReadyState,
             setGameWonState,
             playMatchCribHub.ready,
-            scoresRef
+            scoresRef,
+            previousCannotGoesRef
           )
         );
       },
@@ -240,7 +237,7 @@ function PlayMatchInner({
       ready(playerId, myMatch) {
         animationManager.current.animate(
           (animationCompleteCallback, prevFlipCardDatas) => {
-            // todo - cannot goes *********************************************************************
+            previousCannotGoesRef.current = new CannotGoes(myMatch);
             setReadyState(getReadyState(myMatch));
             setGameState(myMatch.gameState);
             if (myMatch.gameState === CribGameState.Discard) {
@@ -264,7 +261,7 @@ function PlayMatchInner({
             } else {
               animationCompleteCallback();
             }
-            return prevFlipCardDatas as FlipCardDatas; // todo
+            return prevFlipCardDatas as FlipCardDatas;
           }
         );
       },
@@ -280,38 +277,23 @@ function PlayMatchInner({
         ) => {
           flipCardData.animationSequence = [];
           if (calledGo) {
-            flipCardData.animationSequence.push(
-              getSepiaAnimationSegment(1, {
-                duration,
-                onComplete: allCalledGo ? undefined : onComplete,
-              })
+            addAnimateGo(
+              flipCardData,
+              true,
+              duration,
+              undefined,
+              allCalledGo ? undefined : onComplete
             );
           }
           if (allCalledGo) {
-            flipCardData.animationSequence.push(
-              getSepiaAnimationSegment(0, {
-                duration,
-                onComplete,
-                at: allCalledGoAt,
-              })
+            addAnimateGo(
+              flipCardData,
+              false,
+              duration,
+              allCalledGoAt,
+              onComplete
             );
           }
-        };
-        const didAllCallGo = (cannotGoes: CannotGoes) => {
-          return [cannotGoes.me, ...cannotGoes.otherPlayers].every(
-            (cannotGo) => !cannotGo
-          );
-        };
-
-        const setAll = (cannotGoes: CannotGoes, value: boolean) => {
-          cannotGoes.me = value;
-          cannotGoes.otherPlayers = cannotGoes.otherPlayers.map(() => value);
-        };
-        const setAllCalledGo = (cannotGoes: CannotGoes) => {
-          setAll(cannotGoes, true);
-        };
-        const resetGoes = (cannotGoes: CannotGoes) => {
-          setAll(cannotGoes, false);
         };
 
         animationManager.current.animate(
@@ -327,10 +309,10 @@ function PlayMatchInner({
               myMatch.gameState === CribGameState.MatchWon;
 
             const previousCannotGoes = previousCannotGoesRef.current;
-            const cannotGoes = getCannotGoes(myMatch);
-            const allCalledGo = didAllCallGo(cannotGoes);
+            const cannotGoes = new CannotGoes(myMatch);
+            const allCalledGo = cannotGoes.allCanGo;
             if (allCalledGo) {
-              setAllCalledGo(cannotGoes); //facilitates the cannot go animation for the last to call
+              cannotGoes.setAllCalledGo(); //facilitates the cannot go animation for the last to call
             }
             const lastToCompleteFactory = createLastCompleteFactory(() => {
               animationCompleteCallback();
@@ -425,8 +407,8 @@ function PlayMatchInner({
                   cardsWithOwners,
                   getDeckPosition(myMatch, positions),
                   clearUpAt,
-                  0.5,
-                  0.5,
+                  discardDuration,
+                  flipDuration,
                   myMatch.pegging.inPlayCards,
                   positions.peggingPositions.inPlay[0],
                   myMatch,
@@ -435,7 +417,7 @@ function PlayMatchInner({
                 );
               } else {
                 setTurnedOver(newFlipCardDatas);
-                const turnOverDelay = 3; //tbd
+                const turnOverDelay = animateGoDuration;
                 addTurnOverTogetherAnimation(
                   prevFlipCardDatas,
                   newFlipCardDatas,
@@ -448,9 +430,9 @@ function PlayMatchInner({
                 );
               }
               // game turn over cards and game won
-              resetGoes(cannotGoes);
+              cannotGoes.resetGoes();
             }
-            // other states to call
+
             previousCannotGoesRef.current = cannotGoes;
             return newFlipCardDatas;
           }

@@ -239,6 +239,43 @@ namespace CribAzureTest.Matches.Change
             Assert.That(match.GameState, Is.EqualTo(expectedState));
         }
 
+        [Test]
+        public void Should_Reset_Cannot_Goes_When_Game_Won()
+        {
+            var mockCribScorer = new Mock<ICribMatchScorer>();
+            mockCribScorer.Setup(cribScorer => cribScorer.ScorePegging(
+                It.IsAny<CribMatch>(),
+                It.IsAny<List<PlayingCard>>(),
+                It.IsAny<bool>(),
+                It.IsAny<string>())
+            ).Returns((PeggingResult.GameWon, new PegScoring(false, false, 3, 0, false)));
+            var matchLogic = new MatchLogic(
+                new Mock<IMatchVerifier>().Object,
+                mockCribScorer.Object,
+                new Mock<INextPlayer>().Object,
+                new Mock<ICribDealer>().Object,
+                new Mock<IDate>().Object);
+
+            var pegging = new Pegging(Empty.PeggedCards, Empty.PeggedCards, "", new List<bool> { false, true }, Empty.GoHistory);
+            var match = new CribMatch(
+                Empty.MatchPlayer("p1"),
+                Empty.MatchPlayer(""),
+                null,
+                null,
+                CribGameState.Pegging,
+                Cards.AceHearts,
+                Empty.Cards,
+                Empty.DealerDetails,
+                pegging,
+                Empty.Scores,
+                "Unlimited", "id", Empty.ChangeHistory, "", null
+            );
+
+            matchLogic.Peg(match, "p1", Cards.AceDiamonds);
+
+            Assert.That(match.Pegging.CannotGoes, Is.EqualTo(new List<bool> { false,false}));
+        }
+
         [TestCase(true)]
         [TestCase(false)]
         public void Should_Score_Show_When_Move_To_Show_State_When_Pegging_Complete(bool peggingComplete)

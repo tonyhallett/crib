@@ -16,6 +16,9 @@ import {
   FlipCardDatas,
   SetCribboardState,
   ReadyState,
+  CannotGoes,
+  FlipCardState,
+  FlipCardData,
 } from "../../PlayMatchTypes";
 import { performPegging } from "./performPegging";
 import {
@@ -29,6 +32,7 @@ import { splitPeggingShowScores } from "../../scoring/splitPeggingShowScores";
 import { getReadyState } from "../../getReadyState";
 import { GameWonProps } from "../../GameWon";
 import { createLastCompleteFactory } from "../../animation/createLastCompleteFactory";
+import { addAnimateGo } from "../../animation/animationSegments";
 
 const getDidTurnOver = (peggedCard: PeggedCard, myMatch: MyMatch) => {
   return (
@@ -57,7 +61,8 @@ export function getSignalRPeggingAnimationProvider(
   setReadyState: (readyState: ReadyState) => void,
   setGameWonState: (gameWonProps: GameWonProps) => void,
   cribHubReady: () => void,
-  scoresRef: MutableRefObject<Score[]> // assumption is that when access current will be current
+  scoresRef: MutableRefObject<Score[]>, // assumption is that when access current will be current
+  previousCannotGoesRef: MutableRefObject<CannotGoes>
 ): AnimationProvider {
   // eslint-disable-next-line complexity
   const animationProvider: AnimationProvider = (
@@ -65,6 +70,7 @@ export function getSignalRPeggingAnimationProvider(
     prevFlipCardDatas
   ) => {
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
+
     allowPegging();
     setNextPlayer(myMatch.pegging.nextPlayer);
     const positions = getPositions();
@@ -103,6 +109,43 @@ export function getSignalRPeggingAnimationProvider(
       snackBarMethods.enqueueSnackbar,
       lastToCompleteFactory
     );
+    let showOrClearUpAt = pegDelay;
+
+    const previousCannotGoes = previousCannotGoesRef.current;
+    const cannotGoes = new CannotGoes(myMatch);
+    if (previousCannotGoes.anyCalledGo && cannotGoes.allCanGo) {
+      const animateGoDuration = 1;
+      const addAnimateGoToCardsInHand = (
+        previousCannotGo: boolean,
+        flipCardDatas: FlipCardData[]
+      ) => {
+        if (previousCannotGo) {
+          flipCardDatas.forEach((flipCardData) => {
+            if (
+              flipCardData.state === FlipCardState.MyHand ||
+              flipCardData.state === FlipCardState.OtherPlayersHand
+            ) {
+              flipCardData.animationSequence = undefined;
+              addAnimateGo(flipCardData, false, animateGoDuration, pegDelay); // todo needs complete ?
+            }
+          });
+        }
+      };
+      addAnimateGoToCardsInHand(
+        previousCannotGoes.me,
+        newFlipCardDatas.myCards
+      );
+
+      newFlipCardDatas.otherPlayersCards.forEach((otherPlayerCards, i) => {
+        addAnimateGoToCardsInHand(
+          previousCannotGoes.otherPlayers[i],
+          otherPlayerCards
+        );
+      });
+
+      showOrClearUpAt += animateGoDuration;
+    }
+    previousCannotGoesRef.current = cannotGoes;
 
     const cardsWithOwners = getCardsWithOwners(
       newFlipCardDatas,
@@ -119,7 +162,7 @@ export function getSignalRPeggingAnimationProvider(
         newFlipCardDatas.cutCard,
         cardsWithOwners,
         deckPosition,
-        pegDelay,
+        showOrClearUpAt,
         discardDuration,
         flipDuration,
         myMatch.pegging.inPlayCards,
@@ -135,7 +178,7 @@ export function getSignalRPeggingAnimationProvider(
         prevFlipCardDatas,
         newFlipCardDatas,
         {
-          at: pegDelay,
+          at: showOrClearUpAt,
           returnDuration: discardDuration,
           moveCutCardDuration: discardDuration,
           flipDuration,

@@ -3,6 +3,7 @@
 using CribAzureFunctionApp.Cosmos;
 using CribAzureFunctionApp.Matches.Card;
 using CribAzureFunctionApp.Matches.Deal;
+using CribAzureFunctionApp.Matches.MyMatches;
 using CribAzureFunctionApp.Matches.Scoring;
 using CribAzureFunctionApp.Matches.Scoring.Match;
 using CribAzureFunctionApp.Matches.State;
@@ -148,6 +149,7 @@ namespace CribAzureFunctionApp.Matches.Change
 
             if (peggingResult == PeggingResult.GameWon)
             {
+                SetAllCanGo(match.Pegging.CannotGoes);
                 PossiblyAdvanceToWinState(true, match);
             }
             else
