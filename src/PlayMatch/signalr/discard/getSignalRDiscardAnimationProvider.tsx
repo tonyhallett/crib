@@ -104,6 +104,7 @@ export function getSignalRDiscardAnimationProvider(
   setReadyState: (readyState: ReadyState) => void,
   setGameWonState: (gameWonState: GameWonProps) => void,
   setCribBoardState: SetCribboardState,
+  setNextPlayer: (nextPlayer: string) => void,
   enqueueSnackbar: EnqueueSnackbar,
   syncChangeHistories: () => void,
   ready: () => void
@@ -116,6 +117,7 @@ export function getSignalRDiscardAnimationProvider(
     prevFlipCardDatas
   ) => {
     setGameState(myMatch.gameState);
+    setNextPlayer(myMatch.pegging.nextPlayer);
 
     const positions = getPositions();
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;

@@ -33,10 +33,15 @@ export interface ReadyProps extends ReadyBackdropProps {
   gameState: CribGameState;
 }
 
+const readyStates: CribGameState[] = [
+  CribGameState.Show,
+  CribGameState.GameWon,
+  CribGameState.MatchWon,
+];
 export function Ready(props: ReadyProps) {
   const { gameState, meReady, otherPlayersReady, zIndex } = props;
-  // todo MatchWon
-  if (gameState === CribGameState.Show || gameState === CribGameState.GameWon) {
+
+  if (readyStates.includes(gameState)) {
     return (
       <ReadyBackdrop
         zIndex={zIndex}

@@ -60,6 +60,7 @@ export function getSignalRPeggingAnimationProvider(
   setCribBoardState: SetCribboardState,
   setReadyState: (readyState: ReadyState) => void,
   setGameWonState: (gameWonProps: GameWonProps) => void,
+  setGameState: (gameState: CribGameState) => void,
   cribHubReady: () => void,
   scoresRef: MutableRefObject<Score[]>, // assumption is that when access current will be current
   previousCannotGoesRef: MutableRefObject<CannotGoes>
@@ -70,7 +71,7 @@ export function getSignalRPeggingAnimationProvider(
     prevFlipCardDatas
   ) => {
     prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
-
+    setGameState(myMatch.gameState);
     allowPegging();
     setNextPlayer(myMatch.pegging.nextPlayer);
     const positions = getPositions();

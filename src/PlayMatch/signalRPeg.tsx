@@ -1,5 +1,4 @@
 import { FlipAnimation, FlipCardAnimationSequence } from "../FlipCard/FlipCard";
-import { defaultCribBoardDuration } from "../crib-board/AnimatedCribBoard";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import {
   CribGameState,
@@ -36,7 +35,7 @@ import {
   PeggingPositions,
   Point,
 } from "./layout/matchLayoutManager";
-import { peggingScored } from "./signalr/pegging/peggingScored";
+import { getPeggingScored } from "./signalr/pegging/peggingScored";
 import { cardMatch, getCardValue } from "./playingCardUtilities";
 import { getOfAKindScore } from "./scoring/scoring-utilities";
 import { getAppendMessage } from "../utilities/stringUtilities";
@@ -79,9 +78,15 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
   peggingScoreSnackbarDurationSeconds = 5
 ): [FlipCardAnimationSequence, Duration] => {
   const scored = peggedCard.peggingScore.score > 0;
-  const scoreDuration = scored
-    ? Math.max(peggingScoreSnackbarDurationSeconds, defaultCribBoardDuration)
-    : 0;
+  const [peggingScored, peggingScoredDuration] = getPeggingScored(
+    peggedCard,
+    pegScores,
+    setCribBoardState,
+    enqueueSnackbar,
+    peggingScoreSnackbarDurationSeconds,
+    animationCompleteCallback
+  );
+  const scoreDuration = scored ? peggingScoredDuration : 0;
 
   const [sequence, moveToPeggingPositionDuration] =
     getMoveToPeggingPositionAnimationSequence(
@@ -90,14 +95,7 @@ export const getMoveToPeggingPositionAnimationSequenceAndScore = (
       discardDuration,
       () => {
         if (scored) {
-          peggingScored(
-            peggedCard,
-            pegScores,
-            setCribBoardState,
-            enqueueSnackbar,
-            peggingScoreSnackbarDurationSeconds,
-            animationCompleteCallback
-          );
+          peggingScored();
         } else {
           animationCompleteCallback?.();
         }
@@ -140,7 +138,7 @@ const applyTurnOverTogetherAnimation = (
   moveToTurnOverDuration: number,
   flipDuration: number,
   onComplete: OnComplete
-): void => {
+): Duration => {
   const positionFromTop =
     numTurnedOverCardsFromBefore +
     numCardsTurningOver -
@@ -191,6 +189,12 @@ const applyTurnOverTogetherAnimation = (
   );
 
   setOrAddToAnimationSequence(flipCardData, segments);
+  return (
+    overlayDuration +
+    flipDuration +
+    moveToTurnOverDuration +
+    instantAnimationDuration
+  );
 };
 
 export const addTurnOverTogetherAnimation = (
@@ -202,7 +206,8 @@ export const addTurnOverTogetherAnimation = (
   peggingPositions: PeggingPositions,
   discardDuration: number,
   flipDuration: number
-) => {
+): Duration => {
+  let duration = 0;
   const numTurnedOverCardsFromBefore = prevFlipCardDatas.myCards
     .concat(prevFlipCardDatas.otherPlayersCards.flat())
     .filter((cardData) => {
@@ -221,7 +226,7 @@ export const addTurnOverTogetherAnimation = (
           }
         );
         if (turnedOverCardIndex >= numTurnedOverCardsFromBefore) {
-          applyTurnOverTogetherAnimation(
+          duration = applyTurnOverTogetherAnimation(
             newFlipCardData,
             turnedOverCardIndex,
             numTurnedOverCardsFromBefore,
@@ -243,6 +248,7 @@ export const addTurnOverTogetherAnimation = (
   addAnimationToTurnedOverCards(
     newFlipCardDatas.otherPlayersCards.flat().concat(newFlipCardDatas.myCards)
   );
+  return duration;
 };
 
 const append15Or31 = (

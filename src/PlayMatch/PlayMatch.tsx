@@ -41,10 +41,7 @@ import { getReadyState } from "./getReadyState";
 import { GameWon, GameWonProps } from "./GameWon";
 import { OnComplete } from "../fixAnimationSequence/common-motion-types";
 import { createLastCompleteFactory } from "./animation/createLastCompleteFactory";
-import {
-  addAnimateGo,
-  getSepiaAnimationSegment,
-} from "./animation/animationSegments";
+import { addAnimateGo } from "./animation/animationSegments";
 import { clearUpAfterWon } from "./animation/clearUpAfterWon";
 import { getCardsWithOwners } from "./getCardsWithOwners";
 import { getDeckPosition } from "./layout/positions-utilities";
@@ -68,6 +65,7 @@ function PlayMatchInner({
 }: PlayMatchProps) {
   const dealNumberRef = useRef(0);
 
+  // this is used by pegging to split scores
   const scoresRef = useRef(matchDetail.match.scores);
   const myMatch = matchDetail.match;
   const previousCannotGoesRef = useRef<CannotGoes>(new CannotGoes(myMatch));
@@ -207,6 +205,7 @@ function PlayMatchInner({
             setReadyState,
             setGameWonState,
             setCribBoardState,
+            setNextPlayer,
             enqueueSnackbar,
             syncChangeHistories,
             playMatchCribHub.ready
@@ -227,6 +226,7 @@ function PlayMatchInner({
             setCribBoardState,
             setReadyState,
             setGameWonState,
+            setGameState,
             playMatchCribHub.ready,
             scoresRef,
             previousCannotGoesRef
@@ -240,6 +240,7 @@ function PlayMatchInner({
             previousCannotGoesRef.current = new CannotGoes(myMatch);
             setReadyState(getReadyState(myMatch));
             setGameState(myMatch.gameState);
+            setNextPlayer(myMatch.pegging.nextPlayer);
             if (myMatch.gameState === CribGameState.Discard) {
               setCribBoardState({
                 colouredScores: getColouredScores(myMatch.scores),
@@ -299,6 +300,9 @@ function PlayMatchInner({
         animationManager.current.animate(
           // eslint-disable-next-line complexity
           (animationCompleteCallback, prevFlipCardDatas) => {
+            setGameState(myMatch.gameState);
+            setNextPlayer(myMatch.pegging.nextPlayer);
+            scoresRef.current = myMatch.scores;
             prevFlipCardDatas = prevFlipCardDatas as FlipCardDatas;
             const newFlipCardDatas: FlipCardDatas = {
               ...prevFlipCardDatas,
@@ -429,7 +433,7 @@ function PlayMatchInner({
                   0.5
                 );
               }
-              // game turn over cards and game won
+
               cannotGoes.resetGoes();
             }
 
@@ -456,7 +460,6 @@ function PlayMatchInner({
     switch (myMatch.gameState) {
       case CribGameState.Discard:
         setCardDatasAndRef(getDiscardCardDatas(myMatch, positions));
-
         break;
       case CribGameState.Pegging:
         setCardDatasAndRef(getPeggingCardDatas(myMatch, positions));

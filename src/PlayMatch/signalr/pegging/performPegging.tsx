@@ -145,7 +145,8 @@ export function performPegging(
           setGameWonState(getGameWonState(myMatch));
         }
         peggingCompleted();
-      }
+      },
+      2
     );
 
   let pegDelay = pegDuration;
@@ -170,7 +171,7 @@ export function performPegging(
   }
 
   if (turnedOver) {
-    addTurnOverTogetherAnimation(
+    pegDelay += addTurnOverTogetherAnimation(
       prevFlipCardDatas,
       newFlipCardDatas,
       pegDelay,
