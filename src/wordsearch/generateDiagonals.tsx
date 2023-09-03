@@ -1,3 +1,5 @@
+import { GridCellPosition } from "./WordSearch";
+
 export function generateDiagonals(wordStart: GridCellPosition, wordEnd: GridCellPosition, callback: (row: number, column: number) => void) {
   const numLetters = Math.abs(wordStart.row - wordEnd.row) + 1;
   const leftToRight = wordStart.col < wordEnd.col;

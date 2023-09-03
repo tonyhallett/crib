@@ -14,15 +14,20 @@ export function findWord(guessedWords:GuessedWord[],wordStart:GridCellPosition, 
 }
 
 export function updateSelectedCell(wordGrid:GuessedCell[][],row:number,col:number, isSelected:boolean) : GuessedCell[][] {
-  return wordGrid.map((gridRow, rowIndex) => gridRow.map((cell, cellIndex) => {
-    if(rowIndex === row && cellIndex === col){
-      return {
-        ...cell,
-        isSelected,
-      } 
+  return wordGrid.map((gridRow, rowIndex) => {
+    if(rowIndex === row){
+      return gridRow.map((cell, cellIndex) => {
+        if(cellIndex === col){
+          return {
+            ...cell,
+            isSelected,
+          } 
+        }
+        return cell;
+      })
     }
-    return cell;
-  }));
+    return gridRow;
+  })
 }
 
 export function wordGridReducer(state: WordSearchState, action: LetterClickAction) {
