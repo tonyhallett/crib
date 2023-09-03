@@ -1,6 +1,7 @@
 import { GuessedCell, GuessedWord, WordSearchState } from "../src/wordsearch";
 import { GridCellPosition, WordPosition, WordSearch } from "../src/wordsearch/WordSearch";
 import { getState, getWord } from "../src/wordsearch/getState";
+import { minMax } from "../src/wordsearch/minMax";
 import { wordGridReducer } from "../src/wordsearch/wordGridReducer";
 
 describe("Word search", () => {
