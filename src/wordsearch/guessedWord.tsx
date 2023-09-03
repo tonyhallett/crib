@@ -1,14 +1,13 @@
-import { GuessedWord, GuessedCell } from ".";
+import { GuessedWord, WordSearchState } from ".";
+import { GridCellPosition } from "./WordSearch";
 import { cellsGuessed } from "./cellsGuessed";
 
-export function guessedWord(matchingWord: GuessedWord,
-  wordStart: { row: number; col: number; },
-  wordEnd: { row: number; col: number; },
-  wordGrid: GuessedCell[][],
-  setWordGrid: React.Dispatch<React.SetStateAction<GuessedCell[][]>>,
-  guessedWords: GuessedWord[],
-  setGuessedWords: React.Dispatch<React.SetStateAction<GuessedWord[]>>) {
-  setGuessedWords(guessedWords.map((guessedWord) => {
+export function guessedWord(
+  matchingWord: GuessedWord,
+  wordEnd: GridCellPosition,
+  state:WordSearchState
+  ) {
+  state.guessedWords = state.guessedWords.map((guessedWord) => {
     if (guessedWord.word === matchingWord.word) {
       return {
         ...guessedWord,
@@ -16,6 +15,6 @@ export function guessedWord(matchingWord: GuessedWord,
       };
     }
     return guessedWord;
-  }));
-  cellsGuessed(wordGrid, setWordGrid, wordStart, wordEnd);
+  });
+  cellsGuessed(state, wordEnd);
 }

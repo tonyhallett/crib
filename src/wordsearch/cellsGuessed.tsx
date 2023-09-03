@@ -1,6 +1,6 @@
 import { GridCellPosition } from "./WordSearch";
 import { getDirection } from "./getDirection";
-import { GuessedCell } from ".";
+import { GuessedCell, WordSearchState } from ".";
 import { minMax } from "./minMax";
 import { generateDiagonals } from "./generateDiagonals";
 
@@ -71,19 +71,20 @@ const diagonalCellsGuessed = (wordGrid:GuessedCell[][],wordStart:GridCellPositio
   });
 }
 
-export function cellsGuessed(wordGrid: GuessedCell[][], setWordGrid: React.Dispatch<React.SetStateAction<GuessedCell[][]>>, wordStart: GridCellPosition, wordEnd: GridCellPosition) {
+export function cellsGuessed(state:WordSearchState, wordEnd: GridCellPosition) {
+  const wordStart = state.firstSelectedCell as GridCellPosition;
   const direction = getDirection(wordStart, wordEnd);
   let newWordGrid: GuessedCell[][] = [];
   switch (direction) {
     case "horizontal":
-      newWordGrid = horizontalCellsGuessed(wordGrid, wordStart, wordEnd);
+      newWordGrid = horizontalCellsGuessed(state.wordGrid, wordStart, wordEnd);
       break;
     case "vertical":
-      newWordGrid = verticalCellsGuessed(wordGrid, wordStart, wordEnd);
+      newWordGrid = verticalCellsGuessed(state.wordGrid, wordStart, wordEnd);
       break;
     case "diagonal":
-      newWordGrid = diagonalCellsGuessed(wordGrid, wordStart, wordEnd);
+      newWordGrid = diagonalCellsGuessed(state.wordGrid, wordStart, wordEnd);
       break;
   }
-  setWordGrid(newWordGrid);
+  state.wordGrid = newWordGrid;
 }
