@@ -1,7 +1,6 @@
 import { GuessedCell, GuessedWord, WordSearchState } from "../src/wordsearch";
 import { GridCellPosition, WordPosition, WordSearch } from "../src/wordsearch/WordSearch";
 import { getState, getWord } from "../src/wordsearch/getState";
-import { minMax } from "../src/wordsearch/minMax";
 import { wordGridReducer } from "../src/wordsearch/wordGridReducer";
 
 describe("Word search", () => {
@@ -276,7 +275,7 @@ describe("Word search", () => {
                             });
                         });
                     });
-                    const arrangeAndTest = (wordPosition:WordPosition,inRangePredicate:(row:number,col:number)=>bool) => {
+                    const arrangeAndTest = (wordPosition:WordPosition,inRangePredicate:(row:number,col:number)=>boolean) => {
                         const {newState} = arrange(wordPosition);
                         newState.wordGrid.forEach((row,rowIndex) => {
                             row.forEach((cell,colIndex) => {
@@ -299,33 +298,47 @@ describe("Word search", () => {
                         })
                     })
     
-                    xdescribe("diagonal", () => {
+                    describe("diagonal", () => {
+                        const arrangeAndTestDiagonals = (wordPosition:WordPosition,diagonals:GridCellPosition[]) => {
+                            diagonals = diagonals.concat(wordPosition.start,wordPosition.end);
+                            arrangeAndTest(wordPosition, (rowIndex,colIndex) => {
+                                return diagonals.some(diagonal => diagonal.row === rowIndex && diagonal.col === colIndex)
+                            });
+                        }
                         it("should set the cells to guessed - left/right bottom/top", () => {
                             const leftRightBottomTopPosition = wordSearch.positions[5];
-                            arrangeAndTest(leftRightBottomTopPosition, (rowIndex,colIndex) => {
-                                throw new Error("Not implemented");
-                            });
+                            //{start:{row:7,col:0},end:{row:5,col:2}}, // DOG
+                            const diagonals:GridCellPosition[] = [
+                                {row:6,col:1}
+                            ]
+                            arrangeAndTestDiagonals(leftRightBottomTopPosition, diagonals);
                         });
 
                         it("should set the cells to guessed - left/right top/bottom", () => {
                             const leftRightTopBottomPosition = wordSearch.positions[6];
-                            arrangeAndTest(leftRightTopBottomPosition, (rowIndex,colIndex) => {
-                                throw new Error("Not implemented");
-                            });
+                            //{start:{row:5,col:3},end:{row:7,col:5}}, // NEO
+                            const diagonals:GridCellPosition[] = [
+                                {row:6,col:4}
+                            ]
+                            arrangeAndTestDiagonals(leftRightTopBottomPosition, diagonals)
                         });
 
                         it("should set the cells to guessed - right/left bottom/top", () => {
                             const rightleftBottomTopPosition = wordSearch.positions[7];
-                            arrangeAndTest(rightleftBottomTopPosition, (rowIndex,colIndex) => {
-                                throw new Error("Not implemented");
-                            });
+                            //{start:{row:7,col:7},end:{row:5,col:5}}, // ODD 
+                            const diagonals:GridCellPosition[] = [
+                                {row:6,col:6}
+                            ]
+                            arrangeAndTestDiagonals(rightleftBottomTopPosition, diagonals)
                         });
 
                         it("should set the cells to guessed - right/left top/bottom", () => {
                             const rightLeftTopBottomPosition = wordSearch.positions[8];
-                            arrangeAndTest(rightLeftTopBottomPosition, (rowIndex,colIndex) => {
-                                throw new Error("Not implemented");
-                            });
+                            // {start:{row:5,col:7},end:{row:7,col:5}}, // ADO
+                            const diagonals:GridCellPosition[] = [
+                                {row:6,col:6}
+                            ]
+                            arrangeAndTestDiagonals(rightLeftTopBottomPosition, diagonals)
                         });
                     });
                 })
