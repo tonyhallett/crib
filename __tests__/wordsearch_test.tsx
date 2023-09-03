@@ -222,7 +222,8 @@ describe("Word search", () => {
                       {start:{row:7,col:7},end:{row:5,col:5}}, // ODD - right/left bottom/top
                       {start:{row:5,col:7},end:{row:7,col:5}}, // ADO - right/left top/bottom
                     ]
-                }
+                };
+
                 describe("cell guessed", () => {
                     const arrange = (wordPosition:WordPosition) => {
                         const [wordGridData,wordList] = getState(wordSearch);
@@ -274,41 +275,57 @@ describe("Word search", () => {
                             });
                         });
                     });
+                    const arrangeAndTest = (wordPosition:WordPosition,inRangePredicate:(row:number,col:number)=>bool) => {
+                        const {newState} = arrange(wordPosition);
+                        newState.wordGrid.forEach((row,rowIndex) => {
+                            row.forEach((cell,colIndex) => {
+                                expect(cell.isGuessed).toBe(inRangePredicate(rowIndex,colIndex));
+                            });
+                        });
+                    }
                     describe("vertical", () => {
                         it("should set the cells to guessed - top to bottom", () => {
                             const topToBottomPosition = wordSearch.positions[3];
-                            const {newState} = arrange(topToBottomPosition);
-
-                            newState.wordGrid.forEach((row,rowIndex) => {
-                                row.forEach((cell,colIndex) => {
-                                    if(colIndex === topToBottomPosition.start.col && rowIndex >= topToBottomPosition.start.row && rowIndex <= topToBottomPosition.end.row){
-                                        expect(cell.isGuessed).toBe(true);
-                                    }else{
-                                        expect(cell.isGuessed).toBe(false);
-                                    }
-                                });
-                            });
+                            arrangeAndTest(
+                                topToBottomPosition,
+                                (rowIndex,colIndex) => colIndex === topToBottomPosition.start.col && rowIndex >= topToBottomPosition.start.row && rowIndex <= topToBottomPosition.end.row
+                            );
                         });
     
                         it("should set the cells to guessed - bottom to top", () => {
                             const bottomToTopPosition = wordSearch.positions[4];
-                            const {newState} = arrange(bottomToTopPosition);
-    
-                            newState.wordGrid.forEach((row,rowIndex) => {
-                                row.forEach((cell,colIndex) => {
-                                    if(colIndex === bottomToTopPosition.start.col && rowIndex <= bottomToTopPosition.start.row && rowIndex >= bottomToTopPosition.end.row){
-                                        expect(cell.isGuessed).toBe(true);
-                                    }else{
-                                        expect(cell.isGuessed).toBe(false);
-                                    }
-                                });
-                            });
+                            arrangeAndTest(bottomToTopPosition, (rowIndex,colIndex) => colIndex === bottomToTopPosition.start.col && rowIndex <= bottomToTopPosition.start.row && rowIndex >= bottomToTopPosition.end.row);
                         })
-    
                     })
     
                     xdescribe("diagonal", () => {
-                        // TODO
+                        it("should set the cells to guessed - left/right bottom/top", () => {
+                            const leftRightBottomTopPosition = wordSearch.positions[5];
+                            arrangeAndTest(leftRightBottomTopPosition, (rowIndex,colIndex) => {
+                                throw new Error("Not implemented");
+                            });
+                        });
+
+                        it("should set the cells to guessed - left/right top/bottom", () => {
+                            const leftRightTopBottomPosition = wordSearch.positions[6];
+                            arrangeAndTest(leftRightTopBottomPosition, (rowIndex,colIndex) => {
+                                throw new Error("Not implemented");
+                            });
+                        });
+
+                        it("should set the cells to guessed - right/left bottom/top", () => {
+                            const rightleftBottomTopPosition = wordSearch.positions[7];
+                            arrangeAndTest(rightleftBottomTopPosition, (rowIndex,colIndex) => {
+                                throw new Error("Not implemented");
+                            });
+                        });
+
+                        it("should set the cells to guessed - right/left top/bottom", () => {
+                            const rightLeftTopBottomPosition = wordSearch.positions[8];
+                            arrangeAndTest(rightLeftTopBottomPosition, (rowIndex,colIndex) => {
+                                throw new Error("Not implemented");
+                            });
+                        });
                     });
                 })
                 
