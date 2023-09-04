@@ -8,6 +8,7 @@ import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Auth0Provider, Component } from "./Rad/getRad";
 import { WordGrid } from "./wordsearch";
+import { WordSearchCreator } from "./wordsearch/WordSearchCreator";
 
 const rootNode = document.getElementById("app");
 
@@ -40,4 +41,4 @@ const root = createRoot(rootNode!);
     </Auth0Provider>
   </ThemeProvider>
 ); */
-root.render(<WordGrid/>)
+root.render(<WordSearchCreator/>)
