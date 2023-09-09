@@ -1,7 +1,8 @@
 import { Button, Grid, Paper, Typography } from "@mui/material";
 import { useReducer } from "react";
 import { fill } from "../utilities/arrayHelpers";
-import { Orientation, getLettersOnGrid } from "./orientationLettersOnGridMap";
+import { Orientation, getLetterPositions } from "./orientationLettersOnGridMap";
+import {TestWord} from "./TestWord";
 
 interface GridCellPosition {
     row:number,
@@ -26,15 +27,11 @@ interface WordSearchCreatorState extends WordSearchCreatorInitialState {
     wordGrid:WordSearchGrid
 }
 
-enum GridCellState {Ok,Conflict, OkSelected, ConflictSelected}
 interface ContributingLetter{
     letter:string,
     wordId:number
 }
 interface GridCell {
-    letter:string,
-    contributingWordId?:number,
-    state:GridCellState,
     contributingLetters:ContributingLetter[]
 }
 type GridRow = GridCell[]
@@ -60,7 +57,12 @@ interface SelectWordAction extends Action {
 type WordSearchCreatorAction = NewWordSearchAction | ClickedSquareAction | SelectWordAction;
 
 const hasDuplicates = (arr:unknown[]) => arr.length !== new Set(arr).size;
-
+const getLetterPositionsOnGrid = (word:PositionedWord, numRows:number, numColumns:number) => {
+    const letterPositions = getLetterPositions(word);
+    return letterPositions.filter((letterPosition) => {
+        return inBounds(letterPosition.row, letterPosition.col, numRows, numColumns);
+    });
+}
 // eslint-disable-next-line complexity
 export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: WordSearchCreatorAction){
     switch(action.type){
@@ -82,7 +84,7 @@ export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: 
                 const word = words[selectedWordIndex];
                 const currentWordStart = word.start;
                 if(currentWordStart.col !== action.col || currentWordStart.row !== action.row){
-                    const oldLettersOnGrid = getLettersOnGrid(word);
+                    const oldLettersOnGrid = getLetterPositionsOnGrid(word, state.numRows, state.numColumns);
                     // although current ui does not use word start
                     const newWords = state.words.map(word => {
                         if(word.id === state.selectedWordId){
@@ -91,10 +93,11 @@ export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: 
                                 row:action.row,
                                 col:action.col
                             }
+                            return newWord;
                         }
                         return word;
                     });
-                    const newLettersOnGrid = getLettersOnGrid(newWords[selectedWordIndex]);
+                    const newLettersOnGrid = getLetterPositionsOnGrid(newWords[selectedWordIndex], state.numRows, state.numColumns);
                     const newWordGrid = state.wordGrid.map((row, rowIndex) => {
                         // eslint-disable-next-line complexity
                         return row.map((cell, colIndex) => {
@@ -115,9 +118,6 @@ export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: 
                                     return cell;
                                 }
                                 const newCell = {...cell};
-                                // as selected takes precedence
-                                newCell.letter = newLetterOnGrid.letter;
-                                newCell.contributingWordId = state.selectedWordId;
                                 newCell.contributingLetters = newCell.contributingLetters.map((contributingLetter) => {
                                     if(contributingLetter.wordId === state.selectedWordId){
                                         return {
@@ -127,44 +127,33 @@ export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: 
                                     }
                                     return contributingLetter;
                                 });
-                                // calculated state
-                                const hasConflict = hasDuplicates(newCell.contributingLetters.map((contributingLetter) => contributingLetter.letter));
-                                newCell.state = hasConflict ? GridCellState.ConflictSelected : GridCellState.OkSelected;
                                 return newCell;
                             }else{
                                 if(oldLetterOnGrid){
                                     const newCell = {...cell};
                                     // remove letter from this word
                                     newCell.contributingLetters = newCell.contributingLetters.filter((contributingLetter) => contributingLetter.wordId !== state.selectedWordId);
-                                    const hasConflict = hasDuplicates(newCell.contributingLetters.map((contributingLetter) => contributingLetter.letter));
-                                    newCell.state = hasConflict ? GridCellState.Conflict : GridCellState.Ok;
-                                    if(newCell.contributingLetters.length === 0){
-                                        newCell.letter = "";
-                                        newCell.contributingWordId = undefined;
-                                    }else{
-                                        if(hasConflict){
-                                            newCell.letter = "*";
-                                            newCell.contributingWordId = -1;
-                                        }else{
-                                            newCell.letter = newCell.contributingLetters[0].letter;
-                                            // BUT !!!!!!
-                                            newCell.contributingWordId = newCell.contributingLetters[0].wordId;
-
-                                        }
-                                    }
-                                    // need to set the letter and contributing word id - may not be one - GIVEN THAT THIS WAS ALREADY THE SELECTED WORD
-                                    // might want a class for the cell ?
                                     return newCell;
-                                }else{
-
                                 }
+                                if(newLetterOnGrid){
+                                    const newCell = {...cell};
+                                    newCell.contributingLetters = [{letter:newLetterOnGrid.letter, wordId:state.selectedWordId},...newCell.contributingLetters];
+                                    return newCell;
+                                }
+                                return cell;
                             }
                         });
                     })
+                    const newState:WordSearchCreatorState = {
+                        ...state,
+                        wordGrid:newWordGrid,
+                        words:newWords
+                    }
+                    return newState;
                 }
                 
 
-            }
+        }
             
 
     }
@@ -172,31 +161,22 @@ export function wordSearchCreatorReducer(state: WordSearchCreatorState, action: 
 }
 
 
-
+function inBounds(row:number, col:number, numRows:number, numColumns:number){
+    return row >= 0 && row < numRows && col >= 0 && col < numColumns;
+}
 
 function stateFromInitial(initialState:WordSearchCreatorInitialState):WordSearchCreatorState {
     const wordSearchGrid:WordSearchGrid = fill(initialState.numRows, () => {
         return fill(initialState.numColumns, () => {
-            return {letter:"",state:GridCellState.Ok, contributingLetters:[]}
+            return {contributingLetters:[]}
         })
     })
     initialState.words.forEach((word) => {
-        const lettersOnGrid = getLettersOnGrid(word);
-        const isSelected = word.id === initialState.selectedWordId;
+        const lettersOnGrid = getLetterPositionsOnGrid(word, initialState.numRows, initialState.numColumns);
         // eslint-disable-next-line complexity
         lettersOnGrid.forEach((letterOnGrid) => {
-            // todo check that it is within  bounds
             const cell = wordSearchGrid[letterOnGrid.row][letterOnGrid.col];
             cell.contributingLetters.push({letter:letterOnGrid.letter, wordId:word.id});
-            if(cell.letter === ""){
-                cell.letter = letterOnGrid.letter;
-                cell.contributingWordId = word.id;
-                cell.state = isSelected ? GridCellState.OkSelected : GridCellState.Ok;
-            } else {
-                cell.letter = isSelected ? letterOnGrid.letter : "*";
-                cell.contributingWordId = isSelected ? word.id : -1;
-                cell.state = isSelected ? GridCellState.ConflictSelected : GridCellState.Conflict;
-            }
         });
     });
     return {
@@ -221,7 +201,7 @@ export function useWordSearchCreator(initialState:WordSearchCreatorInitialState 
         
     numRows:8,
     numColumns:8,
-    selectedWordId:1,
+    selectedWordId:3,
 }){
     return useReducer(wordSearchCreatorReducer, stateFromInitial(initialState));
 }
@@ -236,8 +216,9 @@ const wordColours:string[] = [
     "brown",
     "limegreen"
 ]
+enum GridCellState {Ok, OkSelected, Conflict, ConflictSelected}
 // eslint-disable-next-line complexity
-function getCellColor(cellState:GridCellState,wordIndex:number){
+function getCellColor(cellState:GridCellState, wordIndex:number){
     switch(cellState){
         case GridCellState.Ok:
             if(wordIndex === -1){
@@ -251,11 +232,78 @@ function getCellColor(cellState:GridCellState,wordIndex:number){
         case GridCellState.ConflictSelected:
             return "red";
     }
+    return "white";
+}
+
+function getLetter(cell:GridCell):string{
+    const letters = getCellLetters(cell);
+    if(letters.length === 0){
+        return "";
+    }
+    const firstLetter = letters[0];
+    if(letters.length === 1){
+        return firstLetter;
+    }
+    if(!hasDuplicates(letters)){
+        return "*";
+    }
+    return firstLetter;
+}
+
+function getCellLetters(cell:GridCell){
+    return cell.contributingLetters.map((contributingLetter) => contributingLetter.letter);
+}
+
+function findSelectedContributingLetter(cell:GridCell, selectedWordId:number){
+    return cell.contributingLetters.find((contributingLetter) => contributingLetter.wordId === selectedWordId);
+}
+
+function cellIsSelected(cell:GridCell, selectedWordId:number){
+    return findSelectedContributingLetter(cell, selectedWordId) !== undefined;
+}
+
+// eslint-disable-next-line complexity
+function getCellState(cell:GridCell, selectedWordId:number):GridCellState{
+    const letters = getCellLetters(cell);
+    if(letters.length === 0){
+        return GridCellState.Ok;
+    }
+    
+    const isSelected = cellIsSelected(cell, selectedWordId);
+    if(letters.length === 1){
+        return isSelected ? GridCellState.OkSelected : GridCellState.Ok;
+    }
+    if(!hasDuplicates(letters)){
+        return isSelected ? GridCellState.ConflictSelected : GridCellState.Conflict;
+    }
+    return isSelected ? GridCellState.OkSelected : GridCellState.Ok;
+}
+
+function getWordId(cell:GridCell,selectedWordId:number){
+    if(cell.contributingLetters.length === 1){
+        return cell.contributingLetters[0].wordId;
+    }
+    
+    const selectedWordIdForCell = findSelectedContributingLetter(cell, selectedWordId);
+    if(selectedWordIdForCell){
+        return selectedWordIdForCell;
+    }
+    return -1;
+}
+
+function getWordIndex(cell:GridCell,words:PositionedWord[], selectedWordId:number ){
+    const wordId = getWordId(cell, selectedWordId);
+    if(wordId === -1){
+        return -1;
+    }
+    return words.findIndex((word) => word.id === wordId);
+
 }
 
 export function WordSearchCreator(){
     const [state, dispatch] = useWordSearchCreator();
     return <>
+        <TestWord/>
         <Button onClick={() => dispatch({type:"newWordSearch"})}>New Word Search</Button>
 
         {state.words.map((word) => {
@@ -275,11 +323,11 @@ export function WordSearchCreator(){
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    backgroundColor: getCellColor(cell.state,state.words.findIndex((word) => word.id === cell.contributingWordId)),
+                    backgroundColor: getCellColor(getCellState(cell, state.selectedWordId),getWordIndex(cell, state.words, state.selectedWordId)),
                   }}
                   elevation={3}
                 >
-                  <Typography>{cell.letter}</Typography>
+                  <Typography>{getLetter(cell)}</Typography>
                 </Paper>
               </Grid>
             ))}

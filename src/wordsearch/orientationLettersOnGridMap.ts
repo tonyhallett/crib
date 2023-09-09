@@ -82,7 +82,7 @@ orientationLettersOnGridMap.set(Orientation.BottomLeftToTopRight, (word) => {
     return letters;
 });
 
-export const getLettersOnGrid = (word:PositionedWord) => {
+export const getLetterPositions = (word:PositionedWord) => {
     const wordLettersOnGridProvider = orientationLettersOnGridMap.get(word.orientation) as WordLettersOnGridProvider;
     return wordLettersOnGridProvider(word);
 }
