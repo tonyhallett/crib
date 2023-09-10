@@ -4,11 +4,12 @@ import Paragraph from '@tiptap/extension-paragraph'
 //import Text from '@tiptap/extension-text'
 import TextStyle from '@tiptap/extension-text-style'
 import { Node as ProseMirrorNode, NodeType, Attrs, Schema } from '@tiptap/pm/model'
-import { AnyExtension, EditorContent, getExtensionField, splitExtensions, useEditor } from '@tiptap/react'
-import { Editor, Extension, NodeConfig } from '@tiptap/core'
+import { EditorContent, useEditor } from '@tiptap/react'
+import { Editor } from '@tiptap/core'
 import { ReplaceStep } from '@tiptap/pm/transform'
 import { NodeSpec } from '@tiptap/pm/model'
 import { Node } from '@tiptap/core'
+import { addRenderTextLeafTextExtension } from './renderTextLeafTextExtension'
 // Node => NodeType
 function logIs(nodeType:NodeType){
     console.log(`isText - ${nodeType.isText}`);
@@ -124,82 +125,8 @@ function logNodes(editor:Editor){
         // inlineContent / is.... taken from the nodeTyoe
 }
 
-function nodeIsLeaf(node:Node){
-    return node.config.content === undefined
-}
-
-function addRenderTextLeafTextExtension(extensions:AnyExtension[]){
-    const {baseExtensions, nodeExtensions, markExtensions} = splitExtensions(extensions);
-    return [...baseExtensions,...markExtensions, ...nodeExtensions, getRenderTextLeafTextExtension()];
-}
-
-type NodeConfigRenderTextContext = ThisParameterType<NonNullable<NodeConfig['renderText']>>
-type NodeConfigContext = Omit<NodeConfigRenderTextContext,'parent'>
 
 
- // because of this context cannot access own options !
-function getRenderTextLeafTextExtension(nodeTypes:string[]=[]){
-    const nodeTypeMatch = (node:Node) => {
-        return nodeTypes.find((nodeType) => nodeType === node.name);
-    }
-    const matchAll = () => true;
-    const matcher = nodeTypes.length > 0 ? nodeTypeMatch : matchAll;
-    const mapRenderTextLeafText = (nodeConfigContext:NodeConfigContext, node:Node) => {
-        return extendWithLeafText(nodeConfigContext, node) ?? 
-            extendWithToText(nodeConfigContext, node) ?? {};
-        
-    }
-    const extendWithToText = (nodeConfigContext:NodeConfigContext, node:Node) => {
-        const extendNodeSchema = getExtensionField<NodeConfig['extendNodeSchema']>(
-            node,
-            "extendNodeSchema",
-            nodeConfigContext
-        );
-        if(extendNodeSchema){
-            const extended = extendNodeSchema(node);
-            if(extended.leafText){
-                const toText:NodeConfig['renderText'] = ({node}) => {
-                    return extended.leafText(node);
-                };
-                return {
-                    toText
-                }
-            }
-        }
-    }
-    const extendWithLeafText = (nodeConfigContext:NodeConfigContext, node:Node) => {
-        const renderText = getExtensionField<NodeConfig['renderText']>(
-            node,
-            'renderText',
-            nodeConfigContext,
-        )
-        if(renderText && nodeIsLeaf(node)){
-            return {
-                leafText(node:ProseMirrorNode){
-                    return renderText({
-                        node,
-
-                        pos:0,
-                        index:0,
-                        parent:undefined as unknown as ProseMirrorNode,
-                    })
-                }
-            }
-        }
-    }
-    const DemoExtension =
-    Extension.create({
-        name:"renderTextLeafText",
-        extendNodeSchema(node) {
-            if(matcher(node)){
-                return mapRenderTextLeafText(this, node);
-            }
-            return {};
-                
-        },
-    });
-    return DemoExtension;
-}
 
 // can I create my own Text node which is a leaf node
 const Text = Node.create({
@@ -221,7 +148,6 @@ const Text = Node.create({
 
   })
   
-
 export function TestWord(){
     const tipTapEditor = useEditor({
       extensions: addRenderTextLeafTextExtension([Document, Paragraph, Text, TextStyle, Color]),
