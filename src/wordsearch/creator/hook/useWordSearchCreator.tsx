@@ -92,6 +92,12 @@ export function useWordSearchCreator(
     toggleFillWithRandomLetters() {
       dispatch({ type: "toggleFillWithRandomLetters" });
     },
+    newWord() {
+      dispatch({ type: "newWord" });
+    },
+    deleteWord() {
+      dispatch({ type: "deleteWord" });
+    },
   };
   return [getCalculatedState(state), dispatcher] as const;
 }

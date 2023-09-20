@@ -1,0 +1,22 @@
+import { getSelectedWord, updateWordGridForWordChange } from "./common";
+import { WordSearchCreatorState } from "./state-types";
+
+export function deleteWordReducer(
+  state: WordSearchCreatorState
+): WordSearchCreatorState {
+  const oldWord = getSelectedWord(state);
+  const newWords = state.words.filter((word) => word.id !== oldWord.id);
+
+  return {
+    ...state,
+    words: newWords,
+    wordGrid: updateWordGridForWordChange(
+      oldWord,
+      undefined,
+      state.numRows,
+      state.numColumns,
+      state.wordGrid,
+      state.fillWithRandomLetters
+    ),
+  };
+}

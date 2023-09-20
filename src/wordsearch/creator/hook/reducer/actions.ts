@@ -33,10 +33,20 @@ export interface ToggleFillWithRandomLettersAction extends Action {
   type: "toggleFillWithRandomLetters";
 }
 
+export interface NewWordAction extends Action {
+  type: "newWord";
+}
+
+export interface DeleteWordAction extends Action {
+  type: "deleteWord";
+}
+
 export type WordSearchCreatorAction =
   | NewWordSearchAction
   | ClickedSquareAction
   | WordSelectedAction
   | WordTextChangedAction
   | OrientationChangedAction
-  | ToggleFillWithRandomLettersAction;
+  | ToggleFillWithRandomLettersAction
+  | NewWordAction
+  | DeleteWordAction;

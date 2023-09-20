@@ -11,85 +11,15 @@ import { getCellColor } from "./getCellColor";
 import { getWordIndex } from "./getWordIndex";
 import { getCellState } from "./getCellState";
 import { getLetter } from "./getLetter";
-import { OrientationState, Orientations } from "../OrientationToolbar";
-import {
-  Orientation,
-  PositionedWordAndLetterState,
-  WordSearchCreatorCalculatedState,
-  WordSearchGrid,
-} from "../../hook/reducer/state-types";
+import { Orientations } from "../OrientationToolbar";
 import ClearIcon from "@mui/icons-material/Clear";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import SaveIcon from "@mui/icons-material/Save";
-
-const orientationOrder: Orientation[] = [
-  Orientation.LeftToRight,
-  Orientation.RightToLeft,
-  Orientation.TopToBottom,
-  Orientation.BottomToTop,
-  Orientation.TopLeftToBottomRight,
-  Orientation.BottomRightToTopLeft,
-  Orientation.TopRightToBottomLeft,
-  Orientation.BottomLeftToTopRight,
-];
-function getOrientationState(
-  state: WordSearchCreatorCalculatedState
-): OrientationState[] {
-  return orientationOrder.map((orientation) => {
-    return {
-      orientation,
-      enabled: state.selectedWordId !== -1,
-    };
-  });
-}
-
-function getCurrentOrientation(
-  state: WordSearchCreatorCalculatedState
-): Orientation {
-  return (
-    state.words.find((word) => word.id === state.selectedWordId)?.orientation ??
-    Orientation.LeftToRight
-  );
-}
-
-function gridHasLetters(wordGrid: WordSearchGrid): boolean {
-  for (let row = 0; row < wordGrid.length; row++) {
-    for (let col = 0; col < wordGrid[row].length; col++) {
-      const cell = wordGrid[row][col];
-      if (cell.contributingLetters.length === 0) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-function wordsAreOk(words: PositionedWordAndLetterState[]): boolean {
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    for (let j = 0; j < word.letterStates.length; j++) {
-      const letterState = word.letterStates[j].state;
-      if (letterState !== "ok") {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-function gridHasLettersAndOkState(
-  wordGrid: WordSearchGrid,
-  words: PositionedWordAndLetterState[]
-): boolean {
-  return gridHasLetters(wordGrid) && wordsAreOk(words);
-}
-function canExport(state: WordSearchCreatorCalculatedState): boolean {
-  const hasWordsWithLength =
-    state.words.length > 0 && state.words.every((word) => word.word.length > 0);
-  return (
-    hasWordsWithLength && gridHasLettersAndOkState(state.wordGrid, state.words)
-  );
-}
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { getCurrentOrientation } from "./getCurrentOrientation";
+import { getOrientationState } from "./getOrientationState";
+import { canExport } from "./canExport";
 
 export function WordSearchCreator() {
   const [state, dispatcher] = useWordSearchCreator();
@@ -107,6 +37,15 @@ export function WordSearchCreator() {
       </ToggleButton>
       <IconButton disabled={!canExport(state)} onClick={() => alert("todo")}>
         <SaveIcon />
+      </IconButton>
+      <IconButton onClick={() => dispatcher.newWord()}>
+        <AddIcon />
+      </IconButton>
+      <IconButton
+        disabled={state.selectedWordId === -1}
+        onClick={() => dispatcher.deleteWord()}
+      >
+        <DeleteIcon />
       </IconButton>
 
       <Orientations

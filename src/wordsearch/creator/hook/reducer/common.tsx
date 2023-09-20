@@ -3,7 +3,9 @@ import { GridCellPositionAndLetter } from "../getLetterPositions";
 import randomLetterWordId from "./randomLetterWordId";
 import {
   ContributingLetter,
+  GridCell,
   PositionedWord,
+  WordSearchCreatorState,
   WordSearchGrid,
 } from "./state-types";
 
@@ -70,24 +72,80 @@ function removeRandomLetters(
     : contributingLetters;
 }
 
+function getWordId(
+  oldWord: PossiblePositionedWord,
+  newWord: PossiblePositionedWord
+) {
+  const id = oldWord?.id ?? newWord?.id;
+  if (id === undefined) {
+    throw new Error("Words are undefined");
+  }
+  return id;
+}
+
+function updateContributingLetterIfLettersChanges(
+  cell: GridCell,
+  oldLetter: string,
+  newLetter: string,
+  wordId: number
+) {
+  if (oldLetter === newLetter) {
+    return cell;
+  }
+  const newCell = { ...cell };
+  newCell.contributingLetters = updateContributingLetter(
+    newCell.contributingLetters,
+    wordId,
+    newLetter
+  );
+  return newCell;
+}
+
+function removeContributingLetterAndPossiblyFillWithRandom(
+  cell: GridCell,
+  wordId: number,
+  fillWithRandomLetters: boolean
+) {
+  const newCell = { ...cell };
+  newCell.contributingLetters = removeContributingLetter(
+    newCell.contributingLetters,
+    wordId
+  );
+  if (fillWithRandomLetters && newCell.contributingLetters.length === 0) {
+    newCell.contributingLetters = getRandomLetterContribution();
+  }
+  return newCell;
+}
+
+function addContributingLetterAndRemoveRandomLetters(
+  cell: GridCell,
+  newLetter: string,
+  wordId: number
+) {
+  const newCell = { ...cell };
+  newCell.contributingLetters = [
+    { letter: newLetter, wordId: wordId },
+    ...removeRandomLetters(newCell.contributingLetters),
+  ];
+  return newCell;
+}
+
+type PossiblePositionedWord = PositionedWord | undefined;
 export function updateWordGridForWordChange(
-  oldWord: PositionedWord,
-  newWord: PositionedWord,
+  oldWord: PossiblePositionedWord,
+  newWord: PossiblePositionedWord,
   numRows: number,
   numColumns: number,
   wordGrid: WordSearchGrid,
   fillWithRandomLetters: boolean
 ): WordSearchGrid {
-  const oldLettersOnGrid = getLetterPositionsOnGrid(
-    oldWord,
-    numRows,
-    numColumns
-  );
-  const newLettersOnGrid = getLetterPositionsOnGrid(
-    newWord,
-    numRows,
-    numColumns
-  );
+  const wordId = getWordId(oldWord, newWord);
+  const getPossibleLetterPositionsOnGrid = (word: PossiblePositionedWord) => {
+    return word ? getLetterPositionsOnGrid(word, numRows, numColumns) : [];
+  };
+  const oldLettersOnGrid = getPossibleLetterPositionsOnGrid(oldWord);
+  const newLettersOnGrid = getPossibleLetterPositionsOnGrid(newWord);
+
   const getLetterAtPosition = (
     lettersWithPosition: GridCellPositionAndLetter[],
     rowIndex: number,
@@ -100,8 +158,8 @@ export function updateWordGridForWordChange(
       return false;
     });
   };
+
   const newWordGrid = wordGrid.map((row, rowIndex) => {
-    // eslint-disable-next-line complexity
     return row.map((cell, colIndex) => {
       const oldLetter = getLetterAtPosition(
         oldLettersOnGrid,
@@ -115,42 +173,41 @@ export function updateWordGridForWordChange(
       )?.letter;
 
       if (oldLetter && newLetter) {
-        if (oldLetter === newLetter) {
-          return cell;
-        }
-        const newCell = { ...cell };
-        newCell.contributingLetters = updateContributingLetter(
-          newCell.contributingLetters,
-          newWord.id,
-          newLetter
+        return updateContributingLetterIfLettersChanges(
+          cell,
+          oldLetter,
+          newLetter,
+          wordId
         );
-        return newCell;
       } else {
         if (oldLetter) {
-          const newCell = { ...cell };
-          newCell.contributingLetters = removeContributingLetter(
-            newCell.contributingLetters,
-            newWord.id
+          return removeContributingLetterAndPossiblyFillWithRandom(
+            cell,
+            wordId,
+            fillWithRandomLetters
           );
-          if (
-            fillWithRandomLetters &&
-            newCell.contributingLetters.length === 0
-          ) {
-            newCell.contributingLetters = getRandomLetterContribution();
-          }
-          return newCell;
         }
         if (newLetter) {
-          const newCell = { ...cell };
-          newCell.contributingLetters = [
-            { letter: newLetter, wordId: newWord.id },
-            ...removeRandomLetters(newCell.contributingLetters),
-          ];
-          return newCell;
+          return addContributingLetterAndRemoveRandomLetters(
+            cell,
+            newLetter,
+            wordId
+          );
         }
         return cell;
       }
     });
   });
   return newWordGrid;
+}
+
+export function getWordById(
+  words: PositionedWord[],
+  wordId: number
+): PositionedWord {
+  return words.find((word) => word.id === wordId) as PositionedWord;
+}
+
+export function getSelectedWord(state: WordSearchCreatorState): PositionedWord {
+  return getWordById(state.words, state.selectedWordId);
 }

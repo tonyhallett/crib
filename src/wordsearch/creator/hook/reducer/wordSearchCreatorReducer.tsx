@@ -1,4 +1,3 @@
-import { stateFromInitial } from "../stateFromInitial";
 import { WordSearchCreatorAction } from "./actions";
 import { WordSearchCreatorState } from "./state-types";
 import { wordTextChangedReducer } from "./wordTextChangedReducer";
@@ -6,6 +5,9 @@ import { toggleFillWithRandomLettersReducer } from "./toggleFillWithRandomLetter
 import { orientationChangedReducer } from "./orientationChangedReducer";
 import { selectWordReducer } from "./selectWordReducer";
 import { clickedSquareReducer } from "./clickedSquareReducer";
+import { newWordSearchReducer } from "./newWordSearchReducer";
+import { newWordReducer } from "./newWordReducer";
+import { deleteWordReducer } from "./deleteWordReducer";
 
 // eslint-disable-next-line complexity
 export function wordSearchCreatorReducer(
@@ -14,13 +16,7 @@ export function wordSearchCreatorReducer(
 ) {
   switch (action.type) {
     case "newWordSearch":
-      // clear word list and clear the grid
-      return stateFromInitial({
-        numColumns: state.numColumns,
-        numRows: state.numRows,
-        selectedWordId: -1,
-        words: [],
-      });
+      return newWordSearchReducer(state);
     case "clickedSquare":
       return clickedSquareReducer(state, action);
     case "wordTextChanged":
@@ -31,6 +27,10 @@ export function wordSearchCreatorReducer(
       return orientationChangedReducer(state, action);
     case "toggleFillWithRandomLetters":
       return toggleFillWithRandomLettersReducer(state);
+    case "newWord":
+      return newWordReducer(state);
+    case "deleteWord":
+      return deleteWordReducer(state);
   }
   return state;
 }

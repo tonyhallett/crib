@@ -1,17 +1,10 @@
 import { OrientationChangedAction } from "./actions";
-import { updateWord, updateWordGridForWordChange } from "./common";
+import { getWordById, updateWord, updateWordGridForWordChange } from "./common";
 import {
   Orientation,
   PositionedWord,
   WordSearchCreatorState,
 } from "./state-types";
-
-export function getWordById(
-  words: PositionedWord[],
-  wordId: number
-): PositionedWord {
-  return words.find((word) => word.id === wordId) as PositionedWord;
-}
 
 export function updateWordOrientation(
   words: PositionedWord[],
