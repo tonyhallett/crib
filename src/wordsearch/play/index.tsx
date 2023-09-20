@@ -1,10 +1,11 @@
 /* eslint-disable no-case-declarations */
 import { useReducer } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import { GridCellPosition, WordPosition } from "./WordSearch";
-import { getState } from "./getState";
+import { WordPosition } from "./types";
 import { wordSearch } from "./demoWordSearch";
 import { wordGridReducer } from "./wordGridReducer";
+import { GridCellPosition } from "../common-types";
+import { getState } from "./getState";
 
 export interface GuessedCell {
   isSelected: boolean;
@@ -12,18 +13,18 @@ export interface GuessedCell {
   letter: string;
 }
 
-export interface GuessedWord extends WordPosition{
+export interface GuessedWord extends WordPosition {
   word: string;
   isGuessed: boolean;
 }
 
-export interface WordSearchState{
+export interface WordSearchState {
   wordGrid: GuessedCell[][];
   guessedWords: GuessedWord[];
   firstSelectedCell: GridCellPosition | undefined;
 }
 
-const [wordGridData,wordList] = getState(wordSearch);
+const [wordGridData, wordList] = getState(wordSearch);
 
 export const WordGrid = () => {
   const [state, dispatch] = useReducer(wordGridReducer, {
@@ -33,7 +34,7 @@ export const WordGrid = () => {
   });
 
   const handleLetterClick = (row: number, col: number) => {
-    dispatch({type:"letterClick",gridCellPosition:{row,col}});
+    dispatch({ type: "letterClick", gridCellPosition: { row, col } });
   };
 
   return (

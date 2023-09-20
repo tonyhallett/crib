@@ -7,8 +7,8 @@ import "@fontsource/roboto/700.css";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Auth0Provider, Component } from "./Rad/getRad";
-import { WordGrid } from "./wordsearch";
-import { WordSearchCreator } from "./wordsearch/WordSearchCreator";
+import { WordGrid } from "./wordsearch/play";
+import { WordSearchCreator } from "./wordsearch/creator/components/WordSearchCreator/WordSearchCreator";
 
 const rootNode = document.getElementById("app");
 
@@ -41,4 +41,4 @@ const root = createRoot(rootNode!);
     </Auth0Provider>
   </ThemeProvider>
 ); */
-root.render(<WordSearchCreator/>)
+root.render(<WordSearchCreator />);

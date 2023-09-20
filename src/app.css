@@ -5,3 +5,13 @@
     -o-background-size: cover;
     background-size: cover;
   } */
+
+.conflict {
+  text-decoration: underline red;
+}
+.offGrid {
+  text-decoration: underline orange wavy;
+}
+.selected {
+  font-style: italic;
+}

@@ -1,6 +1,9 @@
-import { GridCellPosition } from "./WordSearch";
+import { GridCellPosition } from "../common-types";
 
-export function getDirection(start: GridCellPosition, end: GridCellPosition): string {
+export function getDirection(
+  start: GridCellPosition,
+  end: GridCellPosition
+): string {
   if (start.row === end.row) {
     return "horizontal";
   } else if (start.col === end.col) {
