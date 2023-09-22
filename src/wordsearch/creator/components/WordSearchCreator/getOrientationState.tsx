@@ -1,8 +1,8 @@
-import { OrientationState } from "../OrientationToolbar";
 import {
   Orientation,
   WordSearchCreatorCalculatedState,
 } from "../../hook/reducer/state-types";
+import { OrientationState } from "../OrientationToolbar/Orientations";
 
 export const orientationOrder: Orientation[] = [
   Orientation.LeftToRight,

@@ -1,5 +1,5 @@
 import { ClickedSquareAction } from "./actions";
-import { updateWord, updateWordGridForWordChange } from "./common";
+import { WordUpdate, updateWord, updateWordGridForWordChange } from "./common";
 import { PositionedWord, WordSearchCreatorState } from "./state-types";
 
 function clickedSquareAndSelectedWordReducer(
@@ -10,18 +10,13 @@ function clickedSquareAndSelectedWordReducer(
   const selectedWordIndex = words.findIndex(
     (word) => word.id === state.selectedWordId
   );
-  const word = words[selectedWordIndex];
-  const currentWordStart = word.start;
+  const selectedWord = words[selectedWordIndex];
+  const selectedWordStart = selectedWord.start;
   if (
-    currentWordStart.col !== action.col ||
-    currentWordStart.row !== action.row
+    selectedWordStart.col !== action.col ||
+    selectedWordStart.row !== action.row
   ) {
-    return clickedDifferentStartingSquareReducer(
-      word,
-      selectedWordIndex,
-      state,
-      action
-    );
+    return clickedDifferentStartingSquareReducer(state, action.row, action.col);
   }
   return state;
 }
@@ -31,25 +26,28 @@ function updateWordStart(
   words: PositionedWord[],
   wordId: number,
   newStart: { row: number; col: number }
-): PositionedWord[] {
+): WordUpdate {
   return updateWord(words, wordId, (word) => ({ ...word, start: newStart }));
 }
 
 function clickedDifferentStartingSquareReducer(
-  word: PositionedWord,
-  selectedWordIndex: number,
   state: WordSearchCreatorState,
-  action: ClickedSquareAction
+  startRow: number,
+  startCol: number
 ): WordSearchCreatorState {
-  const newWords = updateWordStart(state.words, state.selectedWordId, {
-    row: action.row,
-    col: action.col,
-  });
+  const { newWords, newWord, oldWord } = updateWordStart(
+    state.words,
+    state.selectedWordId,
+    {
+      row: startRow,
+      col: startCol,
+    }
+  );
   const newState: WordSearchCreatorState = {
     ...state,
     wordGrid: updateWordGridForWordChange(
-      word,
-      newWords[selectedWordIndex],
+      oldWord,
+      newWord,
       state.numRows,
       state.numColumns,
       state.wordGrid,

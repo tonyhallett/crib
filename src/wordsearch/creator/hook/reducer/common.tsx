@@ -9,17 +9,32 @@ import {
   WordSearchGrid,
 } from "./state-types";
 
+export interface WordUpdate {
+  oldWord: PositionedWord;
+  newWord: PositionedWord;
+  newWords: PositionedWord[];
+}
+
 export function updateWord(
   words: PositionedWord[],
   wordToUpdateId: number,
   updater: (word: PositionedWord) => PositionedWord
-): PositionedWord[] {
-  return words.map((word) => {
+): WordUpdate {
+  let oldWord: PositionedWord | undefined;
+  let newWord: PositionedWord | undefined;
+  const newWords = words.map((word) => {
     if (word.id === wordToUpdateId) {
-      return updater(word);
+      newWord = updater(word);
+      oldWord = word;
+      return newWord;
     }
     return word;
   });
+  return {
+    newWords,
+    oldWord: oldWord as PositionedWord,
+    newWord: newWord as PositionedWord,
+  };
 }
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

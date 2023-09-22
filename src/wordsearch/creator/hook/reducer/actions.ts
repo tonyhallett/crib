@@ -29,6 +29,10 @@ export interface OrientationChangedAction extends Action {
   orientation: Orientation;
 }
 
+export interface FlipAction extends Action {
+  type: "flipped";
+}
+
 export interface ToggleFillWithRandomLettersAction extends Action {
   type: "toggleFillWithRandomLetters";
 }
@@ -49,4 +53,5 @@ export type WordSearchCreatorAction =
   | OrientationChangedAction
   | ToggleFillWithRandomLettersAction
   | NewWordAction
-  | DeleteWordAction;
+  | DeleteWordAction
+  | FlipAction;

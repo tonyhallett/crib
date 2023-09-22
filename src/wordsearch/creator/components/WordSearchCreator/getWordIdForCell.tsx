@@ -6,12 +6,12 @@ export function getWordIdForCell(cell: GridCell, selectedWordId: number) {
     return cell.contributingLetters[0].wordId;
   }
 
-  const selectedWordIdForCell = findSelectedContributingLetter(
+  const selectedContributingLetter = findSelectedContributingLetter(
     cell,
     selectedWordId
   );
-  if (selectedWordIdForCell) {
-    return selectedWordIdForCell;
+  if (selectedContributingLetter) {
+    return selectedContributingLetter.wordId;
   }
   return -1;
 }

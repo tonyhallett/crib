@@ -6,12 +6,17 @@ import {
   StyledLetterNodeOptions,
 } from "../TipTap/Schema";
 import { useEffect } from "react";
+import { EnterAWordPlaceholder } from "../TipTap/enterAWordPlaceholder";
 
 export interface TipTapWordProps {
   content: Content;
   textChanged: StyledLetterNodeOptions["textChanged"];
   focused: () => void;
+  doFocus:boolean,
+  id:number
 }
+
+
 
 export function TipTapWord(props: TipTapWordProps) {
   const { content, textChanged } = props;
@@ -20,6 +25,7 @@ export function TipTapWord(props: TipTapWordProps) {
       StyledLetterRootNode,
       Text,
       StyledLetterNode.configure({ textChanged }),
+      EnterAWordPlaceholder
     ],
     content,
     onFocus: props.focused,
@@ -27,6 +33,12 @@ export function TipTapWord(props: TipTapWordProps) {
   useEffect(() => {
     tipTapEditor?.commands.setContent(content);
   }, [content, tipTapEditor]);
+
+  useEffect(() => {
+    if (props.doFocus) {
+      tipTapEditor?.commands.focus();
+    }
+  }, [props, tipTapEditor]);
 
   if (!tipTapEditor) {
     return null;

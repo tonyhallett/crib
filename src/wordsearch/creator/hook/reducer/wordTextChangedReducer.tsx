@@ -12,7 +12,8 @@ export function updateWordText(
   newText: string
 ): PositionedWord[] {
   newText = removeDisallowedCharacters(newText.toUpperCase());
-  return updateWord(words, wordId, (word) => ({ ...word, word: newText }));
+  return updateWord(words, wordId, (word) => ({ ...word, word: newText }))
+    .newWords;
 }
 
 export function wordTextChangedReducer(

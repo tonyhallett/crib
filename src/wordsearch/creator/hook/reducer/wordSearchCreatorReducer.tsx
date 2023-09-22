@@ -8,6 +8,7 @@ import { clickedSquareReducer } from "./clickedSquareReducer";
 import { newWordSearchReducer } from "./newWordSearchReducer";
 import { newWordReducer } from "./newWordReducer";
 import { deleteWordReducer } from "./deleteWordReducer";
+import { flippedReducer } from "./flippedReducer";
 
 // eslint-disable-next-line complexity
 export function wordSearchCreatorReducer(
@@ -31,6 +32,8 @@ export function wordSearchCreatorReducer(
       return newWordReducer(state);
     case "deleteWord":
       return deleteWordReducer(state);
+    case "flipped":
+      return flippedReducer(state);
   }
   return state;
 }

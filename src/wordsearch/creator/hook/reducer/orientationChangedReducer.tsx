@@ -1,5 +1,5 @@
 import { OrientationChangedAction } from "./actions";
-import { getWordById, updateWord, updateWordGridForWordChange } from "./common";
+import { WordUpdate, updateWord, updateWordGridForWordChange } from "./common";
 import {
   Orientation,
   PositionedWord,
@@ -10,7 +10,7 @@ export function updateWordOrientation(
   words: PositionedWord[],
   wordId: number,
   newOrientation: Orientation
-): PositionedWord[] {
+): WordUpdate {
   return updateWord(words, wordId, (word) => ({
     ...word,
     orientation: newOrientation,
@@ -21,15 +21,13 @@ export function orientationChangedReducer(
   state: WordSearchCreatorState,
   action: OrientationChangedAction
 ): WordSearchCreatorState {
-  const currentWord = getWordById(state.words, state.selectedWordId);
-  const newWords = updateWordOrientation(
+  const { newWords, newWord, oldWord } = updateWordOrientation(
     state.words,
     state.selectedWordId,
     action.orientation
   );
-  const newWord = getWordById(newWords, state.selectedWordId);
   const newWordGrid = updateWordGridForWordChange(
-    currentWord,
+    oldWord,
     newWord,
     state.numRows,
     state.numColumns,

@@ -1,6 +1,12 @@
 import { getSelectedWord, updateWordGridForWordChange } from "./common";
 import { WordSearchCreatorState } from "./state-types";
 
+function getNewSelectedWordId(words: WordSearchCreatorState["words"]) {
+  if(words.length === 0) {
+    return -1;
+  }
+  return words[0].id;
+}
 export function deleteWordReducer(
   state: WordSearchCreatorState
 ): WordSearchCreatorState {
@@ -9,6 +15,7 @@ export function deleteWordReducer(
 
   return {
     ...state,
+    selectedWordId: getNewSelectedWordId(newWords),
     words: newWords,
     wordGrid: updateWordGridForWordChange(
       oldWord,

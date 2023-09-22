@@ -64,7 +64,7 @@ export function useWordSearchCreator(
 
     numRows: 8,
     numColumns: 8,
-    selectedWordId: 3,
+    selectedWordId: 1,
   }
 ) {
   const [state, dispatch] = useReducer(
@@ -88,6 +88,9 @@ export function useWordSearchCreator(
     },
     orientationChanged(orientation: Orientation) {
       dispatch({ type: "orientationChanged", orientation });
+    },
+    flipped() {
+      dispatch({ type: "flipped" });
     },
     toggleFillWithRandomLetters() {
       dispatch({ type: "toggleFillWithRandomLetters" });
