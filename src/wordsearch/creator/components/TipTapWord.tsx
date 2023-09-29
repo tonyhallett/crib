@@ -12,11 +12,9 @@ export interface TipTapWordProps {
   content: Content;
   textChanged: StyledLetterNodeOptions["textChanged"];
   focused: () => void;
-  doFocus:boolean,
-  id:number
+  doFocus: boolean;
+  id: number;
 }
-
-
 
 export function TipTapWord(props: TipTapWordProps) {
   const { content, textChanged } = props;
@@ -25,7 +23,7 @@ export function TipTapWord(props: TipTapWordProps) {
       StyledLetterRootNode,
       Text,
       StyledLetterNode.configure({ textChanged }),
-      EnterAWordPlaceholder
+      EnterAWordPlaceholder,
     ],
     content,
     onFocus: props.focused,

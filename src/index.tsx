@@ -8,9 +8,8 @@ import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Auth0Provider, Component } from "./Rad/getRad";
 import { WordGrid } from "./wordsearch/play";
-import { HueDemo, WordSearchCreator } from "./wordsearch/creator/components/WordSearchCreator/WordSearchCreator";
+import { WordSearchCreator } from "./wordsearch/creator/components/WordSearchCreator/WordSearchCreator";
 import { HSLDemo } from "./wordsearch/creator/components/HSLDemo";
-
 const rootNode = document.getElementById("app");
 
 const theme = createTheme({
@@ -43,5 +42,5 @@ const root = createRoot(rootNode!);
   </ThemeProvider>
 ); */
 root.render(<WordSearchCreator />);
-//root.render(<HueDemo />);
+//root.render(<ColorContrastDemo/>)
 //root.render(<HSLDemo saturation={100} lightness={30} numColors={16} />);

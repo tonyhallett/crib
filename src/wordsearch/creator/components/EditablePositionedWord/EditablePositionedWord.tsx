@@ -8,7 +8,7 @@ interface EditablePositionedWordProps {
   textChanged: TipTapWordProps["textChanged"];
   focused: TipTapWordProps["focused"];
   isSelected: boolean;
-  doFocus:boolean
+  doFocus: boolean;
 }
 export function EditablePositionedWordImpl(props: EditablePositionedWordProps) {
   return (
@@ -24,22 +24,37 @@ export function EditablePositionedWordImpl(props: EditablePositionedWordProps) {
   );
 }
 
-function letterStatesNoRerender(prevProps:EditablePositionedWordProps, newProps:EditablePositionedWordProps){
-  if(prevProps.word.letterStates.length !== newProps.word.letterStates.length) {
+function letterStatesNoRerender(
+  prevProps: EditablePositionedWordProps,
+  newProps: EditablePositionedWordProps
+) {
+  if (
+    prevProps.word.letterStates.length !== newProps.word.letterStates.length
+  ) {
     return false;
   }
-  for(let i = 0;i<prevProps.word.letterStates.length;i++) {
+  for (let i = 0; i < prevProps.word.letterStates.length; i++) {
     const prevLetterState = prevProps.word.letterStates[i];
     const newLetterState = newProps.word.letterStates[i];
-    if(prevLetterState.letter !== newLetterState.letter || prevLetterState.state !== newLetterState.state) {
+    if (
+      prevLetterState.letter !== newLetterState.letter ||
+      prevLetterState.state !== newLetterState.state
+    ) {
       return false;
     }
   }
   return true;
 }
-export const EditablePositionedWord = memo(EditablePositionedWordImpl,(prevProps, newProps) => {
-  if(prevProps.isSelected !== newProps.isSelected || prevProps.doFocus !== newProps.doFocus || prevProps.word.id !== newProps.word.id) {
-    return false;
+export const EditablePositionedWord = memo(
+  EditablePositionedWordImpl,
+  (prevProps, newProps) => {
+    if (
+      prevProps.isSelected !== newProps.isSelected ||
+      prevProps.doFocus !== newProps.doFocus ||
+      prevProps.word.id !== newProps.word.id
+    ) {
+      return false;
+    }
+    return letterStatesNoRerender(prevProps, newProps);
   }
-  return letterStatesNoRerender(prevProps, newProps);
-});
+);

@@ -2,7 +2,7 @@ import { getSelectedWord, updateWordGridForWordChange } from "./common";
 import { WordSearchCreatorState } from "./state-types";
 
 function getNewSelectedWordId(words: WordSearchCreatorState["words"]) {
-  if(words.length === 0) {
+  if (words.length === 0) {
     return -1;
   }
   return words[0].id;

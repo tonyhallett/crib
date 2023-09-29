@@ -10,8 +10,11 @@ export function useRefForOneRender<T>() {
       ref.current = undefined;
     }
   });
-  return [ref, (newVal: T) => {
-    ref.current = newVal;
-    markerRef.current = true;
-  }] as const;
+  return [
+    ref,
+    (newVal: T) => {
+      ref.current = newVal;
+      markerRef.current = true;
+    },
+  ] as const;
 }
