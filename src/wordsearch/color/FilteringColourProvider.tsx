@@ -7,7 +7,7 @@ import {
 import chroma from "chroma-js";
 
 export abstract class FilteringColorProviderBase implements ColorProvider {
-  private count = -1;
+  private applicableColourIndex = 0;
   public exhausted = false;
   private applicableColors: string[] = [];
   private colors: string[] = [];
@@ -22,14 +22,14 @@ export abstract class FilteringColorProviderBase implements ColorProvider {
 
   private setApplicableColours() {
     if (this.colourRestriction !== undefined) {
-      if (this.colourRestriction === ColourRestriction.None) {
-        this.applicableColors = this.colors;
-      } else {
-        this.filterColours(
+      this.applicableColors = this.colors;
+      if (this.colourRestriction !== ColourRestriction.None) {
+        this.applicableColors = this.filterColours(
           isBlack(this.colourRestriction),
           isTripleA(this.colourRestriction)
         );
       }
+      this.exhausted = this.applicableColors.length === 0;
     }
   }
 
@@ -39,8 +39,7 @@ export abstract class FilteringColorProviderBase implements ColorProvider {
   }
 
   private updateColors() {
-    this.exhausted = false;
-    this.count = -1;
+    this.applicableColourIndex = 0;
     this.setApplicableColours();
     this.coloursChangedListener?.();
   }
@@ -58,14 +57,14 @@ export abstract class FilteringColorProviderBase implements ColorProvider {
   private filterColours(textBlack: boolean, tripleA: boolean) {
     const textColor = textBlack ? "black" : "white";
     const ratio = tripleA ? 7 : 4.5;
-    // change the system so that it can just return done ?
-    this.applicableColors = this.colors.filter((color) => {
+    return this.colors.filter((color) => {
       return chroma.contrast(color, textColor) >= ratio;
     });
   }
 
   getColor(): string {
-    this.exhausted = this.count === this.applicableColors.length - 1;
-    return this.applicableColors[++this.count];
+    this.exhausted =
+      this.applicableColourIndex === this.applicableColors.length - 1;
+    return this.applicableColors[this.applicableColourIndex++];
   }
 }

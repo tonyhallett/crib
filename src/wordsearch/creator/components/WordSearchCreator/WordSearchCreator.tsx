@@ -8,10 +8,8 @@ import {
 } from "@mui/material";
 import { EditablePositionedWord } from "../EditablePositionedWord/EditablePositionedWord";
 import { useWordSearchCreator } from "../../hook/useWordSearchCreator";
-import { getCellColor } from "./getCellColor";
-import { getWordIndex } from "./getWordIndex";
+import { getWordIndexOrIdentifierForCell } from "./getWordIndexOrIdentifierForCell";
 import { GridCellState, getCellState } from "./getCellState";
-import { getLetter } from "./getLetter";
 import { OrientationToolbarWithFlip } from "../OrientationToolbar/OrientationToolbar";
 import ClearIcon from "@mui/icons-material/Clear";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
@@ -23,16 +21,29 @@ import { getOrientationState } from "./getOrientationState";
 import { canExport } from "./canExport";
 import { nextWordId } from "../../hook/reducer/newWordReducer";
 import { useRefForOneRender } from "./useRefForOneRender";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import chroma from "chroma-js";
 import { ColourRestriction, isBlack } from "../../../color/ColorRestriction";
 import { ContrastedBackgroundColorProvider } from "../../../color/ContrastedBackgroundColorProvider";
 import { demoChangingListColorProvider } from "../../../color/demoChangingListColorProvider";
-import { useForceRender } from "../../../../hooks/useForceRender";
 import { useRefConstructorOnce } from "../../hook/useRefConstructorOnce";
+import { cycleEnum } from "../../helpers/cycleEnum";
+import {
+  CellIdentifier,
+  CellIdentifiers,
+} from "./getWordIdOrIdentifierForCell";
+import { getLetterAndStyle } from "./getLetterAndStyle";
 
-function getTextColor(colourRestriction: ColourRestriction) {
-  return isBlack(colourRestriction) ? "black" : "white"; //todo when is None
+function getBackgroundColor(cellIdentifier: CellIdentifier) {
+  switch (cellIdentifier) {
+    case CellIdentifiers.noLetters:
+    case CellIdentifiers.randomLetters:
+      return "white";
+    case CellIdentifiers.multipleSameLetters:
+      return "pink";
+    case CellIdentifiers.conflictingLetters:
+      return "red";
+  }
 }
 
 function getSelectedOutlineColor(colourRestriction: ColourRestriction) {
@@ -46,35 +57,27 @@ const colorRestrictions: ColourRestriction[] = [
   ColourRestriction.WhiteAAA,
   ColourRestriction.None,
 ];
-function nextEnum<T extends number>(currentEnum: T, enumValues: T[]): T {
-  const currentIndex = enumValues.indexOf(currentEnum);
 
-  if (currentIndex === -1) {
-    // Handle the case where the currentEnum is not found.
-    return enumValues[0];
-  }
+const initialColourRestriction = ColourRestriction.WhiteAAA;
 
-  const nextIndex = (currentIndex + 1) % enumValues.length;
-  return enumValues[nextIndex];
-}
-
-const colourRestriction = ColourRestriction.WhiteAAA;
 export function WordSearchCreator() {
   const [currentListIndex, setCurrentListIndex] = useState(0);
   const [currentColourRestriction, setCurrentColourRestriction] =
-    useState<ColourRestriction>(colourRestriction);
-  const colorProviderRef = useRefConstructorOnce(() => (
-    new ContrastedBackgroundColorProvider(
-      [demoChangingListColorProvider],
-      "gray",
-      colourRestriction
-    )
-  ));
+    useState<ColourRestriction>(initialColourRestriction);
+  const colorProviderRef = useRefConstructorOnce(
+    () =>
+      new ContrastedBackgroundColorProvider(
+        [demoChangingListColorProvider],
+        "gray",
+        initialColourRestriction
+      )
+  );
   const [state, dispatcher] = useWordSearchCreator();
   const [newWordRef, setNewWordRef] = useRefForOneRender<number>();
 
-  const textColor = getTextColor(currentColourRestriction);
-  const selectedOutlineColor = getSelectedOutlineColor(currentColourRestriction);
+  const selectedOutlineColor = getSelectedOutlineColor(
+    currentColourRestriction
+  );
   return (
     <>
       <Button
@@ -87,13 +90,11 @@ export function WordSearchCreator() {
       </Button>
       <Button
         onClick={() => {
-          const nextRestriction = nextEnum(
+          const nextRestriction = cycleEnum(
             currentColourRestriction,
             colorRestrictions
           );
-          colorProviderRef.current.changeColourRestriction(
-            nextRestriction
-          );
+          colorProviderRef.current.changeColourRestriction(nextRestriction);
           setCurrentColourRestriction(nextRestriction);
         }}
       >
@@ -153,17 +154,23 @@ export function WordSearchCreator() {
               const isSelected =
                 cellState === GridCellState.OkSelected ||
                 cellState === GridCellState.ConflictSelected;
-              const wordIndex = getWordIndex(
+              const wordIndexOrIdentifier = getWordIndexOrIdentifierForCell(
                 cell,
                 state.words,
                 state.selectedWordId
               );
-              const backgroundColor =
-                wordIndex === -1
-                  ? "white"
-                  : colorProviderRef.current.getColor(
-                      state.words[wordIndex].id
-                    );
+              const backgroundColor = wordIndexOrIdentifier.isIndex
+                ? colorProviderRef.current.getColor(
+                    state.words[wordIndexOrIdentifier.index].id
+                  )
+                : getBackgroundColor(wordIndexOrIdentifier.cellIdentifier);
+
+              const { letter, style } = getLetterAndStyle(
+                cell,
+                backgroundColor,
+                state.selectedWordId,
+                state.words
+              );
               return (
                 <Grid key={colIndex} item>
                   <Paper
@@ -178,17 +185,11 @@ export function WordSearchCreator() {
                         ? `5px solid ${selectedOutlineColor}`
                         : undefined,
                       outlineOffset: isSelected ? "-5px" : undefined,
-                      /* backgroundColor: getCellColor(
-                      getCellState(cell, state.selectedWordId),
-                      getWordIndex(cell, state.words, state.selectedWordId)
-                    ), */
                       backgroundColor,
                     }}
                     elevation={3}
                   >
-                    <Typography style={{ color: textColor }}>
-                      {getLetter(cell)}
-                    </Typography>
+                    <Typography style={style}>{letter}</Typography>
                   </Paper>
                 </Grid>
               );

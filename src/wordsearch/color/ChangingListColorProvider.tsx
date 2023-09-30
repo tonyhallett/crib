@@ -1,6 +1,5 @@
 import { FilteringColorProviderBase } from "./FilteringColourProvider";
 
-
 export class ChangingListColorProvider extends FilteringColorProviderBase {
   private currentListIndex = 0;
   constructor(private listColors: string[][]) {

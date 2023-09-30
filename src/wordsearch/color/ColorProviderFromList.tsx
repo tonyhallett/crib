@@ -9,5 +9,3 @@ export class ColorProviderFromList extends FilteringColorProviderBase {
     return this.listColors;
   }
 }
-
-

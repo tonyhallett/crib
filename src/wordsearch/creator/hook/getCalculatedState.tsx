@@ -1,3 +1,4 @@
+import { same } from "../../helpers/hasDuplicates";
 import { inBounds } from "../helpers/inBounds";
 import { getLetterPositions } from "./getLetterPositions";
 import {
@@ -26,8 +27,9 @@ function getWordsWithLetterStates(
       let letterState: LetterState = "offGrid";
       if (isOnGrid(letterPosition.row, letterPosition.col)) {
         const gridCell = wordSearchGrid[letterPosition.row][letterPosition.col];
-        letterState =
-          gridCell.contributingLetters.length === 1 ? "ok" : "conflict";
+        letterState = same(gridCell.contributingLetters.map((cl) => cl.letter))
+          ? "ok"
+          : "conflict";
       }
       const letterAndState: LetterAndState = {
         letter: letterPosition.letter,

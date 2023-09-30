@@ -1,6 +1,5 @@
 import { ChangingListColorProvider } from "./ChangingListColorProvider";
 
-
 export const demoChangingListColorProvider = new ChangingListColorProvider([
   [
     "#6afaff",

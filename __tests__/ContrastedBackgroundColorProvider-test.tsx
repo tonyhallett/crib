@@ -437,6 +437,35 @@ describe("ContrastedBackgroundColorProvider", () => {
           );
         });
       });
+      describe("the color provider is exhausted", () => {
+        it("should not ask the color provider to update", () => {
+          let coloursChangedListener: () => void | undefined;
+          const changeColours = () => {
+            colorProvider.exhausted = true;
+            coloursChangedListener();
+          };
+          const getColor = jest.fn().mockImplementation(() => {
+            colorProvider.exhausted = true;
+            return "red";
+          });
+          const colorProvider: ColorProvider = {
+            initialize: jest.fn(),
+            getColor,
+            exhausted: false,
+            onColorsChanged(ccListener) {
+              coloursChangedListener = ccListener;
+            },
+            changeColourRestriction() {
+              //
+            },
+          };
+          const contrastedBackgroundColorProvider =
+            new ContrastedBackgroundColorProvider([colorProvider]);
+          contrastedBackgroundColorProvider.getColor(1);
+          changeColours();
+          expect(getColor).toHaveBeenCalledTimes(1);
+        });
+      });
     });
     describe("fallback colours should attempt to be replaced", () => {
       it("the first non exhausted provider should change the color", () => {

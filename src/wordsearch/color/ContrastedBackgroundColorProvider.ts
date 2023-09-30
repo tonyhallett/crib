@@ -45,15 +45,12 @@ export class ContrastedBackgroundColorProvider {
     let index = 0;
     for (let i = 0; i < this.colorProviders.length; i++) {
       const colorProvider = this.colorProviders[i];
+      this.initializeColorProviderIfUnitialized(colorProvider, i);
       if (!colorProvider.exhausted) {
         cp = colorProvider;
         index = i;
         break;
       }
-    }
-
-    if (cp) {
-      this.initializeColorProviderIfUnitialized(cp, index);
     }
 
     return cp ? { colorProvider: cp, index } : undefined;
@@ -74,7 +71,7 @@ export class ContrastedBackgroundColorProvider {
     const colorProviderIndex = this.colorProviders.indexOf(colorProvider);
     colorProvider.initialize(this.colourRestriction);
     colorProvider.onColorsChanged?.(() => {
-      this.coloursChanged(colorProvider, colorProviderIndex);
+      this.coloursChanged(colorProviderIndex);
     });
   }
 
@@ -157,15 +154,17 @@ export class ContrastedBackgroundColorProvider {
   ) {
     const colorProvider = colorProviderDetail.colorProvider;
     let replacedColoursCount = 0; // have the color provider provide for its own
-    for (let i = 0; i < providerColorDetailsToChange.length; i++) {
-      const colorDetail = providerColorDetailsToChange[i];
-      const newColor = colorProvider.getColor();
-      colorDetail.color = newColor;
-      colorDetail.colorIndex = colorProviderDetail.providedCount;
-      colorProviderDetail.providedCount++;
-      replacedColoursCount++;
-      if (colorProvider.exhausted) {
-        break;
+    if (!colorProvider.exhausted) {
+      for (let i = 0; i < providerColorDetailsToChange.length; i++) {
+        const colorDetail = providerColorDetailsToChange[i];
+        const newColor = colorProvider.getColor();
+        colorDetail.color = newColor;
+        colorDetail.colorIndex = colorProviderDetail.providedCount;
+        colorProviderDetail.providedCount++;
+        replacedColoursCount++;
+        if (colorProvider.exhausted) {
+          break;
+        }
       }
     }
 
@@ -195,13 +194,7 @@ export class ContrastedBackgroundColorProvider {
     );
   }
 
-  private coloursChanged(
-    colorProvider: ColorProvider,
-    colorProviderIndex: number
-  ) {
-    if (colorProvider.exhausted) {
-      throw new Error("color provider should have some colours when colour");
-    }
+  private coloursChanged(colorProviderIndex: number) {
     this.removeUsedColorsForColorProvider(colorProviderIndex);
 
     const colorProviderDetail = this.colorProviderDetails[colorProviderIndex];

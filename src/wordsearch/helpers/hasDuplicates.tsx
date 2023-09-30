@@ -5,3 +5,7 @@ export function hasDuplicates(arr: unknown[]) {
 export function distinct<T>(arr: T[]): T[] {
   return [...new Set(arr)];
 }
+
+export function same(arr: unknown[]) {
+  return distinct(arr).length === 1;
+}

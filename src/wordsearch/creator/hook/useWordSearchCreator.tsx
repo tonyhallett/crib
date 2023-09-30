@@ -60,6 +60,12 @@ export function useWordSearchCreator(
         orientation: Orientation.BottomLeftToTopRight,
         start: { row: 7, col: 2 },
       },
+      {
+        word: "CAN",
+        id: 9,
+        orientation: Orientation.LeftToRight,
+        start: { row: 2, col: 5 },
+      },
     ],
 
     numRows: 8,
