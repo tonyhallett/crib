@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
 import { WordPosition } from "./types";
 import { wordSearch } from "./demoWordSearch";

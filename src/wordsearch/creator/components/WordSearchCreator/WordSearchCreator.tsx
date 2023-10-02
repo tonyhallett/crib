@@ -21,30 +21,15 @@ import { getOrientationState } from "./getOrientationState";
 import { canExport } from "./canExport";
 import { nextWordId } from "../../hook/reducer/newWordReducer";
 import { useRefForOneRender } from "./useRefForOneRender";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import chroma from "chroma-js";
 import { ColourRestriction, isBlack } from "../../../color/ColorRestriction";
 import { ContrastedBackgroundColorProvider } from "../../../color/ContrastedBackgroundColorProvider";
 import { demoChangingListColorProvider } from "../../../color/demoChangingListColorProvider";
 import { useRefConstructorOnce } from "../../hook/useRefConstructorOnce";
 import { cycleEnum } from "../../helpers/cycleEnum";
-import {
-  CellIdentifier,
-  CellIdentifiers,
-} from "./getWordIdOrIdentifierForCell";
 import { getLetterAndStyle } from "./getLetterAndStyle";
-
-function getBackgroundColor(cellIdentifier: CellIdentifier) {
-  switch (cellIdentifier) {
-    case CellIdentifiers.noLetters:
-    case CellIdentifiers.randomLetters:
-      return "white";
-    case CellIdentifiers.multipleSameLetters:
-      return "pink";
-    case CellIdentifiers.conflictingLetters:
-      return "red";
-  }
-}
+import { getCellIdentifierLetterBackgroundColor } from "./getCellIdentifierLetterBackgroundColor";
 
 function getSelectedOutlineColor(colourRestriction: ColourRestriction) {
   return isBlack(colourRestriction) ? "black" : chroma("white").darken();
@@ -74,7 +59,7 @@ export function WordSearchCreator() {
   );
   const [state, dispatcher] = useWordSearchCreator();
   const [newWordRef, setNewWordRef] = useRefForOneRender<number>();
-
+  
   const selectedOutlineColor = getSelectedOutlineColor(
     currentColourRestriction
   );
@@ -159,15 +144,17 @@ export function WordSearchCreator() {
                 state.words,
                 state.selectedWordId
               );
-              const backgroundColor = wordIndexOrIdentifier.isIndex
-                ? colorProviderRef.current.getColor(
+              const backgroundColorDetails = wordIndexOrIdentifier.isIndex
+                ? {
+                    isRadiant:false,
+                    color:colorProviderRef.current.getColor(
                     state.words[wordIndexOrIdentifier.index].id
-                  )
-                : getBackgroundColor(wordIndexOrIdentifier.cellIdentifier);
+                  )}
+                : getCellIdentifierLetterBackgroundColor(wordIndexOrIdentifier.cellIdentifier, currentColourRestriction);
 
               const { letter, style } = getLetterAndStyle(
                 cell,
-                backgroundColor,
+                backgroundColorDetails,
                 state.selectedWordId,
                 state.words
               );
@@ -185,7 +172,7 @@ export function WordSearchCreator() {
                         ? `5px solid ${selectedOutlineColor}`
                         : undefined,
                       outlineOffset: isSelected ? "-5px" : undefined,
-                      backgroundColor,
+                      background:backgroundColorDetails.color,
                     }}
                     elevation={3}
                   >

@@ -94,7 +94,7 @@ interface StyledLetter {
   style: React.CSSProperties;
 }
 
-function getTextColour(backgroundColor: string) {
+function getBlackOrWhiteWithBestContrast(backgroundColor: string) {
   const blackDistance = chroma.distance(backgroundColor, chroma("black"));
   const whiteDistance = chroma.distance(backgroundColor, chroma("white"));
   return blackDistance > 1.2 * whiteDistance ? "black" : "white";
@@ -116,23 +116,37 @@ function getLetter(cell: GridCell, selectedWordId: number): string {
   return contributingFromSelected?.letter ?? same(letters) ? letters[0] : "*";
 }
 
+
+export interface RadiantBackground {
+  isRadiant:true,
+  color:string,
+  textContrastColor?:string,
+}
+interface NonRadiantBackground {
+  isRadiant:false,
+  color:string
+}
+
+export type LetterBackground = RadiantBackground | NonRadiantBackground;
 export function getLetterAndStyle(
   cell: GridCell,
-  backgroundColor: string,
+  letterBackground: LetterBackground,
   selectedWordId: number,
-  words: PositionedWordAndLetterState[]
+  words: PositionedWordAndLetterState[],
+  
 ): StyledLetter {
-  const textColour = getTextColour(backgroundColor);
+  const contrastingColor = letterBackground.isRadiant ? letterBackground.textContrastColor : letterBackground.color;
+  const textColour = contrastingColor !== undefined? getBlackOrWhiteWithBestContrast(contrastingColor) : undefined;
   return {
-    letter: getLetter(cell, selectedWordId),
+    letter: textColour !== undefined ? getLetter(cell, selectedWordId) : "",
     style: {
-      color: getTextColour(backgroundColor),
-      textDecoration: getLetterTextDecoration(
+      color: textColour,
+      textDecoration: textColour !== undefined ?getLetterTextDecoration(
         cell,
         textColour,
         selectedWordId,
         words
-      ),
+      ) : undefined,
     },
   };
 }

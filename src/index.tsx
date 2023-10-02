@@ -10,6 +10,7 @@ import { Auth0Provider, Component } from "./Rad/getRad";
 import { WordGrid } from "./wordsearch/play";
 import { WordSearchCreator } from "./wordsearch/creator/components/WordSearchCreator/WordSearchCreator";
 import { HSLDemo } from "./wordsearch/creator/components/HSLDemo";
+import { DemoReactRouter } from "./wordsearch/DemoReactRouter";
 const rootNode = document.getElementById("app");
 
 const theme = createTheme({
@@ -41,6 +42,8 @@ const root = createRoot(rootNode!);
     </Auth0Provider>
   </ThemeProvider>
 ); */
-root.render(<WordSearchCreator />);
+//root.render(<DemoReactRouter/>)
+//root.render(<WordSearchCreator />);
+root.render(<WordGrid/>)
 //root.render(<ColorContrastDemo/>)
 //root.render(<HSLDemo saturation={100} lightness={30} numColors={16} />);
