@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { ActionFunction,useRouteLoaderData,Outlet, LoaderFunction, RouterProvider, createBrowserRouter, useLoaderData, useFetcher, NavLink } from "react-router-dom";
+import { LocalStorage } from "./localStorage";
+import { WordSearchCreatorCalculatedState } from "./creator/hook/reducer/state-types";
+import { WordSearchState } from "./play";
+
+// will add the additional properties to state that provide the details for viewing without pulling in averything
+const storage = new LocalStorage<WordSearchCreatorCalculatedState,WordSearchState,[]>([]);
 
 interface ColourSettings{
     someSetting:string;
