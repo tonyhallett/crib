@@ -100,6 +100,7 @@ describe("Word search", () => {
           firstSelectedCell: undefined,
           wordGrid: [[{ isGuessed: false, isSelected: false, letter: "A" }]],
           guessedWords: [],
+          canTemplate: false,
         };
         const newState = wordGridReducer(state, {
           type: "letterClick",
@@ -115,6 +116,7 @@ describe("Word search", () => {
           firstSelectedCell: undefined,
           wordGrid: [[{ isGuessed: false, isSelected: false, letter: "A" }]],
           guessedWords: [],
+          canTemplate: false,
         };
         const newState = wordGridReducer(state, {
           type: "letterClick",
@@ -134,6 +136,7 @@ describe("Word search", () => {
           firstSelectedCell: undefined,
           wordGrid: [[{ isGuessed: false, isSelected: false, letter: "A" }]],
           guessedWords: [],
+          canTemplate: false,
         };
         const newState = wordGridReducer(state, {
           type: "letterClick",
@@ -160,6 +163,7 @@ describe("Word search", () => {
           firstSelectedCell: undefined,
           wordGrid: [selectedCellRow],
           guessedWords: [],
+          canTemplate: false,
         };
         const newState = wordGridReducer(state, {
           type: "letterClick",
@@ -182,6 +186,7 @@ describe("Word search", () => {
             notSelectedCellRow,
           ],
           guessedWords: [],
+          canTemplate: false,
         };
         const newState = wordGridReducer(state, {
           type: "letterClick",
@@ -213,6 +218,7 @@ describe("Word search", () => {
               ],
             ],
             guessedWords: guessedWords,
+            canTemplate: false,
           };
           const newState = wordGridReducer(state, {
             type: "letterClick",
@@ -243,6 +249,7 @@ describe("Word search", () => {
               ],
             ],
             guessedWords: guessedWords,
+            canTemplate: false,
           };
           const newState = wordGridReducer(state, {
             type: "letterClick",
@@ -287,6 +294,7 @@ describe("Word search", () => {
               wordGrid: wordGridData,
               guessedWords: wordList,
               firstSelectedCell: wordPosition.start,
+              canTemplate: false,
             };
             const newState = wordGridReducer(state, {
               type: "letterClick",
@@ -432,6 +440,7 @@ describe("Word search", () => {
               ],
             ],
             guessedWords: [],
+            canTemplate: false,
           };
           const newState = wordGridReducer(state, {
             type: "letterClick",
@@ -465,6 +474,7 @@ describe("Word search", () => {
                 ],
               ],
               guessedWords: guessedWords,
+              canTemplate: false,
             };
             const newState = wordGridReducer(state, {
               type: "letterClick",

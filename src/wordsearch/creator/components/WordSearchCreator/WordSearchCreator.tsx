@@ -30,6 +30,9 @@ import { useRefConstructorOnce } from "../../hook/useRefConstructorOnce";
 import { cycleEnum } from "../../helpers/cycleEnum";
 import { getLetterAndStyle } from "./getLetterAndStyle";
 import { getCellIdentifierLetterBackgroundColor } from "./getCellIdentifierLetterBackgroundColor";
+import { useLoaderData, useSubmit } from "react-router-dom";
+import { WordSearchCreatorState } from "../../hook/reducer/state-types";
+import { wordSearchLocalStorage } from "../../../wordSearchLocalStorage";
 
 function getSelectedOutlineColor(colourRestriction: ColourRestriction) {
   return isBlack(colourRestriction) ? "black" : chroma("white").darken();
@@ -46,6 +49,8 @@ const colorRestrictions: ColourRestriction[] = [
 const initialColourRestriction = ColourRestriction.WhiteAAA;
 
 export function WordSearchCreator() {
+  const submit = useSubmit();
+  const loaderState = useLoaderData() as WordSearchCreatorState | null;
   const [currentListIndex, setCurrentListIndex] = useState(0);
   const [currentColourRestriction, setCurrentColourRestriction] =
     useState<ColourRestriction>(initialColourRestriction);
@@ -57,9 +62,11 @@ export function WordSearchCreator() {
         initialColourRestriction
       )
   );
-  const [state, dispatcher] = useWordSearchCreator();
+  const [state, dispatcher] = useWordSearchCreator(loaderState ?? undefined);
   const [newWordRef, setNewWordRef] = useRefForOneRender<number>();
-  
+  useEffect(() => {
+    wordSearchLocalStorage.setWordSearchCreatorState(state);
+  }, [state]);
   const selectedOutlineColor = getSelectedOutlineColor(
     currentColourRestriction
   );
@@ -98,7 +105,11 @@ export function WordSearchCreator() {
       <IconButton
         disabled={!canExport(state)}
         onClick={() => {
-          //todo
+          const formData: FormData = new FormData();
+          formData.set("newWordSearch", JSON.stringify(state));
+          // do I need fetcher submit ?
+          // use Form/fetcher.Form
+          submit(formData, { method: "post", action: "." });
         }}
       >
         <SaveIcon />
@@ -146,11 +157,15 @@ export function WordSearchCreator() {
               );
               const backgroundColorDetails = wordIndexOrIdentifier.isIndex
                 ? {
-                    isRadiant:false,
-                    color:colorProviderRef.current.getColor(
-                    state.words[wordIndexOrIdentifier.index].id
-                  )}
-                : getCellIdentifierLetterBackgroundColor(wordIndexOrIdentifier.cellIdentifier, currentColourRestriction);
+                    isRadiant: false,
+                    color: colorProviderRef.current.getColor(
+                      state.words[wordIndexOrIdentifier.index].id
+                    ),
+                  }
+                : getCellIdentifierLetterBackgroundColor(
+                    wordIndexOrIdentifier.cellIdentifier,
+                    currentColourRestriction
+                  );
 
               const { letter, style } = getLetterAndStyle(
                 cell,
@@ -172,7 +187,7 @@ export function WordSearchCreator() {
                         ? `5px solid ${selectedOutlineColor}`
                         : undefined,
                       outlineOffset: isSelected ? "-5px" : undefined,
-                      background:backgroundColorDetails.color,
+                      background: backgroundColorDetails.color,
                     }}
                     elevation={3}
                   >

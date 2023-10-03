@@ -1,14 +1,7 @@
 import { getSelectedOrientation } from "../../components/WordSearchCreator/getCurrentOrientation";
-import {
-  GridCellPositionAndLetter,
-  getLetterPositions,
-} from "../getLetterPositions";
 import { updateWord, updateWordGridForWordChange } from "./common";
-import {
-  Orientation,
-  PositionedWord,
-  WordSearchCreatorState,
-} from "./state-types";
+import { getLastLetterPosition } from "./getLastLetterPosition";
+import { Orientation, WordSearchCreatorState } from "./state-types";
 
 export const orientationPairs = [
   [Orientation.LeftToRight, Orientation.RightToLeft],
@@ -29,13 +22,6 @@ export function getFlipOrientation(orientation: Orientation): Orientation {
     }
   }
   return flippedOrientation;
-}
-
-function getLastLetterPosition(
-  word: PositionedWord
-): GridCellPositionAndLetter {
-  const letterPositions = getLetterPositions(word);
-  return letterPositions[letterPositions.length - 1];
 }
 
 export function flippedReducer(

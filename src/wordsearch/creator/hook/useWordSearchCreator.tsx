@@ -7,71 +7,23 @@ import {
   WordSearchCreatorInitialState,
 } from "./reducer/state-types";
 
+const defaultX: WordSearchCreatorInitialState = {
+  words: [
+    {
+      word: "HELLO",
+      id: 1,
+      orientation: Orientation.LeftToRight,
+      start: { row: 0, col: 0 },
+    },
+  ],
+
+  numRows: 8,
+  numColumns: 8,
+  selectedWordId: 1,
+};
+const defaultState = stateFromInitial(defaultX);
 export function useWordSearchCreator(
-  initialState: WordSearchCreatorInitialState = {
-    words: [
-      {
-        word: "HELLO",
-        id: 1,
-        orientation: Orientation.LeftToRight,
-        start: { row: 0, col: 0 },
-      },
-      {
-        word: "YOU",
-        id: 2,
-        orientation: Orientation.RightToLeft,
-        start: { row: 0, col: 7 },
-      },
-
-      {
-        word: "CONFLICT",
-        id: 3,
-        orientation: Orientation.TopToBottom,
-        start: { row: 0, col: 7 },
-      },
-      {
-        word: "UP",
-        id: 4,
-        orientation: Orientation.BottomToTop,
-        start: { row: 7, col: 6 },
-      },
-
-      {
-        word: "TLBR",
-        id: 5,
-        orientation: Orientation.TopLeftToBottomRight,
-        start: { row: 1, col: 0 },
-      },
-      {
-        word: "BRTL",
-        id: 6,
-        orientation: Orientation.BottomRightToTopLeft,
-        start: { row: 4, col: 4 },
-      },
-      {
-        word: "TRBL",
-        id: 7,
-        orientation: Orientation.TopRightToBottomLeft,
-        start: { row: 4, col: 6 },
-      },
-      {
-        word: "BLTR",
-        id: 8,
-        orientation: Orientation.BottomLeftToTopRight,
-        start: { row: 7, col: 2 },
-      },
-      {
-        word: "CAN",
-        id: 9,
-        orientation: Orientation.LeftToRight,
-        start: { row: 2, col: 5 },
-      },
-    ],
-
-    numRows: 8,
-    numColumns: 8,
-    selectedWordId: 1,
-  }
+  initialState: WordSearchCreatorInitialState = defaultState
 ) {
   const [state, dispatch] = useReducer(
     wordSearchCreatorReducer,

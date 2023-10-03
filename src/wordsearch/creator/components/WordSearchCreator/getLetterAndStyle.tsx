@@ -12,9 +12,10 @@ function contributingLetterWordOffGrid(
   words: PositionedWordAndLetterState[]
 ) {
   const wordId = contributingLetter.wordId;
-  const word = words.find(
-    (word) => word.id === wordId
-  ) as PositionedWordAndLetterState;
+  const word = words.find((word) => word.id === wordId);
+  if (word === undefined) {
+    return false;
+  }
   return word.letterStates.some(
     (letterAndState) => letterAndState.state === "offGrid"
   );
@@ -116,15 +117,14 @@ function getLetter(cell: GridCell, selectedWordId: number): string {
   return contributingFromSelected?.letter ?? same(letters) ? letters[0] : "*";
 }
 
-
 export interface RadiantBackground {
-  isRadiant:true,
-  color:string,
-  textContrastColor?:string,
+  isRadiant: true;
+  color: string;
+  textContrastColor?: string;
 }
 interface NonRadiantBackground {
-  isRadiant:false,
-  color:string
+  isRadiant: false;
+  color: string;
 }
 
 export type LetterBackground = RadiantBackground | NonRadiantBackground;
@@ -132,21 +132,23 @@ export function getLetterAndStyle(
   cell: GridCell,
   letterBackground: LetterBackground,
   selectedWordId: number,
-  words: PositionedWordAndLetterState[],
-  
+  words: PositionedWordAndLetterState[]
 ): StyledLetter {
-  const contrastingColor = letterBackground.isRadiant ? letterBackground.textContrastColor : letterBackground.color;
-  const textColour = contrastingColor !== undefined? getBlackOrWhiteWithBestContrast(contrastingColor) : undefined;
+  const contrastingColor = letterBackground.isRadiant
+    ? letterBackground.textContrastColor
+    : letterBackground.color;
+  const textColour =
+    contrastingColor !== undefined
+      ? getBlackOrWhiteWithBestContrast(contrastingColor)
+      : undefined;
   return {
     letter: textColour !== undefined ? getLetter(cell, selectedWordId) : "",
     style: {
       color: textColour,
-      textDecoration: textColour !== undefined ?getLetterTextDecoration(
-        cell,
-        textColour,
-        selectedWordId,
-        words
-      ) : undefined,
+      textDecoration:
+        textColour !== undefined
+          ? getLetterTextDecoration(cell, textColour, selectedWordId, words)
+          : undefined,
     },
   };
 }

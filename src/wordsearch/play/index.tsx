@@ -2,10 +2,11 @@
 import { useEffect, useReducer } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
 import { WordPosition } from "./types";
-import { wordSearch } from "./demoWordSearch";
 import { wordGridReducer } from "./wordGridReducer";
 import { GridCellPosition } from "../common-types";
-import { getState } from "./getState";
+import { useLoaderData } from "react-router-dom";
+import { WordSearchAndId } from "../router/routes/play/playLoader";
+import { wordSearchLocalStorage } from "../wordSearchLocalStorage";
 
 export interface GuessedCell {
   isSelected: boolean;
@@ -22,17 +23,19 @@ export interface WordSearchState {
   wordGrid: GuessedCell[][];
   guessedWords: GuessedWord[];
   firstSelectedCell: GridCellPosition | undefined;
+  canTemplate: boolean;
 }
 
-const [wordGridData, wordList] = getState(wordSearch);
-
 export const WordGrid = () => {
-  const [state, dispatch] = useReducer(wordGridReducer, {
-    wordGrid: wordGridData,
-    guessedWords: wordList,
-    firstSelectedCell: undefined,
-  });
-
+  //needs the id too !
+  const wordSearchAndId = useLoaderData() as WordSearchAndId;
+  const [state, dispatch] = useReducer(
+    wordGridReducer,
+    wordSearchAndId.wordSearch
+  );
+  useEffect(() => {
+    wordSearchLocalStorage.updateWordSearch(state, wordSearchAndId.id);
+  }, [state, wordSearchAndId.id]);
   const handleLetterClick = (row: number, col: number) => {
     dispatch({ type: "letterClick", gridCellPosition: { row, col } });
   };
