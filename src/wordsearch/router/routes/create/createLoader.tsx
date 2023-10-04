@@ -1,8 +1,9 @@
-import { LoaderFunction } from "react-router-dom";
 import { wordSearchLocalStorage } from "../../../wordSearchLocalStorage";
+import { createLoaderFunctionAndUseLoaderData } from "../../helpers";
 
-export const createLoader: LoaderFunction = () => {
-  const wordSearchCreatorState =
-    wordSearchLocalStorage.getWordSearchCreatorState();
-  return wordSearchCreatorState ?? null;
-};
+export const createLoaderAndUseLoaderData =
+  createLoaderFunctionAndUseLoaderData(() => {
+    const wordSearchCreatorState =
+      wordSearchLocalStorage.getWordSearchCreatorState();
+    return wordSearchCreatorState ?? null;
+  });

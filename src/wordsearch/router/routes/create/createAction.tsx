@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from "react-router-dom";
+import { ActionFunction, SubmitFunction, redirect } from "react-router-dom";
 import {
   PositionedWord,
   WordSearchCreatorCalculatedState,
@@ -8,6 +8,8 @@ import { wordSearchLocalStorage } from "../../../wordSearchLocalStorage";
 import { GridCellPosition } from "../../../common-types";
 import { getLastLetterPosition } from "../../../creator/hook/reducer/getLastLetterPosition";
 import { WordSearchState, GuessedWord, GuessedCell } from "../../../play";
+import { getPlayPath } from "../play/playRoute";
+import { getFormDataDeserialized, singleFormDataEntry } from "../../helpers";
 
 const getEnd = (positionedWord: PositionedWord): GridCellPosition => {
   const letterPosition = getLastLetterPosition(positionedWord);
@@ -16,6 +18,7 @@ const getEnd = (positionedWord: PositionedWord): GridCellPosition => {
     col: letterPosition.col,
   };
 };
+
 const wordSearchFromCreated = (
   wordSearchCreatorState: WordSearchCreatorState
 ): WordSearchState => {
@@ -47,15 +50,37 @@ const wordSearchFromCreated = (
   };
   return wordSearchState;
 };
+
 export const createAction: ActionFunction = async ({ request }) => {
-  const formData = await request.formData();
-  const newWordSearchSerialized = formData.get("newWordSearch") as string;
-  const newWordSearch: WordSearchCreatorCalculatedState = JSON.parse(
-    newWordSearchSerialized
-  );
+  const createJson: CreateJson = await request.json();
   //need to clear storage....
   const newWordSearchId = wordSearchLocalStorage.newWordSearch(
-    wordSearchFromCreated(newWordSearch)
+    wordSearchFromCreated(createJson.newWordSearch)
   );
-  return redirect(`/play/${newWordSearchId}`);
+  if (createJson.play) {
+    return redirect(getPlayPath(newWordSearchId));
+  }
+  return null;
 };
+
+interface CreateJson {
+  newWordSearch: WordSearchCreatorCalculatedState;
+  play: boolean;
+}
+
+export function createSubmit(
+  submit: SubmitFunction,
+  state: WordSearchCreatorCalculatedState,
+  play: boolean
+) {
+  const json: CreateJson = {
+    newWordSearch: state,
+    play,
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  submit(json as any, {
+    method: "post",
+    action: ".",
+    encType: "application/json",
+  });
+}

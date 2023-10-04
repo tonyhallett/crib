@@ -17,7 +17,6 @@ import { playRoute } from "./routes/play/playRoute";
 } */
 
 const router = createBrowserRouter([rootRoute, createRoute, playRoute]);
-
 export function ReactRouterWordSearch() {
   return <RouterProvider router={router} />;
 }

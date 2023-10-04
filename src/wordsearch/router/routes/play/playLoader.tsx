@@ -1,22 +1,26 @@
-import { LoaderFunction } from "react-router-dom";
 import { WordSearchState } from "../../../play";
 import { wordSearchLocalStorage } from "../../../wordSearchLocalStorage";
-import { getIntParam } from "../../getIntParam";
+import {
+  createLoaderFunctionAndUseLoaderData,
+  getIntParam,
+} from "../../helpers";
 
 export interface WordSearchAndId {
   id: number;
   wordSearch: WordSearchState;
 }
 
-export const playLoader: LoaderFunction = ({ params }) => {
-  const id = getIntParam(params.wordSearchId);
-  const wordSearch = wordSearchLocalStorage.getWordSearch(id);
-  if (wordSearch === undefined) {
-    throw new Error("not found");
+export const playLoaderAndUseLoaderData = createLoaderFunctionAndUseLoaderData(
+  ({ params }) => {
+    const id = getIntParam(params.wordSearchId);
+    const wordSearch = wordSearchLocalStorage.getWordSearch(id);
+    if (wordSearch === undefined) {
+      throw new Error("not found");
+    }
+    const wordSearchAndId: WordSearchAndId = {
+      id,
+      wordSearch,
+    };
+    return wordSearchAndId;
   }
-  const wordSearchAndId: WordSearchAndId = {
-    id,
-    wordSearch
-  };
-  return wordSearchAndId;
-};
+);

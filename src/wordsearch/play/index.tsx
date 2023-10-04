@@ -4,8 +4,7 @@ import { Grid, Paper, Typography } from "@mui/material";
 import { WordPosition } from "./types";
 import { wordGridReducer } from "./wordGridReducer";
 import { GridCellPosition } from "../common-types";
-import { useLoaderData } from "react-router-dom";
-import { WordSearchAndId } from "../router/routes/play/playLoader";
+import { playLoaderAndUseLoaderData } from "../router/routes/play/playLoader";
 import { wordSearchLocalStorage } from "../wordSearchLocalStorage";
 
 export interface GuessedCell {
@@ -28,7 +27,7 @@ export interface WordSearchState {
 
 export const WordGrid = () => {
   //needs the id too !
-  const wordSearchAndId = useLoaderData() as WordSearchAndId;
+  const wordSearchAndId = playLoaderAndUseLoaderData.useLoaderData();
   const [state, dispatch] = useReducer(
     wordGridReducer,
     wordSearchAndId.wordSearch

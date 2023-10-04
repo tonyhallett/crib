@@ -14,6 +14,7 @@ import { OrientationToolbarWithFlip } from "../OrientationToolbar/OrientationToo
 import ClearIcon from "@mui/icons-material/Clear";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import SaveIcon from "@mui/icons-material/Save";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { getSelectedOrientation } from "./getCurrentOrientation";
@@ -30,9 +31,10 @@ import { useRefConstructorOnce } from "../../hook/useRefConstructorOnce";
 import { cycleEnum } from "../../helpers/cycleEnum";
 import { getLetterAndStyle } from "./getLetterAndStyle";
 import { getCellIdentifierLetterBackgroundColor } from "./getCellIdentifierLetterBackgroundColor";
-import { useLoaderData, useSubmit } from "react-router-dom";
-import { WordSearchCreatorState } from "../../hook/reducer/state-types";
+import { useSubmit } from "react-router-dom";
 import { wordSearchLocalStorage } from "../../../wordSearchLocalStorage";
+import { createSubmit } from "../../../router/routes/create/createAction";
+import { createLoaderAndUseLoaderData } from "../../../router/routes/create/createLoader";
 
 function getSelectedOutlineColor(colourRestriction: ColourRestriction) {
   return isBlack(colourRestriction) ? "black" : chroma("white").darken();
@@ -50,7 +52,7 @@ const initialColourRestriction = ColourRestriction.WhiteAAA;
 
 export function WordSearchCreator() {
   const submit = useSubmit();
-  const loaderState = useLoaderData() as WordSearchCreatorState | null;
+  const loaderState = createLoaderAndUseLoaderData.useLoaderData();
   const [currentListIndex, setCurrentListIndex] = useState(0);
   const [currentColourRestriction, setCurrentColourRestriction] =
     useState<ColourRestriction>(initialColourRestriction);
@@ -105,14 +107,24 @@ export function WordSearchCreator() {
       <IconButton
         disabled={!canExport(state)}
         onClick={() => {
-          const formData: FormData = new FormData();
-          formData.set("newWordSearch", JSON.stringify(state));
           // do I need fetcher submit ?
           // use Form/fetcher.Form
-          submit(formData, { method: "post", action: "." });
+          createSubmit(submit, state, false);
+          dispatcher.newWordSearch();
         }}
       >
         <SaveIcon />
+      </IconButton>
+      <IconButton
+        disabled={!canExport(state)}
+        onClick={() => {
+          // do I need fetcher submit ?
+          // use Form/fetcher.Form
+          createSubmit(submit, state, true);
+          dispatcher.newWordSearch();
+        }}
+      >
+        <PlayArrowIcon />
       </IconButton>
       <IconButton
         onClick={() => {
